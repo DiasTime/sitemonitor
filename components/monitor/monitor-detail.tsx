@@ -16,6 +16,7 @@ import { StatusDot } from '@/components/ui/status-dot'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePoll } from '@/components/ui/use-poll'
 import {
+  formatExact,
   formatNumber,
   formatRelative,
   formatResponseTime,
@@ -157,7 +158,7 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
             </a>
           </div>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground" title={formatExact(state?.lastCheck)}>
             Checks approximately every 3 minutes
             {state?.lastCheck ? ` · last check ${formatRelative(state.lastCheck)}` : ''}
           </p>

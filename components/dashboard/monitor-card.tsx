@@ -8,7 +8,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { StatusDot } from '@/components/ui/status-dot'
-import { formatClock, formatResponseTime, formatUptime, hostnameOf } from '@/lib/utils'
+import {
+  formatClock,
+  formatExact,
+  formatResponseTime,
+  formatUptime,
+  hostnameOf,
+} from '@/lib/utils'
 import type { MonitorWithState, UiStatus } from '@/lib/types'
 
 interface MonitorCardProps {
@@ -153,7 +159,9 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-border px-5 py-3 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span>Last check: {formatClock(state?.lastCheck)}</span>
+          <span title={formatExact(state?.lastCheck)}>
+            Last check: {formatClock(state?.lastCheck)}
+          </span>
           <span>
             {state?.incidents ?? 0} incident{(state?.incidents ?? 0) === 1 ? '' : 's'}
           </span>

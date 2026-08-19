@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatClock, formatResponseTime } from '@/lib/utils'
+import { formatClock, formatExact, formatResponseTime } from '@/lib/utils'
 import type { HistoryEntry } from '@/lib/types'
 
 /** Most recent checks first. */
@@ -35,7 +35,10 @@ export function HistoryTable({ entries, limit = 50 }: { entries: HistoryEntry[];
       <TableBody>
         {rows.map((entry) => (
           <TableRow key={`${entry.timestamp}-${entry.monitorId}`}>
-            <TableCell className="tabular whitespace-nowrap text-muted-foreground">
+            <TableCell
+              className="tabular whitespace-nowrap text-muted-foreground"
+              title={formatExact(entry.timestamp)}
+            >
               {formatClock(entry.timestamp)}
             </TableCell>
             <TableCell>

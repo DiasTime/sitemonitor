@@ -383,7 +383,19 @@ Time:
 19 Aug 2026, 15:48
 ```
 
-Times in Telegram messages are UTC.
+Times in Telegram messages carry their time zone, so an alert is never
+ambiguous. They default to UTC; set the repository variable `DISPLAY_TIMEZONE`
+to an IANA name (Settings → Secrets and variables → Actions → Variables) to get
+them in your own zone instead:
+
+```text
+DISPLAY_TIMEZONE = Asia/Almaty   ->  19 Aug 2026, 18:49 GMT+5
+DISPLAY_TIMEZONE = Europe/Moscow ->  19 Aug 2026, 16:49 GMT+3
+unset, or not a valid zone       ->  19 Aug 2026, 13:49 UTC
+```
+
+The dashboard is unaffected by this setting — it always renders in the viewer's
+own time zone, and every time on it has a tooltip with the full local date.
 
 ---
 
@@ -465,9 +477,14 @@ runs all succeeded; GitHub simply never started the others.
 
 So the schedule no longer asks for the interval. It fires **hourly** — a cadence
 GitHub honours reliably — and the run itself does the timing: one job stays
-alive for `LOOP_MINUTES` (default 50) and checks every `LOOP_INTERVAL_SECONDS`
-(default 180). That gives a real three-minute interval, driven by a clock inside
-the run instead of GitHub's scheduler.
+alive for `LOOP_MINUTES` and checks every `LOOP_INTERVAL_SECONDS`, driven by a
+clock inside the run instead of GitHub's scheduler.
+
+**This deployment is budgeted at 2 minutes of runner time per hour**
+(`LOOP_MINUTES=2`, `LOOP_INTERVAL_SECONDS=60`), which is 2 checks per hour. Note
+what that does and does not buy: a 2-minute window cannot contain three-minute
+checks at all, which is why the interval is 60s here rather than 180s. Raise
+both together to get closer to continuous coverage — see the table below.
 
 A looping run commits and pushes on its own as soon as a status changes, so
 alerts and the dashboard do not wait for the window to end. Set `LOOP_MINUTES`
@@ -491,10 +508,14 @@ minute of runner time:
 
 | `LOOP_MINUTES` | Coverage | Approx. minutes/month |
 | --- | --- | --- |
-| `50` | continuous | ~36,000 |
+| `50` | continuous, at `LOOP_INTERVAL_SECONDS` | ~36,000 |
 | `10` | 10 min of every hour | ~7,300 |
-| `2` | 2 min of every hour | ~1,500 |
+| `2` (current) | 2 min of every hour — 2 checks | ~1,500 |
 | `0` | one check per hour | ~730 |
+
+`LOOP_INTERVAL_SECONDS` must be smaller than the window, or the window fits a
+single check: 2 minutes at the 180s default would be one check per hour, not
+two.
 
 Note the trade-off is real either way: a low `LOOP_MINUTES` gives accurate
 three-minute checking inside its window and no checking at all outside it, while
@@ -590,8 +611,9 @@ Actions → *Variables*) — all optional:
 | `CHECK_TIMEOUT_MS` | `10000` | Per-request timeout |
 | `HISTORY_RETENTION_DAYS` | `30` | How long history is kept |
 | `MAX_HEALTH_BODY_BYTES` | `65536` | How much of a health response is read |
-| `LOOP_MINUTES` | `50` | How long one run keeps checking; `0` = one check and exit |
-| `LOOP_INTERVAL_SECONDS` | `180` | Interval between checks inside a run |
+| `LOOP_MINUTES` | `2` | How long one run keeps checking; `0` = one check and exit |
+| `LOOP_INTERVAL_SECONDS` | `60` | Interval between checks inside a run |
+| `DISPLAY_TIMEZONE` | `UTC` | IANA zone for times in Telegram alerts |
 
 ---
 
@@ -599,9 +621,11 @@ Actions → *Variables*) — all optional:
 
 - **The interval is driven by the run, not the schedule.** GitHub will not fire
   a three-minute cron, so the workflow starts hourly and does its own timing
-  (see [why the schedule is hourly](#why-the-schedule-is-hourly)). Inside a run
-  the three-minute interval is accurate; between runs there is a gap whose size
-  depends on `LOOP_MINUTES`. Still not a second-accurate SLA monitor.
+  (see [why the schedule is hourly](#why-the-schedule-is-hourly)). At the
+  current `LOOP_MINUTES=2` that means **2 checks per hour**, both inside a
+  2-minute window, and nothing for the remaining 58 minutes. An outage starting
+  just after a window can go unnoticed for nearly an hour. Raise `LOOP_MINUTES`
+  to shrink that gap, at the cost of runner minutes.
 - **Runner time is metered on private repositories.** A continuous 50-minute
   window every hour will exceed the free 2,000 minutes/month several times over.
   See [Actions minutes](#actions-minutes).
@@ -686,6 +710,12 @@ Actions minutes — check <https://github.com/settings/billing>.
 Look at whether `LOOP_MINUTES` is set low, and remember the gap between hourly
 runs is not covered when it is. See
 [why the schedule is hourly](#why-the-schedule-is-hourly).
+
+**Telegram alerts show a time that is not mine.**
+Set the repository variable `DISPLAY_TIMEZONE` to your IANA zone, e.g.
+`Asia/Almaty`. Alerts always print the zone next to the time, so you can see
+which one is in effect. The dashboard is separate: it uses your browser's zone,
+and hovering any time shows the full local date.
 
 ---
 

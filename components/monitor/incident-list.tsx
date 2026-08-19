@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { formatDuration, formatIncidentDate } from '@/lib/utils'
+import { formatDuration, formatExact, formatIncidentDate } from '@/lib/utils'
 import type { Incident } from '@/lib/types'
 
 export function IncidentList({
@@ -28,7 +28,10 @@ export function IncidentList({
         return (
           <li key={incident.id} className="flex flex-wrap items-start gap-x-6 gap-y-3 px-5 py-4">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 text-sm font-medium">
+              <div
+                className="flex items-center gap-2 text-sm font-medium"
+                title={formatExact(incident.startedAt)}
+              >
                 <span aria-hidden>{ongoing ? '🔴' : '⚪️'}</span>
                 {formatIncidentDate(incident.startedAt)}
               </div>

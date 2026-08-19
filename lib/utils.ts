@@ -53,10 +53,30 @@ export function formatDuration(ms: number | null | undefined): string {
   return restHours ? `${head} ${restHours} hour${restHours === 1 ? '' : 's'}` : head
 }
 
-/** "19 Aug 2026, 15:42" — used in Telegram messages. */
-export function formatFullTimestamp(iso: string, timeZone = 'UTC'): string {
+/** True when the runtime recognises an IANA time zone name. */
+function isValidTimeZone(timeZone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-GB', { timeZone }).format(0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * "19 Aug 2026, 15:42 GMT+5" — used in Telegram messages.
+ *
+ * Alerts are read by a person in one place, so they are rendered in that
+ * person's zone rather than the runner's UTC. The zone is always spelled out:
+ * a bare time in an alert is worse than useless when it is five hours off.
+ */
+export function formatFullTimestamp(iso: string, timeZone?: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
+
+  const requested = timeZone ?? process.env.DISPLAY_TIMEZONE ?? 'UTC'
+  const zone = isValidTimeZone(requested) ? requested : 'UTC'
+
   const formatted = new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
     month: 'short',
@@ -64,10 +84,19 @@ export function formatFullTimestamp(iso: string, timeZone = 'UTC'): string {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-    timeZone,
+    timeZone: zone,
+    timeZoneName: 'short',
   }).format(date)
-  // en-GB renders "19 Aug 2026, 15:42" already; normalise stray commas just in case.
+  // en-GB renders "19 Aug 2026, 15:42 GMT+5" already; normalise stray commas.
   return formatted.replace(/,\s+/, ', ')
+}
+
+/** Full local date and time, for tooltips that disambiguate a bare clock. */
+export function formatExact(iso: string | null | undefined): string | undefined {
+  if (!iso) return undefined
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return undefined
+  return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'long' })
 }
 
 /** "15:36" in the viewer's locale. */

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePoll } from '@/components/ui/use-poll'
-import { formatRelative } from '@/lib/utils'
+import { formatExact, formatRelative } from '@/lib/utils'
 import type { StatusResponse } from '@/lib/types'
 
 const POLL_INTERVAL_MS = 30_000
@@ -32,7 +32,7 @@ export function DashboardClient() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground" title={formatExact(data?.updatedAt)}>
               Checks approximately every 3 minutes
               {data?.updatedAt ? ` · last run ${formatRelative(data.updatedAt)}` : ''}
             </p>

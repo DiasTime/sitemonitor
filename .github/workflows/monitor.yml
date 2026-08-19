@@ -15,7 +15,7 @@ on:
       loop_minutes:
         description: "How long this run keeps checking (0 = one check and exit)"
         required: false
-        default: "50"
+        default: "2"
 
 # Only one monitoring run at a time, and never cancel a run that is mid-commit:
 # two runs writing data/*.json concurrently is the one thing that can corrupt state.
@@ -30,7 +30,7 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     # Must exceed LOOP_MINUTES with room for checkout, install and the last pass.
-    timeout-minutes: 70
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -59,10 +59,19 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # IANA zone for the times printed in Telegram alerts, e.g. Asia/Almaty.
+          # Unset or invalid falls back to UTC. The zone is always shown.
+          DISPLAY_TIMEZONE: ${{ vars.DISPLAY_TIMEZONE }}
           # How long this run keeps checking, and how often. A looping run
           # commits and pushes for itself as soon as a status changes.
-          LOOP_MINUTES: ${{ inputs.loop_minutes || vars.LOOP_MINUTES || '50' }}
-          LOOP_INTERVAL_SECONDS: ${{ vars.LOOP_INTERVAL_SECONDS || '180' }}
+          #
+          # Deliberately small: runner time is metered on private repositories,
+          # so this is budgeted at ~2 minutes per hour. The interval is 60s
+          # rather than 180s because a 2-minute window at 180s would fit only a
+          # single check. Raise both together via repository variables to buy
+          # more coverage — see the README.
+          LOOP_MINUTES: ${{ inputs.loop_minutes || vars.LOOP_MINUTES || '2' }}
+          LOOP_INTERVAL_SECONDS: ${{ vars.LOOP_INTERVAL_SECONDS || '60' }}
           # Optional tuning — safe to leave unset.
           COMMIT_INTERVAL_MINUTES: ${{ vars.COMMIT_INTERVAL_MINUTES }}
           CHECK_TIMEOUT_MS: ${{ vars.CHECK_TIMEOUT_MS }}
