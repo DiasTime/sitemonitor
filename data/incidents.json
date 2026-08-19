@@ -1,3 +1,15 @@
 {
-  "incidents": []
+  "incidents": [
+    {
+      "id": "darynast-kz-2026-08-19T21:26:50.509Z",
+      "monitorId": "darynast-kz",
+      "startedAt": "2026-08-19T21:26:50.509Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Connection reset by peer",
+      "failedChecks": 1
+    }
+  ]
 }
