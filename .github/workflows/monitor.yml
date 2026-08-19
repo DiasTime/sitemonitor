@@ -16,6 +16,11 @@ on:
         description: "How long this run keeps checking (0 = one check and exit)"
         required: false
         default: "2"
+  # Fired by the dashboard's "Run check" button. repository_dispatch is used
+  # rather than workflow_dispatch because it needs only the "Contents: write"
+  # token the dashboard already has, not an extra "Actions: write" grant.
+  repository_dispatch:
+    types: [run-check]
 
 # Only one monitoring run at a time, and never cancel a run that is mid-commit:
 # two runs writing data/*.json concurrently is the one thing that can corrupt state.
@@ -70,7 +75,7 @@ jobs:
           # rather than 180s because a 2-minute window at 180s would fit only a
           # single check. Raise both together via repository variables to buy
           # more coverage — see the README.
-          LOOP_MINUTES: ${{ inputs.loop_minutes || vars.LOOP_MINUTES || '2' }}
+          LOOP_MINUTES: ${{ inputs.loop_minutes || github.event.client_payload.loop_minutes || vars.LOOP_MINUTES || '2' }}
           LOOP_INTERVAL_SECONDS: ${{ vars.LOOP_INTERVAL_SECONDS || '60' }}
           # Optional tuning — safe to leave unset.
           COMMIT_INTERVAL_MINUTES: ${{ vars.COMMIT_INTERVAL_MINUTES }}

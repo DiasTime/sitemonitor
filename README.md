@@ -52,6 +52,7 @@ delivers the alerts, and Vercel serves the dashboard.
 9. [Data files](#9-data-files)
 10. [Alerting rules](#10-alerting-rules)
     - [Health endpoints](#health-endpoints)
+    - [Running a check by hand](#running-a-check-by-hand)
     - [Why the schedule is hourly](#why-the-schedule-is-hourly)
 11. [Why it does not commit on every check](#11-why-it-does-not-commit-on-every-check)
 12. [Security](#12-security)
@@ -71,6 +72,9 @@ delivers the alerts, and Vercel serves the dashboard.
   and the incident log.
 - **Add / pause / delete monitors** from the UI. Changes are written straight
   into `data/monitors.json` through the GitHub API.
+- **Run check** button — probe everything now instead of waiting for the
+  schedule. It starts the same workflow, so a manual run behaves exactly like a
+  scheduled one, alerts included.
 - **Two kinds of monitor** — a *website*, judged by its HTTP status code, or a
   *health endpoint*, whose JSON body is inspected too, so an endpoint answering
   HTTP 200 while reporting trouble counts as down. Pick the kind in the add
@@ -247,6 +251,7 @@ into one API call per visitor:
 | `GET /api/status` | Current state of every monitor |
 | `GET /api/history` | Check samples (`?monitorId=&range=24h\|7d\|30d&limit=`) |
 | `GET /api/incidents` | Incidents (`?monitorId=`) |
+| `POST /api/check` | Starts a monitoring run now (the **Run check** button) |
 
 The dashboard polls `/api/status` every 30 seconds and updates in place — no
 page reloads. Polling pauses while the browser tab is hidden.
@@ -465,6 +470,33 @@ Details worth knowing:
 - The last reported value is stored in `status.json` and shown on the card and
   the monitor page. `history.json` keeps only up/down, as for any monitor.
 - Monitors written before this existed have no `type` and stay `website`.
+
+---
+
+## Running a check by hand
+
+The dashboard's **Run check** button starts a monitoring run immediately, for
+when you do not want to wait for the next scheduled window — right after adding
+a monitor, for instance.
+
+It sends a `repository_dispatch` event, which the workflow listens for, and the
+run does a single pass so it finishes in well under a minute. The button shows
+"Checking…" until the results land, then the dashboard refreshes itself.
+
+Deliberately a `repository_dispatch` and not a `workflow_dispatch`: the latter
+would need an extra "Actions: write" scope on `GITHUB_TOKEN`, while the former
+is covered by the "Contents: write" the dashboard already requires. Nothing to
+change about your token.
+
+Two things to know:
+
+- Manual runs are throttled to one every 30 seconds. Each one still costs a
+  GitHub Actions minute.
+- `GITHUB_BRANCH` is not consulted here — `repository_dispatch` always runs the
+  workflow from the repository's default branch.
+
+The same thing is available from the Actions tab (**Website Monitor → Run
+workflow**), where you can also choose how long the run keeps checking.
 
 ---
 

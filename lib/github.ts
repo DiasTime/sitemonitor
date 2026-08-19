@@ -257,3 +257,42 @@ export async function updateJsonFile<T>(
     409,
   )
 }
+
+/**
+ * Fire a `repository_dispatch` event, which the monitoring workflow listens for.
+ *
+ * Deliberately not `workflow_dispatch`: that endpoint needs an "Actions: write"
+ * token, while this one is covered by the "Contents: write" the dashboard
+ * already requires for editing data/monitors.json. One less permission to grant.
+ */
+export async function dispatchRepositoryEvent(
+  eventType: string,
+  clientPayload: Record<string, unknown> = {},
+): Promise<void> {
+  const config = getGitHubConfig()
+
+  const response = await fetch(
+    `${API_ROOT}/repos/${config.owner}/${config.repo}/dispatches`,
+    {
+      method: 'POST',
+      headers: { ...headers(config), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event_type: eventType, client_payload: clientPayload }),
+      cache: 'no-store',
+    },
+  )
+
+  if (response.status === 204) return
+
+  const detail = await safeText(response)
+  if (response.status === 403 || response.status === 404) {
+    throw new GitHubApiError(
+      'GitHub refused to start the workflow. The token needs "Contents: read and write" ' +
+        `on this repository. (${response.status}: ${detail})`,
+      response.status,
+    )
+  }
+  throw new GitHubApiError(
+    `GitHub API returned ${response.status} while starting the workflow: ${detail}`,
+    response.status,
+  )
+}

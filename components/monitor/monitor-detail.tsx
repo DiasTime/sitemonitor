@@ -159,7 +159,7 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
           </div>
 
           <p className="text-xs text-muted-foreground" title={formatExact(state?.lastCheck)}>
-            Checks approximately every 3 minutes
+            Checks run on GitHub Actions
             {state?.lastCheck ? ` · last check ${formatRelative(state.lastCheck)}` : ''}
           </p>
         </div>
