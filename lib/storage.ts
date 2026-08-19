@@ -93,6 +93,8 @@ function uniqueId(base: string, taken: Set<string>): string {
 export interface AddMonitorInput {
   url: unknown
   name?: unknown
+  /** Optional health-check endpoint; validated with the same SSRF rules as `url`. */
+  healthUrl?: unknown
 }
 
 export type MutationResult =
@@ -110,6 +112,15 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
   const nameCheck = validateMonitorName(rawName)
   if (!nameCheck.ok) return { ok: false, error: nameCheck.error!, status: 400 }
   const name = nameCheck.name!
+
+  let healthUrl: string | undefined
+  if (typeof input.healthUrl === 'string' && input.healthUrl.trim()) {
+    const healthCheck = validateMonitorUrl(input.healthUrl)
+    if (!healthCheck.ok) {
+      return { ok: false, error: `Health endpoint: ${healthCheck.error!}`, status: 400 }
+    }
+    healthUrl = healthCheck.url!
+  }
 
   let created: Monitor | null = null
   let failure: { error: string; status: number } | null = null
@@ -137,6 +148,7 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
         name,
         url,
         enabled: true,
+        ...(healthUrl ? { healthUrl } : {}),
         createdAt: new Date().toISOString(),
       }
       created = monitor

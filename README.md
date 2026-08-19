@@ -51,6 +51,7 @@ delivers the alerts, and Vercel serves the dashboard.
 8. [How it works](#8-how-it-works)
 9. [Data files](#9-data-files)
 10. [Alerting rules](#10-alerting-rules)
+    - [Health endpoints](#health-endpoints)
 11. [Why it does not commit on every check](#11-why-it-does-not-commit-on-every-check)
 12. [Security](#12-security)
 13. [Configuration reference](#13-configuration-reference)
@@ -69,6 +70,9 @@ delivers the alerts, and Vercel serves the dashboard.
   and the incident log.
 - **Add / pause / delete websites** from the UI. Changes are written straight
   into `data/monitors.json` through the GitHub API.
+- **Optional health endpoint per site** — "Add health endpoint" in the add
+  dialog. It is probed on every run and its JSON body is inspected, so a site
+  answering HTTP 200 while its health check reports trouble counts as down.
 - **Telegram alerts** on the transitions only: one message when a site goes
   down, one when it comes back.
 - **No database, no VPS, no Docker, no cron service, no worker.**
@@ -262,11 +266,14 @@ by hand and push.
       "id": "example-com",
       "name": "Example",
       "url": "https://example.com",
+      "healthUrl": "https://example.com/api/health",
       "enabled": true
     }
   ]
 }
 ```
+
+`healthUrl` is optional — see [Health endpoints](#health-endpoints) below.
 
 **`data/status.json`** — current state per monitor: status, HTTP code, response
 time, error, last check, the time it entered that state, cumulative check
@@ -367,6 +374,73 @@ Times in Telegram messages are UTC.
 
 ---
 
+## Health endpoints
+
+Each monitor can carry an optional `healthUrl` alongside its site URL. Add one
+with **"Add health endpoint"** in the add-website dialog, or by putting
+`healthUrl` into `data/monitors.json` by hand.
+
+Both URLs are probed on every run, and **the monitor is UP only when both are.**
+The site URL proves the site is reachable; the health endpoint proves it is
+actually working.
+
+The health response body is parsed as JSON and its `status` field is read
+(`state` and `health` are accepted as aliases). These values count as healthy:
+
+```text
+ok  up  healthy  pass  passing  success  green  true
+```
+
+So an endpoint answering
+
+```json
+{ "status": "ok", "timestamp": "2026-08-19T12:08:16.452Z" }
+```
+
+keeps the monitor UP, while
+
+```json
+{ "status": "degraded", "timestamp": "2026-08-19T12:08:16.452Z" }
+```
+
+marks it DOWN **even though the HTTP status was 200** — which is the whole point
+of pointing at a health endpoint. The Telegram alert then names the endpoint and
+the reported value, instead of misleadingly saying "HTTP 200":
+
+```text
+🔴 SITE DOWN
+
+Example
+
+URL:
+https://example.com
+
+Health endpoint:
+https://example.com/api/health
+
+Reported:
+degraded
+
+Time:
+19 Aug 2026, 12:08
+```
+
+Details worth knowing:
+
+- A response that is **not JSON**, or JSON **without** a recognised status field,
+  is judged on its HTTP code alone — a plain `OK` body will not fail a monitor.
+- A non-2xx/3xx health response is DOWN regardless of the body.
+- Only the first 64 KB of the body is read (`MAX_HEALTH_BODY_BYTES`).
+- The health URL goes through exactly the same validation and SSRF protection as
+  the site URL.
+- Health results are **not** stored in `history.json`; the chart and history
+  table stay about the site itself. The latest health result lives in
+  `status.json` and is shown on the card and the monitor page.
+- A health endpoint can be set when adding a monitor. To add or change one
+  afterwards, edit `data/monitors.json`.
+
+---
+
 ## 11. Why it does not commit on every check
 
 A commit every three minutes would be 480 commits a day and would make the git
@@ -453,6 +527,7 @@ Actions → *Variables*) — all optional:
 | `COMMIT_INTERVAL_MINUTES` | `30` | How often results are committed when nothing changed |
 | `CHECK_TIMEOUT_MS` | `10000` | Per-request timeout |
 | `HISTORY_RETENTION_DAYS` | `30` | How long history is kept |
+| `MAX_HEALTH_BODY_BYTES` | `65536` | How much of a health response is read |
 
 ---
 

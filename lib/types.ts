@@ -10,8 +10,25 @@ export interface Monitor {
   name: string
   url: string
   enabled: boolean
+  /**
+   * Optional health-check endpoint, e.g. https://example.com/api/health.
+   * When set it is probed alongside the site URL and its JSON body is inspected:
+   * a `status` field must report a healthy value for the monitor to count as UP.
+   */
+  healthUrl?: string
   /** ISO timestamp, set when the monitor was added through the dashboard. */
   createdAt?: string
+}
+
+/** Result of probing a monitor's health endpoint. */
+export interface HealthResult {
+  url: string
+  status: Status
+  statusCode: number | null
+  responseTime: number | null
+  error: string | null
+  /** Value of the `status` field in the JSON body, when the response had one. */
+  reported: string | null
 }
 
 export interface MonitorsFile {
@@ -39,6 +56,8 @@ export interface MonitorStatus {
   uptime30d: number | null
   avgResponse24h: number | null
   incidents: number
+  /** Last health-endpoint result, null when the monitor has no health endpoint. */
+  health: HealthResult | null
 }
 
 export interface StatusFile {
@@ -83,6 +102,16 @@ export interface IncidentsFile {
 }
 
 /** Result of a single HTTP probe. */
+export interface ProbeResult {
+  status: Status
+  statusCode: number | null
+  responseTime: number | null
+  error: string | null
+  /** Value of the `status` field when the body was JSON with one. */
+  reported?: string | null
+}
+
+/** Combined outcome for one monitor in one run: the site plus its health endpoint. */
 export interface CheckResult {
   monitorId: string
   status: Status
@@ -90,6 +119,7 @@ export interface CheckResult {
   responseTime: number | null
   error: string | null
   timestamp: string
+  health: HealthResult | null
 }
 
 export type HistoryRange = '24h' | '7d' | '30d'

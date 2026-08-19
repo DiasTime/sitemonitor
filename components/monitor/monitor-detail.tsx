@@ -2,12 +2,13 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, TriangleAlert } from 'lucide-react'
+import { Activity, ArrowLeft, ExternalLink, TriangleAlert } from 'lucide-react'
 
 import { AppHeader } from '@/components/dashboard/app-header'
 import { ResponseTimeChart } from '@/components/charts/response-time-chart'
 import { HistoryTable } from '@/components/monitor/history-table'
 import { IncidentList } from '@/components/monitor/incident-list'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -160,6 +161,50 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
                   Down since {new Date(openIncident.startedAt).toLocaleString()}.
                 </p>
               )}
+            </div>
+          </Card>
+        )}
+
+        {monitor.healthUrl && (
+          <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                <Activity className="h-3.5 w-3.5" />
+                Health endpoint
+              </div>
+              <a
+                href={monitor.healthUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mt-1.5 block truncate text-sm hover:underline"
+              >
+                {monitor.healthUrl}
+              </a>
+              {state?.health?.error && (
+                <p className="mt-1 break-words text-xs text-down">{state.health.error}</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-6">
+              {state?.health?.reported && (
+                <div>
+                  <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Reported
+                  </div>
+                  <div className="tabular mt-1 text-sm">{state.health.reported}</div>
+                </div>
+              )}
+              <div>
+                <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Response
+                </div>
+                <div className="tabular mt-1 text-sm">
+                  {formatResponseTime(state?.health?.responseTime)}
+                </div>
+              </div>
+              <Badge variant={state?.health?.status === 'DOWN' ? 'down' : 'up'}>
+                {state?.health?.status ?? 'PENDING'}
+              </Badge>
             </div>
           </Card>
         )}

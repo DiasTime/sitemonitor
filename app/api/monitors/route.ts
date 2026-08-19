@@ -16,15 +16,19 @@ export async function GET() {
 
 /** POST /api/monitors — add a site (writes data/monitors.json through the GitHub API). */
 export async function POST(request: Request) {
-  let body: { url?: unknown; name?: unknown }
+  let body: { url?: unknown; name?: unknown; healthUrl?: unknown }
   try {
-    body = (await request.json()) as { url?: unknown; name?: unknown }
+    body = (await request.json()) as { url?: unknown; name?: unknown; healthUrl?: unknown }
   } catch {
     return jsonResponse({ error: 'Invalid request body' }, { status: 400 })
   }
 
   try {
-    const result = await addMonitor({ url: body?.url, name: body?.name })
+    const result = await addMonitor({
+      url: body?.url,
+      name: body?.name,
+      healthUrl: body?.healthUrl,
+    })
     if (!result.ok) {
       return jsonResponse({ error: result.error }, { status: result.status })
     }

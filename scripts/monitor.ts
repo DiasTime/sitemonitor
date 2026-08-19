@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
 import type {
   CheckResult,
+  HealthResult,
   HistoryEntry,
   HistoryFile,
   Incident,
@@ -32,6 +33,7 @@ import type {
   Monitor,
   MonitorStatus,
   MonitorsFile,
+  ProbeResult,
   StatusFile,
 } from '../lib/types'
 import {
@@ -207,22 +209,52 @@ const safeLookup: NonNullable<https.RequestOptions['lookup']> = (hostname, optio
     .catch((error: NodeJS.ErrnoException) => done(error))
 }
 
+/** `status` values a health endpoint may report while still being healthy. */
+const HEALTHY_REPORTED = new Set(['ok', 'up', 'healthy', 'pass', 'passing', 'success', 'green', 'true'])
+
+/** Only this much of a health response is read before the socket is torn down. */
+const MAX_HEALTH_BODY_BYTES = numberFromEnv('MAX_HEALTH_BODY_BYTES', 64 * 1024)
+
+/**
+ * Pull the reported status out of a health-check body.
+ * Returns null when the body is not JSON or carries no recognisable status
+ * field — such an endpoint is then judged on its HTTP code alone.
+ */
+function readReportedStatus(body: string): string | null {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(body)
+  } catch {
+    return null
+  }
+  if (!parsed || typeof parsed !== 'object') return null
+
+  const record = parsed as Record<string, unknown>
+  const raw = record.status ?? record.state ?? record.health
+  if (typeof raw === 'string') return raw.trim()
+  if (typeof raw === 'boolean') return String(raw)
+  return null
+}
+
 /**
  * Probe one URL. Resolves with the observed status — never rejects.
- * Response time is measured up to the first response byte; the body is
- * discarded, we only care about reachability.
+ * Response time is measured up to the first response byte.
+ *
+ * With `readBody`, up to MAX_HEALTH_BODY_BYTES of the response is buffered so a
+ * health endpoint's JSON can be inspected; otherwise the body is discarded
+ * because only reachability matters.
  */
-function probe(url: string, timestamp: string, monitorId: string): Promise<CheckResult> {
+function probe(url: string, options: { readBody?: boolean } = {}): Promise<ProbeResult> {
   return new Promise((resolve) => {
     const parsed = new URL(url)
     const client = parsed.protocol === 'https:' ? https : http
     const startedAt = process.hrtime.bigint()
     let settled = false
 
-    const finish = (result: Omit<CheckResult, 'monitorId' | 'timestamp'>) => {
+    const finish = (result: ProbeResult) => {
       if (settled) return
       settled = true
-      resolve({ ...result, monitorId, timestamp })
+      resolve(result)
     }
 
     const elapsedMs = () => Number(process.hrtime.bigint() - startedAt) / 1e6
@@ -234,7 +266,7 @@ function probe(url: string, timestamp: string, monitorId: string): Promise<Check
         lookup: safeLookup,
         headers: {
           'User-Agent': USER_AGENT,
-          Accept: '*/*',
+          Accept: options.readBody ? 'application/json, */*' : '*/*',
           'Accept-Encoding': 'identity',
           Connection: 'close',
         },
@@ -245,18 +277,63 @@ function probe(url: string, timestamp: string, monitorId: string): Promise<Check
       (response) => {
         const responseTime = Math.round(elapsedMs())
         const statusCode = response.statusCode ?? 0
-        const healthy = statusCode >= 200 && statusCode <= 399
+        const codeHealthy = statusCode >= 200 && statusCode <= 399
 
-        response.resume() // drain and free the socket
-        response.destroy()
-        request.destroy()
+        if (!options.readBody) {
+          response.resume() // drain and free the socket
+          response.destroy()
+          request.destroy()
+          finish({
+            status: codeHealthy ? 'UP' : 'DOWN',
+            statusCode,
+            responseTime,
+            error: codeHealthy ? null : `HTTP ${statusCode}`,
+          })
+          return
+        }
 
-        finish({
-          status: healthy ? 'UP' : 'DOWN',
-          statusCode,
-          responseTime,
-          error: healthy ? null : `HTTP ${statusCode}`,
+        const chunks: Buffer[] = []
+        let received = 0
+
+        const settleWithBody = () => {
+          const reported = readReportedStatus(Buffer.concat(chunks).toString('utf8'))
+
+          if (!codeHealthy) {
+            finish({
+              status: 'DOWN',
+              statusCode,
+              responseTime,
+              error: `HTTP ${statusCode}`,
+              reported,
+            })
+            return
+          }
+          if (reported !== null && !HEALTHY_REPORTED.has(reported.toLowerCase())) {
+            finish({
+              status: 'DOWN',
+              statusCode,
+              responseTime,
+              error: `Reported status "${reported.slice(0, 60)}"`,
+              reported,
+            })
+            return
+          }
+          finish({ status: 'UP', statusCode, responseTime, error: null, reported })
+        }
+
+        response.on('data', (chunk: Buffer) => {
+          received += chunk.length
+          if (received <= MAX_HEALTH_BODY_BYTES) {
+            chunks.push(chunk)
+            return
+          }
+          // Oversized body: keep what we have and stop reading.
+          response.destroy()
+          request.destroy()
+          settleWithBody()
         })
+        response.on('end', settleWithBody)
+        response.on('error', () => settleWithBody())
       },
     )
 
@@ -286,30 +363,66 @@ function probe(url: string, timestamp: string, monitorId: string): Promise<Check
   })
 }
 
-/** Validate then probe. Invalid URLs are reported as DOWN rather than crashing the run. */
-async function checkMonitor(monitor: Monitor, timestamp: string): Promise<CheckResult> {
-  const validation = validateMonitorUrl(monitor.url)
+/** Validate a URL, then probe it. Invalid URLs are reported as DOWN, never thrown. */
+async function checkUrl(url: string, options: { readBody?: boolean } = {}): Promise<ProbeResult> {
+  const validation = validateMonitorUrl(url)
   if (!validation.ok) {
     return {
-      monitorId: monitor.id,
       status: 'DOWN',
       statusCode: null,
       responseTime: null,
       error: `Invalid URL: ${validation.error}`,
-      timestamp,
     }
   }
   if (isBlockedHostname(new URL(validation.url!).hostname)) {
     return {
-      monitorId: monitor.id,
       status: 'DOWN',
       statusCode: null,
       responseTime: null,
       error: 'Blocked: internal hostname',
-      timestamp,
     }
   }
-  return probe(validation.url!, timestamp, monitor.id)
+  return probe(validation.url!, options)
+}
+
+/**
+ * Check one monitor: its site URL, plus its health endpoint when configured.
+ * A monitor is UP only when both are — a health endpoint reporting trouble
+ * behind an HTTP 200 is exactly the case this is here to catch.
+ */
+async function checkMonitor(monitor: Monitor, timestamp: string): Promise<CheckResult> {
+  const site = await checkUrl(monitor.url)
+
+  let health: HealthResult | null = null
+  if (monitor.healthUrl) {
+    const result = await checkUrl(monitor.healthUrl, { readBody: true })
+    health = {
+      url: monitor.healthUrl,
+      status: result.status,
+      statusCode: result.statusCode,
+      responseTime: result.responseTime,
+      error: result.error,
+      reported: result.reported ?? null,
+    }
+  }
+
+  const healthy = site.status === 'UP' && (!health || health.status === 'UP')
+  const error =
+    site.status === 'DOWN'
+      ? site.error
+      : health && health.status === 'DOWN'
+        ? `Health check: ${health.error ?? 'failed'}`
+        : null
+
+  return {
+    monitorId: monitor.id,
+    status: healthy ? 'UP' : 'DOWN',
+    statusCode: site.statusCode,
+    responseTime: site.responseTime,
+    error,
+    timestamp,
+    health,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -350,6 +463,20 @@ async function sendTelegram(text: string): Promise<void> {
 
 function downMessage(monitor: Monitor, result: CheckResult): string {
   const lines = ['🔴 SITE DOWN', '', monitor.name, '', 'URL:', monitor.url, '']
+
+  // The site answered but its health endpoint did not: report that instead,
+  // otherwise the alert would read "HTTP 200" on a monitor that is down.
+  const health = result.health
+  if (result.statusCode !== null && health && health.status === 'DOWN') {
+    lines.push('Health endpoint:', health.url, '')
+    if (health.reported !== null) {
+      lines.push('Reported:', health.reported, '')
+    } else {
+      lines.push('Error:', health.error ?? 'failed', '')
+    }
+    lines.push('Time:', formatFullTimestamp(result.timestamp))
+    return lines.join('\n')
+  }
 
   if (result.statusCode !== null) {
     lines.push('Status:', `HTTP ${result.statusCode}`, '')
@@ -575,12 +702,14 @@ async function main() {
       uptime30d: null,
       avgResponse24h: null,
       incidents: 0,
+      health: result.health,
     }
 
     const symbol = result.status === 'UP' ? 'UP  ' : 'DOWN'
     const detail =
       result.status === 'UP'
-        ? `${result.statusCode} · ${formatResponseTime(result.responseTime)}`
+        ? `${result.statusCode} · ${formatResponseTime(result.responseTime)}` +
+          (result.health ? ` · health ${result.health.reported ?? result.health.status}` : '')
         : (result.error ?? 'failed')
     log(`  ${symbol} ${monitor.name} (${hostnameOf(monitor.url)}) — ${detail}`)
   }
