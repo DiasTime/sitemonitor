@@ -9,17 +9,28 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "DNS error: host not found",
-      "failedChecks": 1
+      "failedChecks": 2
     },
     {
-      "id": "baimura-vms-svoydom-kz-2026-08-19T11:54:08.483Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "startedAt": "2026-08-19T11:54:08.483Z",
+      "id": "olen-vms-svoydom-kz-2026-08-19T12:19:08.758Z",
+      "monitorId": "olen-vms-svoydom-kz",
+      "startedAt": "2026-08-19T12:19:08.758Z",
       "endedAt": null,
       "durationMs": null,
       "status": "ongoing",
-      "statusCode": 404,
-      "error": "HTTP 404",
+      "statusCode": null,
+      "error": "Connection timeout",
+      "failedChecks": 1
+    },
+    {
+      "id": "sharyn-vms-svoydom-kz-2026-08-19T12:19:08.758Z",
+      "monitorId": "sharyn-vms-svoydom-kz",
+      "startedAt": "2026-08-19T12:19:08.758Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Connection error",
       "failedChecks": 1
     }
   ]
