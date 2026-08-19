@@ -1,3 +1,26 @@
 {
-  "incidents": []
+  "incidents": [
+    {
+      "id": "admin-svoyapp-kz-2026-08-19T11:54:08.483Z",
+      "monitorId": "admin-svoyapp-kz",
+      "startedAt": "2026-08-19T11:54:08.483Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "DNS error: host not found",
+      "failedChecks": 1
+    },
+    {
+      "id": "baimura-vms-svoydom-kz-2026-08-19T11:54:08.483Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "startedAt": "2026-08-19T11:54:08.483Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 404,
+      "error": "HTTP 404",
+      "failedChecks": 1
+    }
+  ]
 }

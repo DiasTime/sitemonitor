@@ -7,6 +7,54 @@
       "statusCode": 200,
       "responseTime": 38,
       "error": null
+    },
+    {
+      "timestamp": "2026-08-19T11:54:08.483Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 974,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T11:54:08.483Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 941,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T11:54:08.483Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1406,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T11:54:08.483Z",
+      "monitorId": "admin-svoyapp-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "DNS error: host not found"
+    },
+    {
+      "timestamp": "2026-08-19T11:54:08.483Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1589,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T11:54:08.483Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "DOWN",
+      "statusCode": 404,
+      "responseTime": 1477,
+      "error": "HTTP 404"
     }
   ]
 }
