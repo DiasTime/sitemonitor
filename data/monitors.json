@@ -42,6 +42,14 @@
       "enabled": true,
       "type": "health",
       "createdAt": "2026-08-19T12:40:26.148Z"
+    },
+    {
+      "id": "baimura-vms-svoydom-kz",
+      "name": "BAIMURA VMS",
+      "url": "https://baimura.vms.svoydom.kz/api/health",
+      "enabled": true,
+      "type": "health",
+      "createdAt": "2026-08-19T12:41:22.405Z"
     }
   ]
 }
