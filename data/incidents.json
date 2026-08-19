@@ -9,29 +9,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "DNS error: host not found",
-      "failedChecks": 2
-    },
-    {
-      "id": "olen-vms-svoydom-kz-2026-08-19T12:19:08.758Z",
-      "monitorId": "olen-vms-svoydom-kz",
-      "startedAt": "2026-08-19T12:19:08.758Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
-      "statusCode": null,
-      "error": "Connection timeout",
-      "failedChecks": 1
-    },
-    {
-      "id": "sharyn-vms-svoydom-kz-2026-08-19T12:19:08.758Z",
-      "monitorId": "sharyn-vms-svoydom-kz",
-      "startedAt": "2026-08-19T12:19:08.758Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
-      "statusCode": null,
-      "error": "Connection error",
-      "failedChecks": 1
+      "failedChecks": 3
     }
   ]
 }
