@@ -1,12 +1,6 @@
 {
   "monitors": [
     {
-      "id": "example-com",
-      "name": "Example",
-      "url": "https://example.com",
-      "enabled": true
-    },
-    {
       "id": "sharyn-kz",
       "name": "Шарын",
       "url": "https://sharyn.kz/login",
