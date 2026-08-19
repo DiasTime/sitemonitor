@@ -52,6 +52,7 @@ delivers the alerts, and Vercel serves the dashboard.
 9. [Data files](#9-data-files)
 10. [Alerting rules](#10-alerting-rules)
     - [Health endpoints](#health-endpoints)
+    - [Why the schedule is hourly](#why-the-schedule-is-hourly)
 11. [Why it does not commit on every check](#11-why-it-does-not-commit-on-every-check)
 12. [Security](#12-security)
 13. [Configuration reference](#13-configuration-reference)
@@ -209,8 +210,10 @@ your own sites.
 
 **Monitoring — `scripts/monitor.ts`, run by `.github/workflows/monitor.yml`.**
 
-The workflow is scheduled with `cron: "*/3 * * * *"` and can also be started by
-hand with `workflow_dispatch`. Each run:
+The workflow is scheduled **hourly**, and each run then keeps checking every
+three minutes for 50 minutes before exiting — see
+[why the schedule is hourly](#why-the-schedule-is-hourly). It can also be
+started by hand with `workflow_dispatch`. Each pass:
 
 1. checks out the repository and installs dependencies;
 2. reads `data/monitors.json`;
@@ -222,7 +225,9 @@ hand with `workflow_dispatch`. Each run:
 5. compares against the previous status and opens or closes an incident on a
    transition;
 6. sends a Telegram message on that transition — and only then;
-7. writes the JSON files back and tells the workflow whether to commit.
+7. writes the JSON files back, and commits and pushes them itself when the state
+   changed, so an outage found in minute 2 reaches the dashboard immediately
+   rather than when the run ends.
 
 A `concurrency` group named `website-monitor` with `cancel-in-progress: false`
 guarantees that two runs never write the JSON files at the same time.
@@ -451,6 +456,53 @@ Details worth knowing:
 
 ---
 
+## Why the schedule is hourly
+
+`cron: "*/3 * * * *"` does not work. GitHub's scheduler is best-effort and drops
+the ticks it cannot serve — on this repository a three-minute schedule was
+measured firing **4 times in 78 minutes**, at gaps of 31, 21 and 25 minutes. The
+runs all succeeded; GitHub simply never started the others.
+
+So the schedule no longer asks for the interval. It fires **hourly** — a cadence
+GitHub honours reliably — and the run itself does the timing: one job stays
+alive for `LOOP_MINUTES` (default 50) and checks every `LOOP_INTERVAL_SECONDS`
+(default 180). That gives a real three-minute interval, driven by a clock inside
+the run instead of GitHub's scheduler.
+
+A looping run commits and pushes on its own as soon as a status changes, so
+alerts and the dashboard do not wait for the window to end. Set `LOOP_MINUTES`
+to `0` for the old behaviour — one check, then exit — which is what
+`npm run monitor` does locally.
+
+### Actions minutes
+
+This trades scheduler reliability for runner time, and runner time is metered on
+private repositories. **Check your usage at
+<https://github.com/settings/billing> before leaving this running.**
+
+- Public repositories: Actions minutes are free. Nothing to think about.
+- Private repositories: GitHub Free includes 2,000 minutes/month. A 50-minute
+  window every hour is roughly 36,000 minutes/month, far beyond that.
+
+If you are on a private repository and want to stay inside the free allowance,
+set the repository variable `LOOP_MINUTES` lower (Settings → Secrets and
+variables → Actions → Variables). Some reference points, at ~1 billed minute per
+minute of runner time:
+
+| `LOOP_MINUTES` | Coverage | Approx. minutes/month |
+| --- | --- | --- |
+| `50` | continuous | ~36,000 |
+| `10` | 10 min of every hour | ~7,300 |
+| `2` | 2 min of every hour | ~1,500 |
+| `0` | one check per hour | ~730 |
+
+Note the trade-off is real either way: a low `LOOP_MINUTES` gives accurate
+three-minute checking inside its window and no checking at all outside it, while
+`0` gives one check an hour, evenly spread. Pick whichever failure you would
+rather have.
+
+---
+
 ## 11. Why it does not commit on every check
 
 A commit every three minutes would be 480 commits a day and would make the git
@@ -538,16 +590,21 @@ Actions → *Variables*) — all optional:
 | `CHECK_TIMEOUT_MS` | `10000` | Per-request timeout |
 | `HISTORY_RETENTION_DAYS` | `30` | How long history is kept |
 | `MAX_HEALTH_BODY_BYTES` | `65536` | How much of a health response is read |
+| `LOOP_MINUTES` | `50` | How long one run keeps checking; `0` = one check and exit |
+| `LOOP_INTERVAL_SECONDS` | `180` | Interval between checks inside a run |
 
 ---
 
 ## 14. Limits and honest caveats
 
-- **The schedule is approximate.** GitHub's scheduled workflows are best-effort.
-  Under load a run can be delayed by several minutes, and during incidents on
-  GitHub's side it may be skipped entirely. The UI says *"checks approximately
-  every 3 minutes"* for a reason — do not treat this as a second-accurate SLA
-  monitor.
+- **The interval is driven by the run, not the schedule.** GitHub will not fire
+  a three-minute cron, so the workflow starts hourly and does its own timing
+  (see [why the schedule is hourly](#why-the-schedule-is-hourly)). Inside a run
+  the three-minute interval is accurate; between runs there is a gap whose size
+  depends on `LOOP_MINUTES`. Still not a second-accurate SLA monitor.
+- **Runner time is metered on private repositories.** A continuous 50-minute
+  window every hour will exceed the free 2,000 minutes/month several times over.
+  See [Actions minutes](#actions-minutes).
 - **Up to 20–30 websites.** The dashboard enforces a hard limit of 30 monitors.
   Beyond that, `history.json` and the per-run commit start to get uncomfortable.
 - **Dashboard freshness follows the commit interval,** not the check interval —
@@ -622,7 +679,13 @@ its job; this tool only monitors publicly reachable sites.
 
 **Scheduled runs stopped.**
 Either the repository has had no activity for 60 days (push any commit to
-re-enable), or Actions is disabled for the repository.
+re-enable), Actions is disabled for the repository, or you have run out of
+Actions minutes — check <https://github.com/settings/billing>.
+
+**Runs are far apart / checks are less frequent than expected.**
+Look at whether `LOOP_MINUTES` is set low, and remember the gap between hourly
+runs is not covered when it is. See
+[why the schedule is hourly](#why-the-schedule-is-hourly).
 
 ---
 

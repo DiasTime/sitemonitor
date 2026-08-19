@@ -15,6 +15,7 @@
  */
 
 import { promises as dns } from 'node:dns'
+import { execFile } from 'node:child_process'
 import { promises as fs } from 'node:fs'
 import http from 'node:http'
 import https from 'node:https'
@@ -76,6 +77,19 @@ const HISTORY_MAX_ENTRIES = numberFromEnv('HISTORY_MAX_ENTRIES', 200_000)
 const COMMIT_INTERVAL_MINUTES = numberFromEnv('COMMIT_INTERVAL_MINUTES', 30)
 /** Safety valve for the between-commits buffer. */
 const BUFFER_MAX_ENTRIES = numberFromEnv('BUFFER_MAX_ENTRIES', 5_000)
+
+/**
+ * How long one workflow run keeps checking, in minutes.
+ *
+ * GitHub's scheduler does not honour a three-minute cron — in practice it fires every
+ * 20-60 minutes and silently drops the ticks in between. So instead of asking
+ * for a run every three minutes, one run stays alive and does the checking
+ * itself, on a real three-minute interval. Set to 0 for a single check and exit
+ * (the default for `npm run monitor` locally).
+ */
+const LOOP_MINUTES = Number(process.env.LOOP_MINUTES ?? 0)
+/** Interval between checks inside a run. */
+const LOOP_INTERVAL_SECONDS = numberFromEnv('LOOP_INTERVAL_SECONDS', 180)
 
 const USER_AGENT =
   process.env.CHECK_USER_AGENT || 'SiteMonitor/1.0 (+https://github.com/topics/uptime-monitoring)'
@@ -524,10 +538,65 @@ function trimHistory(entries: HistoryEntry[], now: number): HistoryEntry[] {
 }
 
 // ---------------------------------------------------------------------------
+// Committing from inside a long run
+// ---------------------------------------------------------------------------
+
+/**
+ * A looping run cannot wait for the workflow's commit step — an outage detected
+ * in minute 2 must reach the dashboard long before minute 50. So the loop
+ * commits and pushes for itself.
+ */
+async function git(args: string[]): Promise<{ ok: boolean; output: string }> {
+  return new Promise((resolve) => {
+    execFile('git', args, { cwd: ROOT }, (error, stdout, stderr) => {
+      resolve({ ok: !error, output: `${stdout}${stderr}`.trim() })
+    })
+  })
+}
+
+let gitConfigured = false
+
+/** Commit and push data/, rebasing over anything the dashboard wrote meanwhile. */
+async function commitAndPush(message: string): Promise<boolean> {
+  if (!gitConfigured) {
+    await git(['config', 'user.name', 'github-actions[bot]'])
+    await git([
+      'config',
+      'user.email',
+      '41898282+github-actions[bot]@users.noreply.github.com',
+    ])
+    gitConfigured = true
+  }
+
+  await git(['add', 'data'])
+  const staged = await git(['diff', '--staged', '--quiet'])
+  if (staged.ok) return false // nothing actually changed on disk
+
+  const committed = await git(['commit', '-m', message])
+  if (!committed.ok) {
+    log(`  git commit failed: ${committed.output}`)
+    return false
+  }
+
+  const branch = process.env.GITHUB_REF_NAME || 'main'
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    const pushed = await git(['push', 'origin', `HEAD:${branch}`])
+    if (pushed.ok) return true
+    log(`  push rejected (attempt ${attempt}), rebasing onto origin/${branch}...`)
+    await new Promise((resolve) => setTimeout(resolve, attempt * 2000))
+    await git(['pull', '--rebase', '--autostash', 'origin', branch])
+  }
+
+  log('  could not push monitoring results after 5 attempts')
+  return false
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
-async function main() {
+/** One pass over every monitor. Returns whether anything was committed. */
+async function runOnce(): Promise<void> {
   const startedAt = Date.now()
   const timestamp = new Date(startedAt).toISOString()
 
@@ -763,9 +832,18 @@ async function main() {
             ? 'monitor removed'
             : 'scheduled flush'
 
-    log(`Committing results (${reason}).`)
     await setOutput('changed', 'true')
     await setOutput('reason', reason)
+
+    if (LOOP_MINUTES > 0) {
+      const down = Object.values(nextStatus).filter((entry) => entry.status === 'DOWN').length
+      const pushed = await commitAndPush(
+        `chore(monitor): ${reason} (${Object.keys(nextStatus).length} monitors, ${down} down)`,
+      )
+      log(pushed ? `Committed and pushed (${reason}).` : `Nothing to push (${reason}).`)
+    } else {
+      log(`Committing results (${reason}).`)
+    }
   } else {
     // Nothing worth a commit: keep the samples in the run-to-run cache instead
     // so the git log does not become a log of every single check.
@@ -784,6 +862,47 @@ async function main() {
     `${results.length} checked, ${results.length - down} up, ${down} down`,
   )
   log(`Done in ${Date.now() - startedAt} ms — ${results.length - down} up, ${down} down.`)
+}
+
+/**
+ * Single check, or a run that keeps checking for LOOP_MINUTES on a real
+ * LOOP_INTERVAL_SECONDS cadence. One failing pass never ends the loop — a
+ * transient error must not take monitoring down until the next schedule.
+ */
+async function main() {
+  if (LOOP_MINUTES <= 0) {
+    await runOnce()
+    return
+  }
+
+  const endsAt = Date.now() + LOOP_MINUTES * 60_000
+  const intervalMs = LOOP_INTERVAL_SECONDS * 1000
+  let pass = 0
+
+  log(
+    `Loop mode: checking every ${LOOP_INTERVAL_SECONDS}s for ${LOOP_MINUTES} min ` +
+      `(~${Math.max(1, Math.floor((LOOP_MINUTES * 60) / LOOP_INTERVAL_SECONDS))} passes).`,
+  )
+
+  for (;;) {
+    const passStartedAt = Date.now()
+    pass += 1
+    log(`\n--- pass ${pass} ---`)
+
+    try {
+      await runOnce()
+    } catch (error) {
+      process.stderr.write(`Pass ${pass} failed: ${(error as Error).message}\n`)
+    }
+
+    const nextAt = passStartedAt + intervalMs
+    if (nextAt >= endsAt) {
+      log(`\nLoop window finished after ${pass} pass(es).`)
+      return
+    }
+    const wait = Math.max(0, nextAt - Date.now())
+    if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
+  }
 }
 
 main().catch((error) => {

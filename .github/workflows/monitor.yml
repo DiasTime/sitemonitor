@@ -2,10 +2,20 @@ name: Website Monitor
 
 on:
   schedule:
-    # Approximately every 3 minutes. GitHub's scheduler is best-effort and runs
-    # under load can be delayed by several minutes — this is not a real-time cron.
-    - cron: "*/3 * * * *"
+    # Hourly, not every three minutes.
+    #
+    # GitHub's scheduler does not honour short crons: a "*/3" schedule was
+    # observed firing every 20-60 minutes, silently dropping the ticks between.
+    # Hourly schedules are honoured reliably, so the run itself does the
+    # three-minute checking (see LOOP_MINUTES below) instead of asking the
+    # scheduler for it.
+    - cron: "0 * * * *"
   workflow_dispatch:
+    inputs:
+      loop_minutes:
+        description: "How long this run keeps checking (0 = one check and exit)"
+        required: false
+        default: "50"
 
 # Only one monitoring run at a time, and never cancel a run that is mid-commit:
 # two runs writing data/*.json concurrently is the one thing that can corrupt state.
@@ -19,7 +29,8 @@ permissions:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Must exceed LOOP_MINUTES with room for checkout, install and the last pass.
+    timeout-minutes: 70
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +44,7 @@ jobs:
         run: npm ci
 
       # Carries the between-commit sample buffer from one run to the next, so
-      # full 3-minute resolution is kept without committing on every check.
+      # full resolution is kept without committing on every check.
       - name: Restore sample buffer
         uses: actions/cache/restore@v4
         with:
@@ -48,6 +59,10 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # How long this run keeps checking, and how often. A looping run
+          # commits and pushes for itself as soon as a status changes.
+          LOOP_MINUTES: ${{ inputs.loop_minutes || vars.LOOP_MINUTES || '50' }}
+          LOOP_INTERVAL_SECONDS: ${{ vars.LOOP_INTERVAL_SECONDS || '180' }}
           # Optional tuning — safe to leave unset.
           COMMIT_INTERVAL_MINUTES: ${{ vars.COMMIT_INTERVAL_MINUTES }}
           CHECK_TIMEOUT_MS: ${{ vars.CHECK_TIMEOUT_MS }}
@@ -60,21 +75,22 @@ jobs:
           path: .monitor-cache
           key: monitor-buffer-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Commit results
-        if: steps.check.outputs.changed == 'true'
+      # A looping run pushes as it goes; this catches anything left on disk when
+      # the window ends, and is the only commit path when LOOP_MINUTES is 0.
+      - name: Commit any remaining results
+        if: always()
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
           if git diff --staged --quiet; then
-            echo "Nothing staged — skipping commit."
+            echo "Nothing left to commit."
             exit 0
           fi
-          git commit -m "chore(monitor): ${{ steps.check.outputs.reason }} (${{ steps.check.outputs.summary }})"
-          # Another run (or a dashboard write) may have landed in between.
+          git commit -m "chore(monitor): ${{ steps.check.outputs.reason || 'final state' }}"
           for attempt in 1 2 3 4 5; do
-            if git push; then
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
               echo "Pushed on attempt $attempt."
               exit 0
             fi
@@ -92,5 +108,5 @@ jobs:
             echo "### Website Monitor"
             echo ""
             echo "- Result: ${{ steps.check.outputs.summary || 'run did not complete' }}"
-            echo "- Committed: ${{ steps.check.outputs.changed || 'false' }} (${{ steps.check.outputs.reason || 'n/a' }})"
+            echo "- Last state: ${{ steps.check.outputs.reason || 'n/a' }}"
           } >> "$GITHUB_STEP_SUMMARY"
