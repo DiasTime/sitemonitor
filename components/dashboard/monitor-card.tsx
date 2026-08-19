@@ -16,16 +16,6 @@ interface MonitorCardProps {
   onChanged: () => void
 }
 
-/** `https://example.com/api/health` -> `/api/health` */
-function healthLabel(url: string): string {
-  try {
-    const parsed = new URL(url)
-    return parsed.pathname + parsed.search || url
-  } catch {
-    return url
-  }
-}
-
 export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const [pending, setPending] = React.useState(false)
@@ -82,6 +72,12 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
           <div className="flex items-center gap-2">
             <StatusDot status={status} />
             <span className="truncate text-sm font-medium">{monitor.name}</span>
+            {monitor.type === 'health' && (
+              <Badge variant="outline" className="shrink-0 gap-1">
+                <Activity className="h-3 w-3" />
+                Health
+              </Badge>
+            )}
             {!monitor.enabled && (
               <Badge variant="outline" className="shrink-0">
                 Paused
@@ -139,21 +135,12 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
         <span className="tabular text-muted-foreground">
           {formatUptime(state?.uptime30d)} uptime
         </span>
+        {state?.reported && (
+          <Badge variant={state.status === 'UP' ? 'up' : 'down'} className="shrink-0">
+            {state.reported}
+          </Badge>
+        )}
       </div>
-
-      {monitor.healthUrl && (
-        <div className="mt-2 flex items-center gap-1.5 px-5 text-xs text-muted-foreground">
-          <Activity className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate" title={monitor.healthUrl}>
-            {healthLabel(monitor.healthUrl)}
-          </span>
-          {state?.health && (
-            <Badge variant={state.health.status === 'UP' ? 'up' : 'down'} className="shrink-0">
-              {state.health.reported ?? state.health.status}
-            </Badge>
-          )}
-        </div>
-      )}
 
       {state?.status === 'DOWN' && state.error && (
         <p className="mx-5 mt-3 flex items-start gap-1.5 rounded-md bg-down/10 px-2.5 py-1.5 text-xs text-down">

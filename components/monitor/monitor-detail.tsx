@@ -131,8 +131,21 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
               >
                 {headline}
               </span>
+              {state?.reported && (
+                <Badge variant={state.status === 'UP' ? 'up' : 'down'}>
+                  reported: {state.reported}
+                </Badge>
+              )}
             </div>
-            <h1 className="mt-3 truncate text-2xl font-semibold tracking-tight">{monitor.name}</h1>
+            <div className="mt-3 flex items-center gap-2">
+              <h1 className="truncate text-2xl font-semibold tracking-tight">{monitor.name}</h1>
+              {monitor.type === 'health' && (
+                <Badge variant="outline" className="shrink-0 gap-1">
+                  <Activity className="h-3 w-3" />
+                  Health endpoint
+                </Badge>
+              )}
+            </div>
             <a
               href={monitor.url}
               target="_blank"
@@ -161,50 +174,6 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
                   Down since {new Date(openIncident.startedAt).toLocaleString()}.
                 </p>
               )}
-            </div>
-          </Card>
-        )}
-
-        {monitor.healthUrl && (
-          <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                <Activity className="h-3.5 w-3.5" />
-                Health endpoint
-              </div>
-              <a
-                href={monitor.healthUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="mt-1.5 block truncate text-sm hover:underline"
-              >
-                {monitor.healthUrl}
-              </a>
-              {state?.health?.error && (
-                <p className="mt-1 break-words text-xs text-down">{state.health.error}</p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-6">
-              {state?.health?.reported && (
-                <div>
-                  <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    Reported
-                  </div>
-                  <div className="tabular mt-1 text-sm">{state.health.reported}</div>
-                </div>
-              )}
-              <div>
-                <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Response
-                </div>
-                <div className="tabular mt-1 text-sm">
-                  {formatResponseTime(state?.health?.responseTime)}
-                </div>
-              </div>
-              <Badge variant={state?.health?.status === 'DOWN' ? 'down' : 'up'}>
-                {state?.health?.status ?? 'PENDING'}
-              </Badge>
             </div>
           </Card>
         )}

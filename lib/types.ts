@@ -5,30 +5,25 @@ export type Status = 'UP' | 'DOWN'
 /** Transient UI-only status, never persisted. */
 export type UiStatus = Status | 'CHECKING'
 
+/**
+ * What kind of endpoint a monitor points at.
+ *
+ * - `website` — judged by its HTTP status code alone.
+ * - `health`  — a health-check endpoint: the JSON body is read as well, and its
+ *               `status` field must report a healthy value.
+ *
+ * Absent means `website`, so monitors created before this existed keep working.
+ */
+export type MonitorType = 'website' | 'health'
+
 export interface Monitor {
   id: string
   name: string
   url: string
   enabled: boolean
-  /**
-   * Optional health-check endpoint, e.g. https://example.com/api/health.
-   * When set it is probed alongside the site URL and its JSON body is inspected:
-   * a `status` field must report a healthy value for the monitor to count as UP.
-   */
-  healthUrl?: string
+  type?: MonitorType
   /** ISO timestamp, set when the monitor was added through the dashboard. */
   createdAt?: string
-}
-
-/** Result of probing a monitor's health endpoint. */
-export interface HealthResult {
-  url: string
-  status: Status
-  statusCode: number | null
-  responseTime: number | null
-  error: string | null
-  /** Value of the `status` field in the JSON body, when the response had one. */
-  reported: string | null
 }
 
 export interface MonitorsFile {
@@ -56,8 +51,11 @@ export interface MonitorStatus {
   uptime30d: number | null
   avgResponse24h: number | null
   incidents: number
-  /** Last health-endpoint result, null when the monitor has no health endpoint. */
-  health: HealthResult | null
+  /**
+   * Value of the `status` field the endpoint last reported, for health monitors
+   * whose body carried one. Null everywhere else.
+   */
+  reported: string | null
 }
 
 export interface StatusFile {
@@ -111,7 +109,7 @@ export interface ProbeResult {
   reported?: string | null
 }
 
-/** Combined outcome for one monitor in one run: the site plus its health endpoint. */
+/** Outcome for one monitor in one run. */
 export interface CheckResult {
   monitorId: string
   status: Status
@@ -119,7 +117,7 @@ export interface CheckResult {
   responseTime: number | null
   error: string | null
   timestamp: string
-  health: HealthResult | null
+  reported: string | null
 }
 
 export type HistoryRange = '24h' | '7d' | '30d'

@@ -68,11 +68,12 @@ delivers the alerts, and Vercel serves the dashboard.
 - **Monitor page** — `/monitor/[id]` with uptime, average response, total
   checks, incidents, a 24H/7D/30D response-time chart, the recent check history
   and the incident log.
-- **Add / pause / delete websites** from the UI. Changes are written straight
+- **Add / pause / delete monitors** from the UI. Changes are written straight
   into `data/monitors.json` through the GitHub API.
-- **Optional health endpoint per site** — "Add health endpoint" in the add
-  dialog. It is probed on every run and its JSON body is inspected, so a site
-  answering HTTP 200 while its health check reports trouble counts as down.
+- **Two kinds of monitor** — a *website*, judged by its HTTP status code, or a
+  *health endpoint*, whose JSON body is inspected too, so an endpoint answering
+  HTTP 200 while reporting trouble counts as down. Pick the kind in the add
+  dialog; each is an independent monitor.
 - **Telegram alerts** on the transitions only: one message when a site goes
   down, one when it comes back.
 - **No database, no VPS, no Docker, no cron service, no worker.**
@@ -266,14 +267,21 @@ by hand and push.
       "id": "example-com",
       "name": "Example",
       "url": "https://example.com",
-      "healthUrl": "https://example.com/api/health",
+      "enabled": true
+    },
+    {
+      "id": "example-api-health",
+      "name": "Example API health",
+      "url": "https://example.com/api/health",
+      "type": "health",
       "enabled": true
     }
   ]
 }
 ```
 
-`healthUrl` is optional — see [Health endpoints](#health-endpoints) below.
+`type` is optional and defaults to `"website"` — see
+[Health endpoints](#health-endpoints) below.
 
 **`data/status.json`** — current state per monitor: status, HTTP code, response
 time, error, last check, the time it entered that state, cumulative check
@@ -376,15 +384,19 @@ Times in Telegram messages are UTC.
 
 ## Health endpoints
 
-Each monitor can carry an optional `healthUrl` alongside its site URL. Add one
-with **"Add health endpoint"** in the add-website dialog, or by putting
-`healthUrl` into `data/monitors.json` by hand.
+A monitor is one URL, and its `type` decides how the answer is judged:
 
-Both URLs are probed on every run, and **the monitor is UP only when both are.**
-The site URL proves the site is reachable; the health endpoint proves it is
-actually working.
+| `type` | Judged by |
+| --- | --- |
+| `website` (default) | HTTP status code only — 200–399 is up |
+| `health` | HTTP status code **and** the JSON body |
 
-The health response body is parsed as JSON and its `status` field is read
+A health endpoint is a monitor in its own right, not an attachment to a website
+one. Add it with the **Health endpoint** tab in the add dialog, or by setting
+`"type": "health"` in `data/monitors.json`. Monitor a site, a health endpoint, or
+both as separate entries — that is your choice, nothing is coupled.
+
+For a `health` monitor the body is parsed as JSON and its `status` field is read
 (`state` and `health` are accepted as aliases). These values count as healthy:
 
 ```text
@@ -397,29 +409,29 @@ So an endpoint answering
 { "status": "ok", "timestamp": "2026-08-19T12:08:16.452Z" }
 ```
 
-keeps the monitor UP, while
+is up, while
 
 ```json
 { "status": "degraded", "timestamp": "2026-08-19T12:08:16.452Z" }
 ```
 
-marks it DOWN **even though the HTTP status was 200** — which is the whole point
-of pointing at a health endpoint. The Telegram alert then names the endpoint and
-the reported value, instead of misleadingly saying "HTTP 200":
+is **down even though the HTTP status was 200** — which is the whole point of
+marking it as a health endpoint. The alert then says what was reported, instead
+of a bare "HTTP 200" that would read as if nothing were wrong:
 
 ```text
-🔴 SITE DOWN
+🔴 HEALTH CHECK FAILED
 
-Example
+Example API health
 
 URL:
-https://example.com
-
-Health endpoint:
 https://example.com/api/health
 
 Reported:
 degraded
+
+Status:
+HTTP 200
 
 Time:
 19 Aug 2026, 12:08
@@ -429,15 +441,13 @@ Details worth knowing:
 
 - A response that is **not JSON**, or JSON **without** a recognised status field,
   is judged on its HTTP code alone — a plain `OK` body will not fail a monitor.
-- A non-2xx/3xx health response is DOWN regardless of the body.
+- A non-2xx/3xx response is down regardless of the body.
 - Only the first 64 KB of the body is read (`MAX_HEALTH_BODY_BYTES`).
-- The health URL goes through exactly the same validation and SSRF protection as
-  the site URL.
-- Health results are **not** stored in `history.json`; the chart and history
-  table stay about the site itself. The latest health result lives in
-  `status.json` and is shown on the card and the monitor page.
-- A health endpoint can be set when adding a monitor. To add or change one
-  afterwards, edit `data/monitors.json`.
+- Health URLs go through exactly the same validation and SSRF protection as any
+  other monitor URL.
+- The last reported value is stored in `status.json` and shown on the card and
+  the monitor page. `history.json` keeps only up/down, as for any monitor.
+- Monitors written before this existed have no `type` and stay `website`.
 
 ---
 

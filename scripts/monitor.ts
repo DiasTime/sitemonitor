@@ -25,7 +25,6 @@ import { fileURLToPath } from 'node:url'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
 import type {
   CheckResult,
-  HealthResult,
   HistoryEntry,
   HistoryFile,
   Incident,
@@ -386,42 +385,21 @@ async function checkUrl(url: string, options: { readBody?: boolean } = {}): Prom
 }
 
 /**
- * Check one monitor: its site URL, plus its health endpoint when configured.
- * A monitor is UP only when both are — a health endpoint reporting trouble
- * behind an HTTP 200 is exactly the case this is here to catch.
+ * Check one monitor. A `health` monitor has its JSON body inspected as well as
+ * its HTTP code, so an endpoint answering 200 while reporting trouble is DOWN.
  */
 async function checkMonitor(monitor: Monitor, timestamp: string): Promise<CheckResult> {
-  const site = await checkUrl(monitor.url)
-
-  let health: HealthResult | null = null
-  if (monitor.healthUrl) {
-    const result = await checkUrl(monitor.healthUrl, { readBody: true })
-    health = {
-      url: monitor.healthUrl,
-      status: result.status,
-      statusCode: result.statusCode,
-      responseTime: result.responseTime,
-      error: result.error,
-      reported: result.reported ?? null,
-    }
-  }
-
-  const healthy = site.status === 'UP' && (!health || health.status === 'UP')
-  const error =
-    site.status === 'DOWN'
-      ? site.error
-      : health && health.status === 'DOWN'
-        ? `Health check: ${health.error ?? 'failed'}`
-        : null
+  const isHealth = monitor.type === 'health'
+  const result = await checkUrl(monitor.url, { readBody: isHealth })
 
   return {
     monitorId: monitor.id,
-    status: healthy ? 'UP' : 'DOWN',
-    statusCode: site.statusCode,
-    responseTime: site.responseTime,
-    error,
+    status: result.status,
+    statusCode: result.statusCode,
+    responseTime: result.responseTime,
+    error: result.error,
     timestamp,
-    health,
+    reported: result.reported ?? null,
   }
 }
 
@@ -462,18 +440,14 @@ async function sendTelegram(text: string): Promise<void> {
 }
 
 function downMessage(monitor: Monitor, result: CheckResult): string {
-  const lines = ['🔴 SITE DOWN', '', monitor.name, '', 'URL:', monitor.url, '']
+  const heading = monitor.type === 'health' ? '🔴 HEALTH CHECK FAILED' : '🔴 SITE DOWN'
+  const lines = [heading, '', monitor.name, '', 'URL:', monitor.url, '']
 
-  // The site answered but its health endpoint did not: report that instead,
-  // otherwise the alert would read "HTTP 200" on a monitor that is down.
-  const health = result.health
-  if (result.statusCode !== null && health && health.status === 'DOWN') {
-    lines.push('Health endpoint:', health.url, '')
-    if (health.reported !== null) {
-      lines.push('Reported:', health.reported, '')
-    } else {
-      lines.push('Error:', health.error ?? 'failed', '')
-    }
+  // A health endpoint that answered 200 but reported trouble: say what it
+  // reported, since "HTTP 200" would read as if nothing were wrong.
+  if (result.statusCode !== null && result.reported !== null) {
+    lines.push('Reported:', result.reported, '')
+    lines.push('Status:', `HTTP ${result.statusCode}`, '')
     lines.push('Time:', formatFullTimestamp(result.timestamp))
     return lines.join('\n')
   }
@@ -493,7 +467,7 @@ function downMessage(monitor: Monitor, result: CheckResult): string {
 
 function recoveryMessage(monitor: Monitor, result: CheckResult, downtimeMs: number): string {
   const lines = [
-    '🟢 SITE RECOVERED',
+    monitor.type === 'health' ? '🟢 HEALTH CHECK RECOVERED' : '🟢 SITE RECOVERED',
     '',
     monitor.name,
     '',
@@ -702,14 +676,14 @@ async function main() {
       uptime30d: null,
       avgResponse24h: null,
       incidents: 0,
-      health: result.health,
+      reported: result.reported,
     }
 
     const symbol = result.status === 'UP' ? 'UP  ' : 'DOWN'
     const detail =
       result.status === 'UP'
         ? `${result.statusCode} · ${formatResponseTime(result.responseTime)}` +
-          (result.health ? ` · health ${result.health.reported ?? result.health.status}` : '')
+          (result.reported ? ` · reported ${result.reported}` : '')
         : (result.error ?? 'failed')
     log(`  ${symbol} ${monitor.name} (${hostnameOf(monitor.url)}) — ${detail}`)
   }

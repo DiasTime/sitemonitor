@@ -16,9 +16,9 @@ export async function GET() {
 
 /** POST /api/monitors — add a site (writes data/monitors.json through the GitHub API). */
 export async function POST(request: Request) {
-  let body: { url?: unknown; name?: unknown; healthUrl?: unknown }
+  let body: { url?: unknown; name?: unknown; type?: unknown }
   try {
-    body = (await request.json()) as { url?: unknown; name?: unknown; healthUrl?: unknown }
+    body = (await request.json()) as { url?: unknown; name?: unknown; type?: unknown }
   } catch {
     return jsonResponse({ error: 'Invalid request body' }, { status: 400 })
   }
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const result = await addMonitor({
       url: body?.url,
       name: body?.name,
-      healthUrl: body?.healthUrl,
+      type: body?.type,
     })
     if (!result.ok) {
       return jsonResponse({ error: result.error }, { status: result.status })

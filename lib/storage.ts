@@ -10,6 +10,7 @@ import type {
   IncidentsFile,
   Monitor,
   MonitorsFile,
+  MonitorType,
   StatusFile,
 } from '@/lib/types'
 
@@ -93,8 +94,8 @@ function uniqueId(base: string, taken: Set<string>): string {
 export interface AddMonitorInput {
   url: unknown
   name?: unknown
-  /** Optional health-check endpoint; validated with the same SSRF rules as `url`. */
-  healthUrl?: unknown
+  /** 'website' (default) or 'health'. */
+  type?: unknown
 }
 
 export type MutationResult =
@@ -113,14 +114,10 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
   if (!nameCheck.ok) return { ok: false, error: nameCheck.error!, status: 400 }
   const name = nameCheck.name!
 
-  let healthUrl: string | undefined
-  if (typeof input.healthUrl === 'string' && input.healthUrl.trim()) {
-    const healthCheck = validateMonitorUrl(input.healthUrl)
-    if (!healthCheck.ok) {
-      return { ok: false, error: `Health endpoint: ${healthCheck.error!}`, status: 400 }
-    }
-    healthUrl = healthCheck.url!
+  if (input.type !== undefined && input.type !== 'website' && input.type !== 'health') {
+    return { ok: false, error: 'type must be "website" or "health"', status: 400 }
   }
+  const type: MonitorType = input.type === 'health' ? 'health' : 'website'
 
   let created: Monitor | null = null
   let failure: { error: string; status: number } | null = null
@@ -148,13 +145,13 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
         name,
         url,
         enabled: true,
-        ...(healthUrl ? { healthUrl } : {}),
+        ...(type === 'health' ? { type } : {}),
         createdAt: new Date().toISOString(),
       }
       created = monitor
       return { monitors: [...monitors, monitor] }
     },
-    `chore(monitors): add ${name}`,
+    `chore(monitors): add ${type === 'health' ? 'health check' : 'website'} ${name}`,
   )
 
   if (failure) return { ok: false, ...(failure as { error: string; status: number }) }
