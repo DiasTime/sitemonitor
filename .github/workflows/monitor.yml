@@ -1,0 +1,96 @@
+name: Website Monitor
+
+on:
+  schedule:
+    # Approximately every 3 minutes. GitHub's scheduler is best-effort and runs
+    # under load can be delayed by several minutes — this is not a real-time cron.
+    - cron: "*/3 * * * *"
+  workflow_dispatch:
+
+# Only one monitoring run at a time, and never cancel a run that is mid-commit:
+# two runs writing data/*.json concurrently is the one thing that can corrupt state.
+concurrency:
+  group: website-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Carries the between-commit sample buffer from one run to the next, so
+      # full 3-minute resolution is kept without committing on every check.
+      - name: Restore sample buffer
+        uses: actions/cache/restore@v4
+        with:
+          path: .monitor-cache
+          key: monitor-buffer-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            monitor-buffer-
+
+      - name: Check websites
+        id: check
+        run: npx tsx scripts/monitor.ts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Optional tuning — safe to leave unset.
+          COMMIT_INTERVAL_MINUTES: ${{ vars.COMMIT_INTERVAL_MINUTES }}
+          CHECK_TIMEOUT_MS: ${{ vars.CHECK_TIMEOUT_MS }}
+          HISTORY_RETENTION_DAYS: ${{ vars.HISTORY_RETENTION_DAYS }}
+
+      - name: Save sample buffer
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .monitor-cache
+          key: monitor-buffer-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Commit results
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "Nothing staged — skipping commit."
+            exit 0
+          fi
+          git commit -m "chore(monitor): ${{ steps.check.outputs.reason }} (${{ steps.check.outputs.summary }})"
+          # Another run (or a dashboard write) may have landed in between.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push failed, rebasing and retrying (attempt $attempt)..."
+            sleep $((attempt * 3))
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          done
+          echo "Could not push monitoring results after 5 attempts." >&2
+          exit 1
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Website Monitor"
+            echo ""
+            echo "- Result: ${{ steps.check.outputs.summary || 'run did not complete' }}"
+            echo "- Committed: ${{ steps.check.outputs.changed || 'false' }} (${{ steps.check.outputs.reason || 'n/a' }})"
+          } >> "$GITHUB_STEP_SUMMARY"
