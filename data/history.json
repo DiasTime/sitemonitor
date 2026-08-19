@@ -167,6 +167,230 @@
       "statusCode": 200,
       "responseTime": 1651,
       "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:12:33.879Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 941,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:12:33.879Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1091,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:12:33.879Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1311,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:12:33.879Z",
+      "monitorId": "admin-svoyapp-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "DNS error: host not found"
+    },
+    {
+      "timestamp": "2026-08-19T14:12:33.879Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1543,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:12:33.879Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1313,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:12:33.879Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1480,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:35:52.896Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 879,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:35:52.896Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 848,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:35:52.896Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1296,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:35:52.896Z",
+      "monitorId": "admin-svoyapp-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "DNS error: host not found"
+    },
+    {
+      "timestamp": "2026-08-19T14:35:52.896Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1519,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:35:52.896Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1360,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:35:52.896Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1495,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:36:52.936Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 809,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:36:52.936Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 809,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:36:52.936Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1177,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:36:52.936Z",
+      "monitorId": "admin-svoyapp-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "DNS error: host not found"
+    },
+    {
+      "timestamp": "2026-08-19T14:36:52.936Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1429,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:36:52.936Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1305,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T14:36:52.936Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1454,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T15:14:20.601Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 792,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T15:14:20.601Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 843,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T15:14:20.601Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1395,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T15:14:20.601Z",
+      "monitorId": "admin-svoyapp-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "DNS error: host not found"
+    },
+    {
+      "timestamp": "2026-08-19T15:14:20.601Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1687,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T15:14:20.601Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1446,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-19T15:14:20.601Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1478,
+      "error": null
     }
   ]
 }
