@@ -5,6 +5,13 @@
       "name": "Example",
       "url": "https://example.com",
       "enabled": true
+    },
+    {
+      "id": "sharyn-kz",
+      "name": "Шарын",
+      "url": "https://sharyn.kz/login",
+      "enabled": true,
+      "createdAt": "2026-08-19T11:49:54.995Z"
     }
   ]
 }
