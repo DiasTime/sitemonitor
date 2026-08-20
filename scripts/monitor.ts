@@ -94,6 +94,14 @@ const LOOP_MINUTES = Number(process.env.LOOP_MINUTES ?? 0)
 /** Interval between checks inside a run. */
 const LOOP_INTERVAL_SECONDS = numberFromEnv('LOOP_INTERVAL_SECONDS', 180)
 
+/**
+ * Send one test alert and exit, without checking anything.
+ *
+ * Alerts only fire on transitions, so there is otherwise no way to confirm the
+ * bot is wired up without waiting for a real outage.
+ */
+const SEND_TEST_ALERT = /^(1|true|yes|on)$/i.test(process.env.SEND_TEST_ALERT ?? '')
+
 const USER_AGENT =
   process.env.CHECK_USER_AGENT || 'SiteMonitor/1.0 (+https://github.com/topics/uptime-monitoring)'
 
@@ -1088,11 +1096,65 @@ async function runOnce(): Promise<void> {
 }
 
 /**
+ * Deliver a test alert to every recipient and report who got it.
+ * Picks up pending /start messages first, so someone who just subscribed is
+ * included in the very test they are waiting for.
+ */
+async function sendTestAlert(): Promise<void> {
+  const read = await readJson<SubscribersFile>(PATHS.subscribers, { offset: 0, subscribers: [] })
+  const sync = await syncSubscribers(read.data)
+  let subscribers = sync.file
+  let changed = sync.changed
+
+  const recipients = recipientsOf(subscribers)
+  log(
+    `Test alert: ${recipients.length} recipient(s) — ` +
+      `${subscribers.subscribers.length} subscriber(s)` +
+      `${process.env.TELEGRAM_CHAT_ID?.trim() ? ' plus TELEGRAM_CHAT_ID' : ''}`,
+  )
+
+  const message = [
+    '🧪 TEST ALERT',
+    '',
+    'Site Monitor is wired up and can reach you.',
+    '',
+    'This was sent by hand from GitHub Actions.',
+    'Nothing is down.',
+    '',
+    'Time:',
+    formatFullTimestamp(new Date().toISOString()),
+  ].join('\n')
+
+  const dead = await broadcast(subscribers, message)
+  if (dead.length) {
+    subscribers = {
+      ...subscribers,
+      subscribers: subscribers.subscribers.filter((entry) => !dead.includes(entry.chatId)),
+    }
+    changed = true
+  }
+
+  if (changed) await writeJson(PATHS.subscribers, subscribers satisfies SubscribersFile)
+
+  await setOutput('changed', changed ? 'true' : 'false')
+  await setOutput('reason', 'test alert')
+  await setOutput(
+    'summary',
+    `test alert sent to ${recipients.length - dead.length}/${recipients.length} chat(s)`,
+  )
+}
+
+/**
  * Single check, or a run that keeps checking for LOOP_MINUTES on a real
  * LOOP_INTERVAL_SECONDS cadence. One failing pass never ends the loop — a
  * transient error must not take monitoring down until the next schedule.
  */
 async function main() {
+  if (SEND_TEST_ALERT) {
+    await sendTestAlert()
+    return
+  }
+
   if (LOOP_MINUTES <= 0) {
     await runOnce()
     return
