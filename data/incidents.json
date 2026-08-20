@@ -9,7 +9,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection reset by peer",
-      "failedChecks": 9
+      "failedChecks": 12
     },
     {
       "id": "baimura-vms-svoydom-kz-2026-08-20T01:20:04.610Z",
@@ -20,7 +20,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 3
+      "failedChecks": 6
     },
     {
       "id": "zhanaurpaq-kz-2026-08-20T02:47:42.621Z",
@@ -31,7 +31,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1
+      "failedChecks": 4
     }
   ]
 }
