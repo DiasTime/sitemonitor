@@ -26,9 +26,9 @@
       "id": "zhanaurpaq-kz-2026-08-20T02:47:42.621Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-08-20T02:47:42.621Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-20T06:27:51.291Z",
+      "durationMs": 13208670,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 12
