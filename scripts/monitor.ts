@@ -35,6 +35,8 @@ import type {
   MonitorsFile,
   ProbeResult,
   StatusFile,
+  Subscriber,
+  SubscribersFile,
 } from '../lib/types'
 import {
   formatDuration,
@@ -54,6 +56,7 @@ const PATHS = {
   status: path.join(ROOT, 'data/status.json'),
   history: path.join(ROOT, 'data/history.json'),
   incidents: path.join(ROOT, 'data/incidents.json'),
+  subscribers: path.join(ROOT, 'data/subscribers.json'),
   buffer: path.join(ROOT, '.monitor-cache/pending-history.json'),
 }
 
@@ -421,36 +424,235 @@ async function checkMonitor(monitor: Monitor, timestamp: string): Promise<CheckR
 // Telegram
 // ---------------------------------------------------------------------------
 
-async function sendTelegram(text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
-  if (!token || !chatId) {
-    log('  Telegram is not configured (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID) — skipping alert')
-    return
-  }
+const TELEGRAM_API = 'https://api.telegram.org'
+
+/**
+ * Optional passphrase for subscribing. When set, only `/start <passphrase>`
+ * subscribes — without it, anyone who finds the bot receives your alerts,
+ * which name your hosts and their outage windows.
+ */
+const SUBSCRIBE_PASSWORD = process.env.TELEGRAM_SUBSCRIBE_PASSWORD?.trim() || ''
+
+function telegramToken(): string | null {
+  return process.env.TELEGRAM_BOT_TOKEN?.trim() || null
+}
+
+interface TelegramResult<T> {
+  ok: boolean
+  result?: T
+  description?: string
+  error_code?: number
+}
+
+/**
+ * Call the Bot API. Never surfaces the raw response, which can echo the token
+ * back in the URL it quotes.
+ */
+async function telegram<T>(
+  method: string,
+  payload: Record<string, unknown>,
+): Promise<TelegramResult<T>> {
+  const token = telegramToken()
+  if (!token) return { ok: false, description: 'no token' }
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), 15_000)
   try {
-    const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const response = await fetch(`${TELEGRAM_API}/bot${token}/${method}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        disable_web_page_preview: true,
-      }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     })
+    const body = (await response.json().catch(() => ({}))) as TelegramResult<T>
     if (!response.ok) {
-      // Never print the response verbatim: it can echo the bot token back.
-      log(`  Telegram API returned ${response.status} — alert not delivered`)
+      return {
+        ok: false,
+        error_code: body.error_code ?? response.status,
+        description: body.description ?? `HTTP ${response.status}`,
+      }
     }
+    return body
   } catch (error) {
-    log(`  Telegram request failed: ${(error as Error).message}`)
+    return { ok: false, description: (error as Error).message }
   } finally {
     clearTimeout(timer)
   }
+}
+
+interface TelegramUpdate {
+  update_id: number
+  message?: {
+    text?: string
+    chat: { id: number; type: string; title?: string; username?: string; first_name?: string }
+    from?: { username?: string; first_name?: string }
+  }
+}
+
+function labelFor(update: NonNullable<TelegramUpdate['message']>): string {
+  const chat = update.chat
+  return (
+    chat.title ||
+    chat.username ||
+    chat.first_name ||
+    update.from?.username ||
+    update.from?.first_name ||
+    String(chat.id)
+  )
+}
+
+/**
+ * Pick up `/start` and `/stop` sent to the bot since the last run.
+ *
+ * There is no server to receive a webhook, so the monitoring run polls
+ * getUpdates instead. Telegram keeps updates for 24 hours, which comfortably
+ * covers the gap between runs, and the offset is persisted so the same update
+ * is never processed twice.
+ */
+async function syncSubscribers(
+  current: SubscribersFile,
+): Promise<{ file: SubscribersFile; changed: boolean }> {
+  if (!telegramToken()) return { file: current, changed: false }
+
+  const response = await telegram<TelegramUpdate[]>('getUpdates', {
+    offset: current.offset || undefined,
+    timeout: 0,
+    allowed_updates: ['message'],
+  })
+
+  if (!response.ok) {
+    log(`  Telegram getUpdates failed: ${response.description ?? 'unknown error'}`)
+    return { file: current, changed: false }
+  }
+
+  const updates = response.result ?? []
+  if (!updates.length) return { file: current, changed: false }
+
+  const subscribers = [...current.subscribers]
+  let offset = current.offset
+  let changed = false
+
+  for (const update of updates) {
+    offset = Math.max(offset, update.update_id + 1)
+    const message = update.message
+    if (!message?.text) continue
+
+    const text = message.text.trim()
+    const chatId = message.chat.id
+    const existing = subscribers.findIndex((entry) => entry.chatId === chatId)
+
+    if (/^\/start\b/.test(text)) {
+      if (SUBSCRIBE_PASSWORD) {
+        const supplied = text.replace(/^\/start(@\S+)?\s*/, '')
+        if (supplied !== SUBSCRIBE_PASSWORD) {
+          await telegram('sendMessage', {
+            chat_id: chatId,
+            text: 'This bot is private. Send /start followed by the passphrase to subscribe.',
+          })
+          continue
+        }
+      }
+
+      if (existing === -1) {
+        const subscriber: Subscriber = {
+          chatId,
+          label: labelFor(message),
+          chatType: message.chat.type,
+          addedAt: new Date().toISOString(),
+        }
+        subscribers.push(subscriber)
+        changed = true
+        log(`  Telegram: subscribed ${subscriber.label} (${chatId})`)
+      }
+      await telegram('sendMessage', {
+        chat_id: chatId,
+        text:
+          'Subscribed to Site Monitor alerts.\n\n' +
+          'You will get a message when a site goes down, and another when it comes back. ' +
+          'Nothing in between.\n\n' +
+          'Send /stop to unsubscribe.',
+        disable_web_page_preview: true,
+      })
+      continue
+    }
+
+    if (/^\/stop\b/.test(text)) {
+      if (existing !== -1) {
+        log(`  Telegram: unsubscribed ${subscribers[existing].label} (${chatId})`)
+        subscribers.splice(existing, 1)
+        changed = true
+      }
+      await telegram('sendMessage', {
+        chat_id: chatId,
+        text: 'Unsubscribed. Send /start to subscribe again.',
+      })
+    }
+  }
+
+  if (offset !== current.offset) changed = true
+  return { file: { offset, subscribers }, changed }
+}
+
+/** Chat ids that should receive alerts: the configured owner plus every subscriber. */
+function recipientsOf(file: SubscribersFile): number[] {
+  const ids: number[] = []
+  const owner = process.env.TELEGRAM_CHAT_ID?.trim()
+  if (owner) {
+    const parsed = Number(owner)
+    if (Number.isFinite(parsed)) ids.push(parsed)
+  }
+  for (const subscriber of file.subscribers) {
+    if (!ids.includes(subscriber.chatId)) ids.push(subscriber.chatId)
+  }
+  return ids
+}
+
+/**
+ * Send an alert to every recipient.
+ *
+ * Chats that have blocked or deleted the bot are dropped from the list: they
+ * can never be delivered to again, and left in place they would fail on every
+ * future alert. Returns the chat ids to remove.
+ */
+async function broadcast(file: SubscribersFile, text: string): Promise<number[]> {
+  if (!telegramToken()) {
+    log('  Telegram is not configured (TELEGRAM_BOT_TOKEN) — skipping alert')
+    return []
+  }
+
+  const recipients = recipientsOf(file)
+  if (!recipients.length) {
+    log('  Telegram has no recipients yet — send /start to the bot to subscribe')
+    return []
+  }
+
+  const dead: number[] = []
+  let delivered = 0
+
+  for (const chatId of recipients) {
+    const response = await telegram('sendMessage', {
+      chat_id: chatId,
+      text,
+      disable_web_page_preview: true,
+    })
+
+    if (response.ok) {
+      delivered += 1
+      continue
+    }
+
+    const code = response.error_code
+    // 403: blocked, kicked or deactivated. 400: chat no longer exists.
+    if (code === 403 || code === 400) {
+      dead.push(chatId)
+      log(`  Telegram: dropping ${chatId} (${response.description ?? code})`)
+    } else {
+      log(`  Telegram: delivery to ${chatId} failed (${response.description ?? code})`)
+    }
+  }
+
+  log(`  Telegram: delivered to ${delivered}/${recipients.length} chat(s)`)
+  return dead
 }
 
 function downMessage(monitor: Monitor, result: CheckResult): string {
@@ -612,6 +814,16 @@ async function runOnce(): Promise<void> {
   const historyRead = await readJson<HistoryFile>(PATHS.history, { entries: [] })
   const incidentsRead = await readJson<IncidentsFile>(PATHS.incidents, { incidents: [] })
   const bufferRead = await readJson<HistoryFile>(PATHS.buffer, { entries: [] })
+  const subscribersRead = await readJson<SubscribersFile>(PATHS.subscribers, {
+    offset: 0,
+    subscribers: [],
+  })
+
+  // Pick up anyone who sent /start or /stop since the last pass, before any
+  // alert goes out, so a fresh subscriber gets this run's news too.
+  const sync = await syncSubscribers(subscribersRead.data)
+  let subscribers = sync.file
+  let subscribersChanged = sync.changed
 
   const previousStatus = statusRead.data.monitors ?? {}
   const incidents: Incident[] = [...(incidentsRead.data.incidents ?? [])]
@@ -797,7 +1009,8 @@ async function runOnce(): Promise<void> {
     prunedStatus ||
     firstRun ||
     intervalElapsed ||
-    bufferFull
+    bufferFull ||
+    subscribersChanged
 
   // --- notifications (always immediate, commit or not) ---------------------
   for (const transition of transitions) {
@@ -806,7 +1019,14 @@ async function runOnce(): Promise<void> {
         ? downMessage(transition.monitor, transition.result)
         : recoveryMessage(transition.monitor, transition.result, transition.downtimeMs ?? 0)
     log(`  Telegram: ${transition.kind === 'down' ? 'DOWN' : 'RECOVERED'} — ${transition.monitor.name}`)
-    await sendTelegram(message)
+    const dead = await broadcast(subscribers, message)
+    if (dead.length) {
+      subscribers = {
+        ...subscribers,
+        subscribers: subscribers.subscribers.filter((entry) => !dead.includes(entry.chatId)),
+      }
+      subscribersChanged = true
+    }
   }
 
   // --- persist -------------------------------------------------------------
@@ -819,6 +1039,7 @@ async function runOnce(): Promise<void> {
     await writeJson(PATHS.status, statusFile)
     await writeJson(PATHS.history, { entries: history } satisfies HistoryFile)
     await writeJson(PATHS.incidents, { incidents: liveIncidents } satisfies IncidentsFile)
+    await writeJson(PATHS.subscribers, subscribers satisfies SubscribersFile)
     // The buffer has been folded into history.json.
     await writeJson(PATHS.buffer, { entries: [] } satisfies HistoryFile)
 
@@ -826,6 +1047,8 @@ async function runOnce(): Promise<void> {
       ? 'status change'
       : incidentsChanged
         ? 'incident update'
+        : subscribersChanged
+        ? 'subscriber update'
         : firstRun
           ? 'first run'
           : prunedStatus

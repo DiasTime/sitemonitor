@@ -64,6 +64,9 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Optional gate on /start. Without it, anyone who finds the bot can
+          # subscribe and will then receive your hosts and their outage windows.
+          TELEGRAM_SUBSCRIBE_PASSWORD: ${{ secrets.TELEGRAM_SUBSCRIBE_PASSWORD }}
           # IANA zone for the times printed in Telegram alerts, e.g. Asia/Almaty.
           # Unset or invalid falls back to UTC. The zone is always shown.
           DISPLAY_TIMEZONE: ${{ vars.DISPLAY_TIMEZONE }}

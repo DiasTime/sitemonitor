@@ -52,6 +52,7 @@ delivers the alerts, and Vercel serves the dashboard.
 9. [Data files](#9-data-files)
 10. [Alerting rules](#10-alerting-rules)
     - [Health endpoints](#health-endpoints)
+    - [Who receives alerts](#who-receives-alerts)
     - [Running a check by hand](#running-a-check-by-hand)
     - [Why the schedule is hourly](#why-the-schedule-is-hourly)
 11. [Why it does not commit on every check](#11-why-it-does-not-commit-on-every-check)
@@ -80,7 +81,8 @@ delivers the alerts, and Vercel serves the dashboard.
   HTTP 200 while reporting trouble counts as down. Pick the kind in the add
   dialog; each is an independent monitor.
 - **Telegram alerts** on the transitions only: one message when a site goes
-  down, one when it comes back.
+  down, one when it comes back — delivered to **everyone who sent `/start`** to
+  the bot, not just one chat.
 - **No database, no VPS, no Docker, no cron service, no worker.**
 
 ---
@@ -112,18 +114,19 @@ That is all the setup the monitoring side needs — the workflow in
 1. Open [@BotFather](https://t.me/BotFather) in Telegram and send `/newbot`.
 2. Follow the prompts. BotFather replies with a token that looks like
    `123456789:AAE...`. That is your `TELEGRAM_BOT_TOKEN`.
-3. Send any message to your new bot (a bot cannot message you first).
-4. Get your chat id by opening this URL in a browser, with your token in place:
+3. Open your new bot in Telegram and send it **`/start`**. That is all — the
+   next monitoring run notices you and starts sending you alerts. Anyone else
+   who needs alerts does the same; see
+   [who receives alerts](#who-receives-alerts).
 
-   ```text
-   https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
-   ```
+`TELEGRAM_CHAT_ID` is optional. Set it if you want one chat wired in from the
+first run, before anybody has sent `/start` — find the id by opening
+`https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates` in a browser after
+messaging the bot, and look for `"chat":{"id":123456789`. Group ids are
+negative; include the minus sign.
 
-   Look for `"chat":{"id":123456789`. That number is your `TELEGRAM_CHAT_ID`.
-   For a group chat the id is negative — include the minus sign.
-
-Telegram is optional. Without it the monitoring still runs and records
-everything; it just does not send messages.
+Telegram as a whole is optional. Without a token the monitoring still runs and
+records everything; it just does not send messages.
 
 ---
 
@@ -135,7 +138,8 @@ repository secret**.
 | Secret | Value |
 | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | The token from BotFather |
-| `TELEGRAM_CHAT_ID` | The chat id from `getUpdates` |
+| `TELEGRAM_CHAT_ID` | Optional. A chat wired in from the start, without `/start` |
+| `TELEGRAM_SUBSCRIBE_PASSWORD` | Optional. Requires `/start <passphrase>` to subscribe |
 
 You do **not** need to add a GitHub token here. The workflow uses the built-in
 `GITHUB_TOKEN` that Actions provides automatically, and it already declares the
@@ -314,6 +318,9 @@ on every run:
 **`data/incidents.json`** — one record per outage, with `startedAt`, `endedAt`,
 `durationMs`, `status` (`ongoing` / `resolved`) and the failing check's details.
 
+**`data/subscribers.json`** — the chats that sent `/start`, plus the `getUpdates`
+cursor. See [who receives alerts](#who-receives-alerts).
+
 ---
 
 ## 10. Alerting rules
@@ -470,6 +477,44 @@ Details worth knowing:
 - The last reported value is stored in `status.json` and shown on the card and
   the monitor page. `history.json` keeps only up/down, as for any monitor.
 - Monitors written before this existed have no `type` and stay `website`.
+
+---
+
+## Who receives alerts
+
+Alerts go to every chat that has subscribed, plus `TELEGRAM_CHAT_ID` when it is
+set. To subscribe, send the bot:
+
+```text
+/start
+```
+
+and to stop:
+
+```text
+/stop
+```
+
+The bot confirms both. Subscribers live in `data/subscribers.json`, so the list
+is versioned like everything else.
+
+**There is no server listening for these messages.** The monitoring run polls
+Telegram's `getUpdates` at the start of every pass and acts on whatever arrived
+since the last one, so a `/start` is picked up on the next run rather than
+instantly — press **Run check** on the dashboard if you do not want to wait.
+Telegram keeps undelivered updates for 24 hours, which comfortably covers the
+gap between runs; the read cursor is stored in `subscribers.json` so an update
+is never handled twice.
+
+Chats that block or delete the bot answer `403`, and are removed from the list
+automatically rather than failing on every future alert.
+
+> **Anyone who can find your bot can subscribe**, and alerts name your hosts
+> and when they were down. If the bot might be discoverable, set the
+> `TELEGRAM_SUBSCRIBE_PASSWORD` secret — then only `/start <passphrase>`
+> subscribes and everything else gets a polite refusal. Note that
+> `data/subscribers.json` records each subscriber's chat id and display name,
+> which is another reason to keep this repository private.
 
 ---
 
@@ -723,10 +768,17 @@ Settings → Actions → General → Workflow permissions → *Read and write
 permissions*.
 
 **No Telegram messages arrive.**
-Check the workflow log: the script prints an explicit line when the token or
-chat id is missing, or when the Telegram API rejects the call. Remember that you
-must message the bot first, and that alerts are only sent on transitions — a
-site that was already down when you set things up will not re-alert.
+Check the workflow log: it prints how many chats an alert was delivered to, and
+says so explicitly when there are no recipients yet. If it reports none, send
+`/start` to the bot and run a check. Remember that alerts are only sent on
+transitions — a site that was already down when you set things up will not
+re-alert.
+
+**I sent `/start` but nothing happened.**
+The bot only reads its messages while a monitoring run is in progress, so wait
+for the next run or press **Run check**. If you set
+`TELEGRAM_SUBSCRIBE_PASSWORD`, plain `/start` is refused — send
+`/start <passphrase>`.
 
 **A site I know is up shows as DOWN with "Blocked: resolves to a private
 address".**

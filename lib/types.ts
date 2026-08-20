@@ -146,3 +146,25 @@ export interface HistoryResponse {
 export interface IncidentsResponse {
   incidents: Incident[]
 }
+
+// --- Telegram subscribers ---------------------------------------------------
+
+/** Someone who sent /start to the bot and now receives alerts. */
+export interface Subscriber {
+  /** Telegram chat id. Negative for groups. */
+  chatId: number
+  /** Best-effort label for the log and the dashboard — never used for delivery. */
+  label: string
+  /** 'private', 'group', 'supergroup', 'channel'. */
+  chatType: string
+  addedAt: string
+}
+
+export interface SubscribersFile {
+  /**
+   * getUpdates cursor. Telegram only keeps updates for 24 hours and drops the
+   * ones already confirmed by a higher offset, so this has to be persisted.
+   */
+  offset: number
+  subscribers: Subscriber[]
+}
