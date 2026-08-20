@@ -9,18 +9,18 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection reset by peer",
-      "failedChecks": 12
+      "failedChecks": 14
     },
     {
       "id": "baimura-vms-svoydom-kz-2026-08-20T01:20:04.610Z",
       "monitorId": "baimura-vms-svoydom-kz",
       "startedAt": "2026-08-20T01:20:04.610Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-20T04:36:02.614Z",
+      "durationMs": 11758004,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 6
+      "failedChecks": 7
     },
     {
       "id": "zhanaurpaq-kz-2026-08-20T02:47:42.621Z",
@@ -31,7 +31,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 4
+      "failedChecks": 6
     }
   ]
 }
