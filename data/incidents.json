@@ -87,6 +87,17 @@
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 2
+    },
+    {
+      "id": "megapolisast-kz-2026-08-21T11:29:05.740Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-08-21T11:29:05.740Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Connection timeout",
+      "failedChecks": 1
     }
   ]
 }
