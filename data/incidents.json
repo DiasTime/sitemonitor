@@ -103,12 +103,12 @@
       "id": "olen-vms-svoydom-kz-2-2026-08-25T06:51:17.770Z",
       "monitorId": "olen-vms-svoydom-kz-2",
       "startedAt": "2026-08-25T06:51:17.770Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-25T07:01:39.248Z",
+      "durationMs": 621478,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1
+      "failedChecks": 2
     }
   ]
 }
