@@ -109,6 +109,17 @@
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 2
+    },
+    {
+      "id": "sharyn-kz-2026-08-26T04:36:26.030Z",
+      "monitorId": "sharyn-kz",
+      "startedAt": "2026-08-26T04:36:26.030Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Connection timeout",
+      "failedChecks": 1
     }
   ]
 }
