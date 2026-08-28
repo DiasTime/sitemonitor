@@ -130,7 +130,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 12
+      "failedChecks": 13
     },
     {
       "id": "sharyn-kz-2026-08-28T06:35:54.458Z",
@@ -164,6 +164,17 @@
       "statusCode": null,
       "error": "No credentials configured for \"megapolisast-kz\" in PORTAL_CREDENTIALS",
       "failedChecks": 6
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-08-28T07:03:21.401Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-08-28T07:03:21.401Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Connection timeout",
+      "failedChecks": 1
     }
   ]
 }
