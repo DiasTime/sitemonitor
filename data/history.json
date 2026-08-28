@@ -16903,6 +16903,54 @@
       "statusCode": 200,
       "responseTime": 1429,
       "error": null
+    },
+    {
+      "timestamp": "2026-08-28T13:56:31.610Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1361,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T13:56:31.610Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1209,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T13:56:31.610Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "Connection timeout"
+    },
+    {
+      "timestamp": "2026-08-28T13:56:31.610Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1480,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T13:56:31.610Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 2051,
+      "error": "HTTP 502"
+    },
+    {
+      "timestamp": "2026-08-28T13:56:31.610Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 2159,
+      "error": null
     }
   ]
 }
