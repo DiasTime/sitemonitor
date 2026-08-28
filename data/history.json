@@ -16471,6 +16471,102 @@
       "statusCode": 200,
       "responseTime": 1869,
       "error": null
+    },
+    {
+      "timestamp": "2026-08-28T01:21:01.415Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 982,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T01:21:01.415Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1640,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T01:21:01.415Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "Connection timeout"
+    },
+    {
+      "timestamp": "2026-08-28T01:21:01.415Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1542,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T01:21:01.415Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1563,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T01:21:01.415Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1590,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T06:35:54.458Z",
+      "monitorId": "sharyn-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "No credentials configured for \"sharyn-kz\" in PORTAL_CREDENTIALS"
+    },
+    {
+      "timestamp": "2026-08-28T06:35:54.458Z",
+      "monitorId": "darynast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "No credentials configured for \"darynast-kz\" in PORTAL_CREDENTIALS"
+    },
+    {
+      "timestamp": "2026-08-28T06:35:54.458Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "No credentials configured for \"zhanaurpaq-kz\" in PORTAL_CREDENTIALS"
+    },
+    {
+      "timestamp": "2026-08-28T06:35:54.458Z",
+      "monitorId": "megapolisast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "No credentials configured for \"megapolisast-kz\" in PORTAL_CREDENTIALS"
+    },
+    {
+      "timestamp": "2026-08-28T06:35:54.458Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 751,
+      "error": null
+    },
+    {
+      "timestamp": "2026-08-28T06:35:54.458Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 717,
+      "error": null
     }
   ]
 }
