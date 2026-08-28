@@ -239,6 +239,9 @@ const HEALTHY_REPORTED = new Set(['ok', 'up', 'healthy', 'pass', 'passing', 'suc
 /** Only this much of a health response is read before the socket is torn down. */
 const MAX_HEALTH_BODY_BYTES = numberFromEnv('MAX_HEALTH_BODY_BYTES', 64 * 1024)
 
+/** Only this much of a login-flow response is read before the socket is torn down. */
+const MAX_LOGIN_BODY_BYTES = numberFromEnv('MAX_LOGIN_BODY_BYTES', 256 * 1024)
+
 /**
  * Pull the reported status out of a health-check body.
  * Returns null when the body is not JSON or carries no recognisable status
@@ -409,11 +412,416 @@ async function checkUrl(url: string, options: { readBody?: boolean } = {}): Prom
   return probe(validation.url!, options)
 }
 
+// ---------------------------------------------------------------------------
+// Portal login checks
+// ---------------------------------------------------------------------------
+
+interface RawResponse {
+  statusCode: number | null
+  headers: http.IncomingHttpHeaders
+  body: string
+  responseTime: number | null
+  error: string | null
+}
+
+/**
+ * Low-level HTTP request used by the login-check flow: unlike `probe`, it can
+ * POST a body, send arbitrary headers, and returns the response headers and
+ * body for inspection. Redirects are never followed, for the same reason as
+ * `probe` — SSRF protection would otherwise have to cover every hop. Resolves
+ * with the observed outcome — never rejects.
+ */
+function rawRequest(
+  url: string,
+  options: { method?: string; headers?: Record<string, string>; body?: string } = {},
+): Promise<RawResponse> {
+  return new Promise((resolve) => {
+    const client = new URL(url).protocol === 'https:' ? https : http
+    const startedAt = process.hrtime.bigint()
+    let settled = false
+
+    const finish = (result: RawResponse) => {
+      if (settled) return
+      settled = true
+      resolve(result)
+    }
+
+    const elapsedMs = () => Number(process.hrtime.bigint() - startedAt) / 1e6
+    const payload = options.body ?? ''
+
+    const request = client.request(
+      url,
+      {
+        method: options.method ?? 'GET',
+        lookup: safeLookup,
+        headers: {
+          'User-Agent': USER_AGENT,
+          Accept: 'text/html,application/xhtml+xml,*/*',
+          'Accept-Encoding': 'identity',
+          Connection: 'close',
+          ...(payload ? { 'Content-Length': String(Buffer.byteLength(payload)) } : {}),
+          ...options.headers,
+        },
+        timeout: REQUEST_TIMEOUT_MS,
+      },
+      (response) => {
+        const responseTime = Math.round(elapsedMs())
+        const statusCode = response.statusCode ?? 0
+        const chunks: Buffer[] = []
+        let received = 0
+
+        const settleWithBody = () => {
+          finish({
+            statusCode,
+            headers: response.headers,
+            body: Buffer.concat(chunks).toString('utf8'),
+            responseTime,
+            error: null,
+          })
+        }
+
+        response.on('data', (chunk: Buffer) => {
+          received += chunk.length
+          if (received <= MAX_LOGIN_BODY_BYTES) {
+            chunks.push(chunk)
+            return
+          }
+          response.destroy()
+          request.destroy()
+          settleWithBody()
+        })
+        response.on('end', settleWithBody)
+        response.on('error', () => settleWithBody())
+      },
+    )
+
+    request.on('timeout', () => {
+      request.destroy()
+      finish({
+        statusCode: null,
+        headers: {},
+        body: '',
+        responseTime: null,
+        error: 'Connection timeout',
+      })
+    })
+
+    request.on('error', (error: NodeJS.ErrnoException) => {
+      finish({
+        statusCode: null,
+        headers: {},
+        body: '',
+        responseTime: null,
+        error:
+          error.code === 'EBLOCKEDADDRESS'
+            ? 'Blocked: resolves to a private address'
+            : describeError(error),
+      })
+    })
+
+    if (payload) request.write(payload)
+    request.end()
+  })
+}
+
+/** Validate and SSRF-check a URL, then issue a raw request against it. */
+async function checkedRawRequest(
+  url: string,
+  options: { method?: string; headers?: Record<string, string>; body?: string } = {},
+): Promise<RawResponse> {
+  const validation = validateMonitorUrl(url)
+  if (!validation.ok) {
+    return {
+      statusCode: null,
+      headers: {},
+      body: '',
+      responseTime: null,
+      error: `Invalid URL: ${validation.error}`,
+    }
+  }
+  if (isBlockedHostname(new URL(validation.url!).hostname)) {
+    return { statusCode: null, headers: {}, body: '', responseTime: null, error: 'Blocked: internal hostname' }
+  }
+  return rawRequest(validation.url!, options)
+}
+
+/** Join a response's Set-Cookie headers into a value usable for a request's Cookie header. */
+function cookieHeaderFrom(headers: http.IncomingHttpHeaders): string | null {
+  const raw = headers['set-cookie']
+  if (!raw || !raw.length) return null
+  const pairs = raw.map((entry) => entry.split(';', 1)[0].trim()).filter(Boolean)
+  return pairs.length ? pairs.join('; ') : null
+}
+
+/**
+ * Hidden `<input>` fields found in an HTML form (CSRF tokens and the like),
+ * carried through to the login POST unchanged so the submission looks like a
+ * real form post rather than a bare username/password pair.
+ */
+function hiddenFieldsOf(html: string): Record<string, string> {
+  const fields: Record<string, string> = {}
+  const inputTag = /<input\b[^>]*>/gi
+  const nameAttr = /\bname\s*=\s*(?:"([^"]*)"|'([^']*)')/i
+  const valueAttr = /\bvalue\s*=\s*(?:"([^"]*)"|'([^']*)')/i
+  let match: RegExpExecArray | null
+  while ((match = inputTag.exec(html))) {
+    const tag = match[0]
+    if (!/\btype\s*=\s*["']?hidden["']?/i.test(tag)) continue
+    const name = nameAttr.exec(tag)
+    if (!name) continue
+    const fieldName = name[1] ?? name[2]
+    if (!fieldName) continue
+    const value = valueAttr.exec(tag)
+    fields[fieldName] = value?.[1] ?? value?.[2] ?? ''
+  }
+  return fields
+}
+
+/** True when the page contains a password input, i.e. it is showing a sign-in form. */
+function hasPasswordField(html: string): boolean {
+  return /<input\b[^>]*\btype\s*=\s*["']?password["']?[^>]*>/i.test(html)
+}
+
+interface PortalCredential {
+  username: string
+  password: string
+  /** Sent as the `X-Site-Key` header, for a multi-tenant backend that needs one to pick the right site. */
+  siteKey?: string
+}
+
+let credentialsCache: Record<string, Partial<PortalCredential>> | null = null
+
+/** Pick out only the recognised, string-typed fields of a credential entry. */
+function readCredentialFields(value: unknown): Partial<PortalCredential> {
+  if (!value || typeof value !== 'object') return {}
+  const candidate = value as Partial<Record<keyof PortalCredential, unknown>>
+  return {
+    ...(typeof candidate.username === 'string' ? { username: candidate.username } : {}),
+    ...(typeof candidate.password === 'string' ? { password: candidate.password } : {}),
+    ...(typeof candidate.siteKey === 'string' ? { siteKey: candidate.siteKey } : {}),
+  }
+}
+
+/**
+ * Credentials for `login` monitors — one JSON secret. A `"default"` entry
+ * applies to every `login` monitor; a per-id entry (keyed by monitor id)
+ * overrides/extends it, so when the same account works everywhere except one
+ * field (e.g. a per-portal `siteKey`), only that field needs repeating:
+ *
+ *   {"default": {"username": "...", "password": "..."},
+ *    "darynast-kz": {"siteKey": "..."}}
+ *
+ * Set as the `PORTAL_CREDENTIALS` GitHub Actions secret — never written to
+ * data/monitors.json, which is public and committed to the repo.
+ */
+function credentialsFor(monitorId: string): PortalCredential | null {
+  if (credentialsCache === null) {
+    credentialsCache = {}
+    const raw = process.env.PORTAL_CREDENTIALS?.trim()
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as Record<string, unknown>
+        for (const [id, value] of Object.entries(parsed)) {
+          credentialsCache[id] = readCredentialFields(value)
+        }
+      } catch (error) {
+        log(`  PORTAL_CREDENTIALS is not valid JSON: ${(error as Error).message}`)
+      }
+    }
+  }
+
+  const merged = { ...credentialsCache.default, ...credentialsCache[monitorId] }
+  if (typeof merged.username === 'string' && typeof merged.password === 'string') {
+    return { username: merged.username, password: merged.password, ...(merged.siteKey ? { siteKey: merged.siteKey } : {}) }
+  }
+  return null
+}
+
+/**
+ * Check a `login` monitor: fetch the sign-in page, submit the credentials
+ * configured for this monitor's id, and judge the result. Two body styles are
+ * supported (`monitor.loginBodyType`): `form` posts application/x-www-form-urlencoded
+ * with any hidden fields (CSRF tokens) carried over from the page; `json`
+ * posts a JSON object, for an API-driven single-page app.
+ *
+ * Success is decided, in order:
+ *  1. `monitor.failureText` present in the response -> DOWN.
+ *  2. `monitor.successText` set -> UP only if present in the response.
+ *  3. A redirect (3xx) -> UP, the common outcome of a successful form post.
+ *  4. `json` mode -> UP unless the body carries its own `error`/`message` field.
+ *  5. `form` mode -> UP unless the response still shows a password field where
+ *     the original sign-in page had one, i.e. the same form was handed back.
+ *
+ * This needs no portal-specific knowledge for a plain HTML login form or a
+ * REST API that reports errors as JSON, but `successText`/`failureText`
+ * should be set for anything more unusual (a login that always 200s with no
+ * error field, etc).
+ */
+async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<CheckResult> {
+  const credential = credentialsFor(monitor.id)
+  if (!credential) {
+    return {
+      monitorId: monitor.id,
+      status: 'DOWN',
+      statusCode: null,
+      responseTime: null,
+      error: `No credentials configured for "${monitor.id}" in PORTAL_CREDENTIALS`,
+      timestamp,
+      reported: null,
+    }
+  }
+
+  const pageUrl = monitor.url
+  const page = await checkedRawRequest(pageUrl, { method: 'GET' })
+  if (page.error || page.statusCode === null) {
+    return {
+      monitorId: monitor.id,
+      status: 'DOWN',
+      statusCode: page.statusCode,
+      responseTime: page.responseTime,
+      error: page.error ?? 'Could not load the sign-in page',
+      timestamp,
+      reported: null,
+    }
+  }
+
+  const cookie = cookieHeaderFrom(page.headers)
+  const usernameField = monitor.usernameField || 'username'
+  const passwordField = monitor.passwordField || 'password'
+  const isJson = monitor.loginBodyType === 'json'
+  const pageHadPasswordField = !isJson && hasPasswordField(page.body)
+
+  let body: string
+  let contentType: string
+  if (isJson) {
+    body = JSON.stringify({ [usernameField]: credential.username, [passwordField]: credential.password })
+    contentType = 'application/json'
+  } else {
+    const form = new URLSearchParams()
+    for (const [key, value] of Object.entries(hiddenFieldsOf(page.body))) form.set(key, value)
+    form.set(usernameField, credential.username)
+    form.set(passwordField, credential.password)
+    body = form.toString()
+    contentType = 'application/x-www-form-urlencoded'
+  }
+
+  const submission = await checkedRawRequest(monitor.loginUrl || monitor.url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': contentType,
+      Referer: pageUrl,
+      ...(cookie ? { Cookie: cookie } : {}),
+      ...(credential.siteKey ? { 'X-Site-Key': credential.siteKey } : {}),
+    },
+    body,
+  })
+
+  const responseTime = submission.responseTime ?? page.responseTime
+
+  if (submission.error || submission.statusCode === null) {
+    return {
+      monitorId: monitor.id,
+      status: 'DOWN',
+      statusCode: submission.statusCode,
+      responseTime,
+      error: submission.error ?? 'Sign-in request failed',
+      timestamp,
+      reported: null,
+    }
+  }
+
+  const statusCode = submission.statusCode
+
+  /** A REST API typically explains a failure in the body — pull it out for a more useful alert than "HTTP 401". */
+  function apiErrorMessage(): string | null {
+    try {
+      const parsed = JSON.parse(submission.body) as Record<string, unknown>
+      const message = parsed?.error ?? parsed?.message
+      return typeof message === 'string' && message ? message.slice(0, 200) : null
+    } catch {
+      return null
+    }
+  }
+
+  if (statusCode < 200 || statusCode > 399) {
+    return {
+      monitorId: monitor.id,
+      status: 'DOWN',
+      statusCode,
+      responseTime,
+      error: apiErrorMessage() ?? `HTTP ${statusCode}`,
+      timestamp,
+      reported: null,
+    }
+  }
+
+  const bodyLower = submission.body.toLowerCase()
+
+  if (monitor.failureText && bodyLower.includes(monitor.failureText.toLowerCase())) {
+    return {
+      monitorId: monitor.id,
+      status: 'DOWN',
+      statusCode,
+      responseTime,
+      error: `Sign-in failed: matched "${monitor.failureText}"`,
+      timestamp,
+      reported: null,
+    }
+  }
+
+  if (monitor.successText) {
+    const matched = bodyLower.includes(monitor.successText.toLowerCase())
+    return {
+      monitorId: monitor.id,
+      status: matched ? 'UP' : 'DOWN',
+      statusCode,
+      responseTime,
+      error: matched ? null : `Sign-in did not report "${monitor.successText}"`,
+      timestamp,
+      reported: null,
+    }
+  }
+
+  if (statusCode >= 300 && statusCode < 400) {
+    return { monitorId: monitor.id, status: 'UP', statusCode, responseTime, error: null, timestamp, reported: null }
+  }
+
+  if (isJson) {
+    // A JSON API never hands back a password field, so the redirect/form
+    // heuristic below does not apply — fall back to the body's own error
+    // signal (both `/api/auth/login` failures seen from this app family
+    // answer 200 or 4xx with an `{"error": "..."}` body; this catches the
+    // 200-with-error-body case the status-code check above would miss).
+    const message = apiErrorMessage()
+    if (message) {
+      return { monitorId: monitor.id, status: 'DOWN', statusCode, responseTime, error: message, timestamp, reported: null }
+    }
+    return { monitorId: monitor.id, status: 'UP', statusCode, responseTime, error: null, timestamp, reported: null }
+  }
+
+  if (pageHadPasswordField && hasPasswordField(submission.body)) {
+    return {
+      monitorId: monitor.id,
+      status: 'DOWN',
+      statusCode,
+      responseTime,
+      error: 'Sign-in form was shown again after submitting credentials',
+      timestamp,
+      reported: null,
+    }
+  }
+
+  return { monitorId: monitor.id, status: 'UP', statusCode, responseTime, error: null, timestamp, reported: null }
+}
+
 /**
  * Check one monitor. A `health` monitor has its JSON body inspected as well as
  * its HTTP code, so an endpoint answering 200 while reporting trouble is DOWN.
+ * A `login` monitor actually signs in — see `checkLoginMonitor`.
  */
 async function checkMonitor(monitor: Monitor, timestamp: string): Promise<CheckResult> {
+  if (monitor.type === 'login') return checkLoginMonitor(monitor, timestamp)
+
   const isHealth = monitor.type === 'health'
   const result = await checkUrl(monitor.url, { readBody: isHealth })
 
@@ -664,7 +1072,12 @@ async function broadcast(file: SubscribersFile, text: string): Promise<number[]>
 }
 
 function downMessage(monitor: Monitor, result: CheckResult): string {
-  const heading = monitor.type === 'health' ? '🔴 HEALTH CHECK FAILED' : '🔴 SITE DOWN'
+  const heading =
+    monitor.type === 'health'
+      ? '🔴 HEALTH CHECK FAILED'
+      : monitor.type === 'login'
+        ? '🔴 PORTAL LOGIN FAILED'
+        : '🔴 SITE DOWN'
   const lines = [heading, '', monitor.name, '', 'URL:', monitor.url, '']
 
   // A health endpoint that answered 200 but reported trouble: say what it
@@ -691,7 +1104,11 @@ function downMessage(monitor: Monitor, result: CheckResult): string {
 
 function recoveryMessage(monitor: Monitor, result: CheckResult, downtimeMs: number): string {
   const lines = [
-    monitor.type === 'health' ? '🟢 HEALTH CHECK RECOVERED' : '🟢 SITE RECOVERED',
+    monitor.type === 'health'
+      ? '🟢 HEALTH CHECK RECOVERED'
+      : monitor.type === 'login'
+        ? '🟢 PORTAL LOGIN RECOVERED'
+        : '🟢 SITE RECOVERED',
     '',
     monitor.name,
     '',

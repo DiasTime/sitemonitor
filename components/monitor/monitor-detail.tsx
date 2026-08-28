@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { Activity, ArrowLeft, ExternalLink, TriangleAlert } from 'lucide-react'
+import { Activity, ArrowLeft, ExternalLink, KeyRound, TriangleAlert } from 'lucide-react'
 
 import { AppHeader } from '@/components/dashboard/app-header'
 import { ResponseTimeChart } from '@/components/charts/response-time-chart'
@@ -144,6 +144,12 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
                 <Badge variant="outline" className="shrink-0 gap-1">
                   <Activity className="h-3 w-3" />
                   Health endpoint
+                </Badge>
+              )}
+              {monitor.type === 'login' && (
+                <Badge variant="outline" className="shrink-0 gap-1">
+                  <KeyRound className="h-3 w-3" />
+                  Login check
                 </Badge>
               )}
             </div>

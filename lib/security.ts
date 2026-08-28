@@ -285,3 +285,43 @@ export function validateMonitorName(raw: unknown): { ok: boolean; name?: string;
 export function isValidMonitorId(id: unknown): id is string {
   return typeof id === 'string' && /^[a-z0-9][a-z0-9-]{0,63}$/.test(id)
 }
+
+const MAX_FIELD_NAME_LENGTH = 64
+const MAX_MATCH_TEXT_LENGTH = 200
+
+/** Validate an HTML form field name (`login` monitors' username/password fields). */
+export function validateFieldName(
+  raw: unknown,
+  label: string,
+): { ok: boolean; name?: string; error?: string } {
+  if (raw === undefined || raw === null || raw === '') return { ok: true, name: undefined }
+  if (typeof raw !== 'string') return { ok: false, error: `${label} must be a string` }
+  const name = raw.trim()
+  if (name.length > MAX_FIELD_NAME_LENGTH) {
+    return { ok: false, error: `${label} must be at most ${MAX_FIELD_NAME_LENGTH} characters` }
+  }
+  // Form field names are attribute values, not identifiers — HTML allows most
+  // characters, so this only rejects whitespace/control characters and the
+  // quote that would break out of the encoded form body.
+  if (UNSAFE_CHARS.test(name) || name.includes('&') || name.includes('=')) {
+    return { ok: false, error: `${label} contains invalid characters` }
+  }
+  return { ok: true, name }
+}
+
+/** Validate a `login` monitor's successText/failureText match string. */
+export function validateMatchText(
+  raw: unknown,
+  label: string,
+): { ok: boolean; text?: string; error?: string } {
+  if (raw === undefined || raw === null || raw === '') return { ok: true, text: undefined }
+  if (typeof raw !== 'string') return { ok: false, error: `${label} must be a string` }
+  const text = raw.trim()
+  if (text.length > MAX_MATCH_TEXT_LENGTH) {
+    return { ok: false, error: `${label} must be at most ${MAX_MATCH_TEXT_LENGTH} characters` }
+  }
+  if (UNSAFE_CHARS.test(text)) {
+    return { ok: false, error: `${label} contains invalid characters` }
+  }
+  return { ok: true, text }
+}

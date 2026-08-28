@@ -52,6 +52,7 @@ delivers the alerts, and Vercel serves the dashboard.
 9. [Data files](#9-data-files)
 10. [Alerting rules](#10-alerting-rules)
     - [Health endpoints](#health-endpoints)
+    - [Portal login checks](#portal-login-checks)
     - [Who receives alerts](#who-receives-alerts)
     - [Running a check by hand](#running-a-check-by-hand)
     - [Why the schedule is hourly](#why-the-schedule-is-hourly)
@@ -76,10 +77,12 @@ delivers the alerts, and Vercel serves the dashboard.
 - **Run check** button — probe everything now instead of waiting for the
   schedule. It starts the same workflow, so a manual run behaves exactly like a
   scheduled one, alerts included.
-- **Two kinds of monitor** — a *website*, judged by its HTTP status code, or a
+- **Three kinds of monitor** — a *website*, judged by its HTTP status code; a
   *health endpoint*, whose JSON body is inspected too, so an endpoint answering
-  HTTP 200 while reporting trouble counts as down. Pick the kind in the add
-  dialog; each is an independent monitor.
+  HTTP 200 while reporting trouble counts as down; or a *portal login check*,
+  which actually signs into the platform with real credentials and counts it
+  down when the sign-in itself fails, not just when the page fails to load.
+  Pick the kind in the add dialog; each is an independent monitor.
 - **Telegram alerts** on the transitions only: one message when a site goes
   down, one when it comes back — delivered to **everyone who sent `/start`** to
   the bot, not just one chat.
@@ -140,6 +143,7 @@ repository secret**.
 | `TELEGRAM_BOT_TOKEN` | The token from BotFather |
 | `TELEGRAM_CHAT_ID` | Optional. A chat wired in from the start, without `/start` |
 | `TELEGRAM_SUBSCRIBE_PASSWORD` | Optional. Requires `/start <passphrase>` to subscribe |
+| `PORTAL_CREDENTIALS` | Optional. Only needed for `login` monitors — see [Portal login checks](#portal-login-checks) |
 
 You do **not** need to add a GitHub token here. The workflow uses the built-in
 `GITHUB_TOKEN` that Actions provides automatically, and it already declares the
@@ -419,6 +423,7 @@ A monitor is one URL, and its `type` decides how the answer is judged:
 | --- | --- |
 | `website` (default) | HTTP status code only — 200–399 is up |
 | `health` | HTTP status code **and** the JSON body |
+| `login` | Actually signing into the portal — see [Portal login checks](#portal-login-checks) |
 
 A health endpoint is a monitor in its own right, not an attachment to a website
 one. Add it with the **Health endpoint** tab in the add dialog, or by setting
@@ -477,6 +482,99 @@ Details worth knowing:
 - The last reported value is stored in `status.json` and shown on the card and
   the monitor page. `history.json` keeps only up/down, as for any monitor.
 - Monitors written before this existed have no `type` and stay `website`.
+
+---
+
+## Portal login checks
+
+A `website` monitor only proves the page loads — a login form can happily
+answer HTTP 200 while the sign-in itself is broken (bad DB connection, expired
+certificate on an auth service, a bug in the login handler). A `login` monitor
+catches that: every run it actually **signs into the portal** with real
+credentials and judges the platform on whether that succeeds, not on whether
+the login page rendered.
+
+Add it with the **Portal login** tab in the add dialog, or by setting
+`"type": "login"` in `data/monitors.json`. The `url` is the sign-in page. Credentials
+are **never** entered in the dialog and never stored in `data/monitors.json` —
+that file is public and committed to the repo. Instead, add a `PORTAL_CREDENTIALS`
+secret under **Settings → Secrets and variables → Actions**.
+
+When the same account signs into every portal, one `"default"` entry covers
+all of them:
+
+```json
+{ "default": { "username": "monitor@example.com", "password": "..." } }
+```
+
+A per-id entry (the monitor's id, shown on its card and in its URL —
+`/monitor/<id>`) overrides or extends `"default"` for just that one monitor,
+so a field that differs for a single portal doesn't need the whole credential
+repeated — e.g. a platform whose API is multi-tenant and needs an `X-Site-Key`
+header to pick the right tenant:
+
+```json
+{
+  "default": { "username": "monitor@example.com", "password": "..." },
+  "darynast-kz": { "siteKey": "..." },
+  "some-other-portal": { "username": "a-different-account", "password": "..." }
+}
+```
+
+A `login` monitor whose id has no `username`/`password` after merging with
+`"default"` is reported down with "No credentials configured" — nothing is
+probed until one is set.
+
+Two submission styles are supported (`loginBodyType`, set via the "Send
+credentials as a JSON body" checkbox in the add dialog):
+
+- **`form`** (default) — a classic server-rendered login: fetch the sign-in
+  page, carry over its cookies and any hidden fields (CSRF tokens included)
+  unchanged, then POST the username and password `application/x-www-form-urlencoded`
+  under the field names the form actually uses.
+- **`json`** — an API-driven single-page app: POST `{ "<usernameField>": ...,
+  "<passwordField>": ... }` as JSON to `loginUrl` instead. This is what four of
+  the portals in this deployment turned out to be — a Vite/React app that
+  itself calls `POST /api/auth/login` with a JSON body and answers with
+  `{ "accessToken": ..., "user": ... }` on success or `{ "error": "..." }` on
+  failure — discovered by reading the deployed JS bundle, since the login page
+  itself renders client-side and has no server-side form to inspect.
+
+Up is decided, in order:
+
+1. `failureText` present in the response -> down.
+2. `successText` set -> up only if it's present in the response.
+3. A redirect (3xx) -> up — the usual outcome of a successful form post.
+4. `json` mode -> up unless the body carries its own `error`/`message` field
+   (covers a login that fails but still answers 200).
+5. `form` mode -> up unless the response still shows a password field where
+   the sign-in page had one, i.e. the same form was handed back.
+
+The defaults work without further configuration for a plain HTML login form or
+a JSON API that reports errors as `error`/`message`. For anything else — a
+different success/failure signal, non-standard field names — set the advanced
+fields in the add dialog:
+
+| Field | Purpose |
+| --- | --- |
+| Form target URL | Where the form/API POSTs, if different from the login page URL |
+| Send as JSON | Switches from a form POST to a JSON POST |
+| Username / password field name | The actual field/key names, if not `username`/`password` |
+| Success text | A string only present once signed in (e.g. `accessToken`) — makes the check exact |
+| Failure text | A string only present when sign-in fails (e.g. "неверный пароль") |
+
+None of the advanced fields are secret — they describe the request's shape,
+not who signs into it — so they live in `data/monitors.json` like everything
+else. `siteKey` is the exception: it functions as an API access key, so it
+lives in `PORTAL_CREDENTIALS` alongside the username and password, never in
+`data/monitors.json`.
+
+A down alert names the platform and the time, exactly like any other monitor,
+just headed `🔴 PORTAL LOGIN FAILED` / `🟢 PORTAL LOGIN RECOVERED` instead of
+`SITE DOWN` / `SITE RECOVERED`.
+
+For local runs, set `PORTAL_CREDENTIALS` in `.env` (see `.env.example`) before
+`npm run monitor`.
 
 ---
 
@@ -626,10 +724,14 @@ dashboard at the cost of more commits.
 
 ## 12. Security
 
-- `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN` and `ADMIN_PASSWORD` are read only in
-  server code. None are prefixed `NEXT_PUBLIC_`, and the modules that touch them
-  are marked `server-only`, so a build fails rather than shipping them to the
-  browser.
+- `GITHUB_TOKEN`, `TELEGRAM_BOT_TOKEN`, `ADMIN_PASSWORD` and `PORTAL_CREDENTIALS`
+  are read only in server code. None are prefixed `NEXT_PUBLIC_`, and the
+  modules that touch them are marked `server-only`, so a build fails rather
+  than shipping them to the browser.
+- `PORTAL_CREDENTIALS` only ever exists as a GitHub Actions secret (or a local
+  `.env`, gitignored). `data/monitors.json` is public and committed, so a
+  `login` monitor stores the shape of the form (field names, success/failure
+  text) but never a username or password.
 - The dashboard, the monitor pages and every data API require a session. The
   session cookie is **HttpOnly**, **Secure** in production, **SameSite=Lax**, and
   carries nothing but an expiry plus an HMAC-SHA256 signature over it. Tampering
@@ -678,6 +780,7 @@ dashboard at the cost of more commits.
 | --- | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | no | Sending alerts |
 | `TELEGRAM_CHAT_ID` | no | Where alerts go |
+| `PORTAL_CREDENTIALS` | no | Credentials for `login` monitors — see [Portal login checks](#portal-login-checks) |
 
 **GitHub Actions repository variables** (Settings → Secrets and variables →
 Actions → *Variables*) — all optional:
@@ -688,6 +791,7 @@ Actions → *Variables*) — all optional:
 | `CHECK_TIMEOUT_MS` | `10000` | Per-request timeout |
 | `HISTORY_RETENTION_DAYS` | `30` | How long history is kept |
 | `MAX_HEALTH_BODY_BYTES` | `65536` | How much of a health response is read |
+| `MAX_LOGIN_BODY_BYTES` | `262144` | How much of a login-flow response is read |
 | `LOOP_MINUTES` | `2` | How long one run keeps checking; `0` = one check and exit |
 | `LOOP_INTERVAL_SECONDS` | `60` | Interval between checks inside a run |
 | `DISPLAY_TIMEZONE` | `UTC` | IANA zone for times in Telegram alerts |

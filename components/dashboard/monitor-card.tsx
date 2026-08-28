@@ -2,7 +2,16 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { Activity, AlertTriangle, Loader2, MoreHorizontal, Pause, Play, Trash2 } from 'lucide-react'
+import {
+  Activity,
+  AlertTriangle,
+  KeyRound,
+  Loader2,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Trash2,
+} from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -82,6 +91,12 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
               <Badge variant="outline" className="shrink-0 gap-1">
                 <Activity className="h-3 w-3" />
                 Health
+              </Badge>
+            )}
+            {monitor.type === 'login' && (
+              <Badge variant="outline" className="shrink-0 gap-1">
+                <KeyRound className="h-3 w-3" />
+                Login
               </Badge>
             )}
             {!monitor.enabled && (

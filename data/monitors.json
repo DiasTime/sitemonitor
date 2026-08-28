@@ -5,6 +5,10 @@
       "name": "Шарын",
       "url": "https://sharyn.kz/login",
       "enabled": true,
+      "type": "login",
+      "loginUrl": "https://sharyn.kz/api/auth/login",
+      "loginBodyType": "json",
+      "successText": "accessToken",
       "createdAt": "2026-08-19T11:49:54.995Z"
     },
     {
@@ -12,6 +16,10 @@
       "name": "Daryn",
       "url": "https://darynast.kz/",
       "enabled": true,
+      "type": "login",
+      "loginUrl": "https://darynast.kz/api/auth/login",
+      "loginBodyType": "json",
+      "successText": "accessToken",
       "createdAt": "2026-08-19T11:50:25.086Z"
     },
     {
@@ -19,6 +27,10 @@
       "name": "ZhanaUrpaq",
       "url": "https://zhanaurpaq.kz/",
       "enabled": true,
+      "type": "login",
+      "loginUrl": "https://zhanaurpaq.kz/api/auth/login",
+      "loginBodyType": "json",
+      "successText": "accessToken",
       "createdAt": "2026-08-19T11:50:46.187Z"
     },
     {
@@ -26,6 +38,10 @@
       "name": "Megapolisast.kz",
       "url": "https://megapolisast.kz/login",
       "enabled": true,
+      "type": "login",
+      "loginUrl": "https://megapolisast.kz/api/auth/login",
+      "loginBodyType": "json",
+      "successText": "accessToken",
       "createdAt": "2026-08-19T11:52:17.833Z"
     },
     {

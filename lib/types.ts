@@ -11,10 +11,13 @@ export type UiStatus = Status | 'CHECKING'
  * - `website` — judged by its HTTP status code alone.
  * - `health`  — a health-check endpoint: the JSON body is read as well, and its
  *               `status` field must report a healthy value.
+ * - `login`   — a portal login form: the monitor actually signs in (see the
+ *               `login*` fields below) and the platform only counts as up when
+ *               the sign-in itself succeeds, not merely when the page loads.
  *
  * Absent means `website`, so monitors created before this existed keep working.
  */
-export type MonitorType = 'website' | 'health'
+export type MonitorType = 'website' | 'health' | 'login'
 
 export interface Monitor {
   id: string
@@ -24,6 +27,26 @@ export interface Monitor {
   type?: MonitorType
   /** ISO timestamp, set when the monitor was added through the dashboard. */
   createdAt?: string
+  /**
+   * `login` monitors only, all optional. Credentials themselves are never
+   * stored here — see `PORTAL_CREDENTIALS` in scripts/monitor.ts.
+   */
+  /** POST target for the sign-in form, when it differs from `url`. Defaults to `url`. */
+  loginUrl?: string
+  /**
+   * How the credentials are submitted: `form` (application/x-www-form-urlencoded,
+   * for a classic server-rendered login form) or `json` (a JSON body, for an
+   * API-driven single-page app). Defaults to `form`.
+   */
+  loginBodyType?: 'form' | 'json'
+  /** Field name for the username/login, in the form body or JSON body. Defaults to "username". */
+  usernameField?: string
+  /** Field name for the password, in the form body or JSON body. Defaults to "password". */
+  passwordField?: string
+  /** Substring required in the response for a sign-in to count as successful. */
+  successText?: string
+  /** Substring whose presence in the response marks the sign-in as failed. */
+  failureText?: string
 }
 
 export interface MonitorsFile {

@@ -1,7 +1,13 @@
 import 'server-only'
 
 import { readJsonFile, updateJsonFile } from '@/lib/github'
-import { isValidMonitorId, validateMonitorName, validateMonitorUrl } from '@/lib/security'
+import {
+  isValidMonitorId,
+  validateFieldName,
+  validateMatchText,
+  validateMonitorName,
+  validateMonitorUrl,
+} from '@/lib/security'
 import { hostnameOf, slugify } from '@/lib/utils'
 import type {
   HistoryEntry,
@@ -94,8 +100,15 @@ function uniqueId(base: string, taken: Set<string>): string {
 export interface AddMonitorInput {
   url: unknown
   name?: unknown
-  /** 'website' (default) or 'health'. */
+  /** 'website' (default), 'health' or 'login'. */
   type?: unknown
+  /** 'login' monitors only — see the matching fields on `Monitor`. */
+  loginUrl?: unknown
+  loginBodyType?: unknown
+  usernameField?: unknown
+  passwordField?: unknown
+  successText?: unknown
+  failureText?: unknown
 }
 
 export type MutationResult =
@@ -114,10 +127,56 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
   if (!nameCheck.ok) return { ok: false, error: nameCheck.error!, status: 400 }
   const name = nameCheck.name!
 
-  if (input.type !== undefined && input.type !== 'website' && input.type !== 'health') {
-    return { ok: false, error: 'type must be "website" or "health"', status: 400 }
+  if (
+    input.type !== undefined &&
+    input.type !== 'website' &&
+    input.type !== 'health' &&
+    input.type !== 'login'
+  ) {
+    return { ok: false, error: 'type must be "website", "health" or "login"', status: 400 }
   }
-  const type: MonitorType = input.type === 'health' ? 'health' : 'website'
+  const type: MonitorType =
+    input.type === 'health' ? 'health' : input.type === 'login' ? 'login' : 'website'
+
+  let loginFields: Pick<
+    Monitor,
+    'loginUrl' | 'loginBodyType' | 'usernameField' | 'passwordField' | 'successText' | 'failureText'
+  > = {}
+  if (type === 'login') {
+    const loginUrlCheck =
+      input.loginUrl === undefined || input.loginUrl === '' || input.loginUrl === null
+        ? { ok: true as const, url: undefined }
+        : validateMonitorUrl(input.loginUrl)
+    if (!loginUrlCheck.ok) return { ok: false, error: `Login URL: ${loginUrlCheck.error}`, status: 400 }
+
+    if (
+      input.loginBodyType !== undefined &&
+      input.loginBodyType !== '' &&
+      input.loginBodyType !== 'form' &&
+      input.loginBodyType !== 'json'
+    ) {
+      return { ok: false, error: 'loginBodyType must be "form" or "json"', status: 400 }
+    }
+    const loginBodyType = input.loginBodyType === 'json' ? 'json' : undefined
+
+    const usernameFieldCheck = validateFieldName(input.usernameField, 'Username field')
+    if (!usernameFieldCheck.ok) return { ok: false, error: usernameFieldCheck.error!, status: 400 }
+    const passwordFieldCheck = validateFieldName(input.passwordField, 'Password field')
+    if (!passwordFieldCheck.ok) return { ok: false, error: passwordFieldCheck.error!, status: 400 }
+    const successTextCheck = validateMatchText(input.successText, 'Success text')
+    if (!successTextCheck.ok) return { ok: false, error: successTextCheck.error!, status: 400 }
+    const failureTextCheck = validateMatchText(input.failureText, 'Failure text')
+    if (!failureTextCheck.ok) return { ok: false, error: failureTextCheck.error!, status: 400 }
+
+    loginFields = {
+      ...(loginUrlCheck.url ? { loginUrl: loginUrlCheck.url } : {}),
+      ...(loginBodyType ? { loginBodyType } : {}),
+      ...(usernameFieldCheck.name ? { usernameField: usernameFieldCheck.name } : {}),
+      ...(passwordFieldCheck.name ? { passwordField: passwordFieldCheck.name } : {}),
+      ...(successTextCheck.text ? { successText: successTextCheck.text } : {}),
+      ...(failureTextCheck.text ? { failureText: failureTextCheck.text } : {}),
+    }
+  }
 
   let created: Monitor | null = null
   let failure: { error: string; status: number } | null = null
@@ -145,13 +204,14 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
         name,
         url,
         enabled: true,
-        ...(type === 'health' ? { type } : {}),
+        ...(type !== 'website' ? { type } : {}),
+        ...loginFields,
         createdAt: new Date().toISOString(),
       }
       created = monitor
       return { monitors: [...monitors, monitor] }
     },
-    `chore(monitors): add ${type === 'health' ? 'health check' : 'website'} ${name}`,
+    `chore(monitors): add ${type === 'health' ? 'health check' : type === 'login' ? 'login check' : 'website'} ${name}`,
   )
 
   if (failure) return { ok: false, ...(failure as { error: string; status: number }) }
