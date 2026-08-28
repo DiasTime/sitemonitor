@@ -130,40 +130,40 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 6
+      "failedChecks": 12
     },
     {
       "id": "sharyn-kz-2026-08-28T06:35:54.458Z",
       "monitorId": "sharyn-kz",
       "startedAt": "2026-08-28T06:35:54.458Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-28T07:02:21.402Z",
+      "durationMs": 1586944,
+      "status": "resolved",
       "statusCode": null,
       "error": "No credentials configured for \"sharyn-kz\" in PORTAL_CREDENTIALS",
-      "failedChecks": 1
+      "failedChecks": 6
     },
     {
       "id": "darynast-kz-2026-08-28T06:35:54.458Z",
       "monitorId": "darynast-kz",
       "startedAt": "2026-08-28T06:35:54.458Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-28T07:02:21.402Z",
+      "durationMs": 1586944,
+      "status": "resolved",
       "statusCode": null,
       "error": "No credentials configured for \"darynast-kz\" in PORTAL_CREDENTIALS",
-      "failedChecks": 1
+      "failedChecks": 6
     },
     {
       "id": "megapolisast-kz-2026-08-28T06:35:54.458Z",
       "monitorId": "megapolisast-kz",
       "startedAt": "2026-08-28T06:35:54.458Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-28T07:02:21.402Z",
+      "durationMs": 1586944,
+      "status": "resolved",
       "statusCode": null,
       "error": "No credentials configured for \"megapolisast-kz\" in PORTAL_CREDENTIALS",
-      "failedChecks": 1
+      "failedChecks": 6
     }
   ]
 }
