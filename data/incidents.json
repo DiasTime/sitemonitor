@@ -125,12 +125,12 @@
       "id": "zhanaurpaq-kz-2026-08-27T11:09:12.951Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-08-27T11:09:12.951Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-29T13:00:55.176Z",
+      "durationMs": 179502225,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 18
+      "failedChecks": 19
     },
     {
       "id": "sharyn-kz-2026-08-28T06:35:54.458Z",
@@ -174,7 +174,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 6
+      "failedChecks": 8
     }
   ]
 }
