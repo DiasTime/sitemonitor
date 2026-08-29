@@ -174,7 +174,18 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 8
+      "failedChecks": 10
+    },
+    {
+      "id": "sharyn-kz-2026-08-29T17:32:59.281Z",
+      "monitorId": "sharyn-kz",
+      "startedAt": "2026-08-29T17:32:59.281Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Connection timeout",
+      "failedChecks": 1
     }
   ]
 }
