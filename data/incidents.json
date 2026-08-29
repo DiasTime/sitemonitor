@@ -174,7 +174,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 12
+      "failedChecks": 14
     },
     {
       "id": "sharyn-kz-2026-08-29T17:32:59.281Z",
@@ -185,7 +185,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 3
+      "failedChecks": 5
     }
   ]
 }
