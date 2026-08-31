@@ -169,12 +169,12 @@
       "id": "olen-vms-svoydom-kz-2-2026-08-28T07:03:21.401Z",
       "monitorId": "olen-vms-svoydom-kz-2",
       "startedAt": "2026-08-28T07:03:21.401Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-08-31T10:59:50.058Z",
+      "durationMs": 273388657,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 29
+      "failedChecks": 30
     },
     {
       "id": "sharyn-kz-2026-08-29T17:32:59.281Z",
@@ -185,7 +185,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 20
+      "failedChecks": 22
     }
   ]
 }
