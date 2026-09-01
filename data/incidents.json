@@ -185,7 +185,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 27
+      "failedChecks": 29
     },
     {
       "id": "olen-vms-svoydom-kz-2-2026-08-31T21:46:15.286Z",
@@ -196,7 +196,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 3
+      "failedChecks": 5
     }
   ]
 }
