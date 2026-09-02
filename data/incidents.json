@@ -207,7 +207,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 3
+      "failedChecks": 4
     },
     {
       "id": "zhanaurpaq-kz-2026-09-02T08:32:09.986Z",
@@ -218,15 +218,15 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 1
+      "failedChecks": 2
     },
     {
       "id": "baimura-vms-svoydom-kz-2026-09-02T08:32:09.986Z",
       "monitorId": "baimura-vms-svoydom-kz",
       "startedAt": "2026-09-02T08:32:09.986Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-02T08:33:10.005Z",
+      "durationMs": 60019,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection timeout",
       "failedChecks": 1
