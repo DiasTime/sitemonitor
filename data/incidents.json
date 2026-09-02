@@ -207,15 +207,15 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 4
+      "failedChecks": 5
     },
     {
       "id": "zhanaurpaq-kz-2026-09-02T08:32:09.986Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-09-02T08:32:09.986Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-02T08:40:44.670Z",
+      "durationMs": 514684,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection timeout",
       "failedChecks": 2
