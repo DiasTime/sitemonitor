@@ -202,12 +202,12 @@
       "id": "olen-vms-svoydom-kz-2-2026-09-02T03:28:32.266Z",
       "monitorId": "olen-vms-svoydom-kz-2",
       "startedAt": "2026-09-02T03:28:32.266Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-06T10:29:46.200Z",
+      "durationMs": 370873934,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 56
+      "failedChecks": 58
     },
     {
       "id": "zhanaurpaq-kz-2026-09-02T08:32:09.986Z",
@@ -235,12 +235,12 @@
       "id": "baimura-vms-svoydom-kz-2026-09-04T20:26:45.516Z",
       "monitorId": "baimura-vms-svoydom-kz",
       "startedAt": "2026-09-04T20:26:45.516Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-06T10:29:46.200Z",
+      "durationMs": 136980684,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 23
+      "failedChecks": 25
     },
     {
       "id": "zhanaurpaq-kz-2026-09-05T00:41:27.930Z",
@@ -251,18 +251,18 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 19
+      "failedChecks": 22
     },
     {
       "id": "megapolisast-kz-2026-09-05T00:41:27.930Z",
       "monitorId": "megapolisast-kz",
       "startedAt": "2026-09-05T00:41:27.930Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-06T10:29:46.200Z",
+      "durationMs": 121698270,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection reset by peer",
-      "failedChecks": 19
+      "failedChecks": 21
     }
   ]
 }
