@@ -207,7 +207,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 54
+      "failedChecks": 56
     },
     {
       "id": "zhanaurpaq-kz-2026-09-02T08:32:09.986Z",
@@ -240,7 +240,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 21
+      "failedChecks": 23
     },
     {
       "id": "zhanaurpaq-kz-2026-09-05T00:41:27.930Z",
@@ -251,7 +251,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 17
+      "failedChecks": 19
     },
     {
       "id": "megapolisast-kz-2026-09-05T00:41:27.930Z",
@@ -262,7 +262,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection reset by peer",
-      "failedChecks": 17
+      "failedChecks": 19
     }
   ]
 }
