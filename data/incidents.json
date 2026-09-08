@@ -246,12 +246,12 @@
       "id": "zhanaurpaq-kz-2026-09-05T00:41:27.930Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-09-05T00:41:27.930Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-08T07:16:41.244Z",
+      "durationMs": 282913314,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 47
+      "failedChecks": 48
     },
     {
       "id": "megapolisast-kz-2026-09-05T00:41:27.930Z",
