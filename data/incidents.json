@@ -263,6 +263,17 @@
       "statusCode": null,
       "error": "Connection reset by peer",
       "failedChecks": 21
+    },
+    {
+      "id": "zhanaurpaq-kz-2026-09-08T21:39:22.772Z",
+      "monitorId": "zhanaurpaq-kz",
+      "startedAt": "2026-09-08T21:39:22.772Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1
     }
   ]
 }
