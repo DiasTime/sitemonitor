@@ -295,7 +295,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection reset by peer",
-      "failedChecks": 1
+      "failedChecks": 3
     },
     {
       "id": "olen-vms-svoydom-kz-2-2026-09-12T12:42:47.919Z",
@@ -306,7 +306,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1
+      "failedChecks": 3
     }
   ]
 }
