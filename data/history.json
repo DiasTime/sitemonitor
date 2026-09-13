@@ -26599,6 +26599,102 @@
       "statusCode": 200,
       "responseTime": 1956,
       "error": null
+    },
+    {
+      "timestamp": "2026-09-13T09:16:22.195Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 784,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-13T09:16:22.195Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1141,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-13T09:16:22.195Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1086,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-13T09:16:22.195Z",
+      "monitorId": "megapolisast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "Connection reset by peer"
+    },
+    {
+      "timestamp": "2026-09-13T09:16:22.195Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 1305,
+      "error": "HTTP 502"
+    },
+    {
+      "timestamp": "2026-09-13T09:16:22.195Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1333,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-13T14:09:13.675Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1185,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-13T14:09:13.675Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 2116,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-13T14:09:13.675Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 1114,
+      "error": "HTTP 502"
+    },
+    {
+      "timestamp": "2026-09-13T14:09:13.675Z",
+      "monitorId": "megapolisast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "Connection reset by peer"
+    },
+    {
+      "timestamp": "2026-09-13T14:09:13.675Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 1604,
+      "error": "HTTP 502"
+    },
+    {
+      "timestamp": "2026-09-13T14:09:13.675Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1754,
+      "error": null
     }
   ]
 }

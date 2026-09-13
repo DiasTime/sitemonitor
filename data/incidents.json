@@ -295,7 +295,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection reset by peer",
-      "failedChecks": 13
+      "failedChecks": 15
     },
     {
       "id": "olen-vms-svoydom-kz-2-2026-09-12T12:42:47.919Z",
@@ -306,7 +306,18 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 13
+      "failedChecks": 15
+    },
+    {
+      "id": "zhanaurpaq-kz-2026-09-13T14:09:13.675Z",
+      "monitorId": "zhanaurpaq-kz",
+      "startedAt": "2026-09-13T14:09:13.675Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1
     }
   ]
 }
