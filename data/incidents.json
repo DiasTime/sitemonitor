@@ -290,12 +290,12 @@
       "id": "megapolisast-kz-2026-09-12T12:42:47.919Z",
       "monitorId": "megapolisast-kz",
       "startedAt": "2026-09-12T12:42:47.919Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-14T04:35:32.350Z",
+      "durationMs": 143564431,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection reset by peer",
-      "failedChecks": 23
+      "failedChecks": 24
     },
     {
       "id": "olen-vms-svoydom-kz-2-2026-09-12T12:42:47.919Z",
@@ -306,18 +306,18 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 23
+      "failedChecks": 25
     },
     {
       "id": "zhanaurpaq-kz-2026-09-13T14:09:13.675Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-09-13T14:09:13.675Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-14T04:35:32.350Z",
+      "durationMs": 51978675,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 9
+      "failedChecks": 10
     }
   ]
 }
