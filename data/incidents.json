@@ -306,7 +306,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 29
+      "failedChecks": 31
     },
     {
       "id": "zhanaurpaq-kz-2026-09-13T14:09:13.675Z",
@@ -323,23 +323,23 @@
       "id": "zhanaurpaq-kz-2026-09-14T12:18:32.538Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-09-14T12:18:32.538Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-14T18:24:40.223Z",
+      "durationMs": 21967685,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1
+      "failedChecks": 2
     },
     {
       "id": "megapolisast-kz-2026-09-14T12:18:32.538Z",
       "monitorId": "megapolisast-kz",
       "startedAt": "2026-09-14T12:18:32.538Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-14T18:24:40.223Z",
+      "durationMs": 21967685,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 1
+      "failedChecks": 2
     }
   ]
 }
