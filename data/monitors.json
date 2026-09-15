@@ -45,6 +45,17 @@
       "createdAt": "2026-08-19T11:52:17.833Z"
     },
     {
+      "id": "anarast-kz",
+      "name": "Anar",
+      "url": "https://anarast.kz/login",
+      "enabled": true,
+      "type": "login",
+      "loginUrl": "https://anarast.kz/api/auth/login",
+      "loginBodyType": "json",
+      "successText": "accessToken",
+      "createdAt": "2026-09-15T05:53:36.823Z"
+    },
+    {
       "id": "olen-vms-svoydom-kz-2",
       "name": "OLEN VMS",
       "url": "https://olen.vms.svoydom.kz/api/health",
