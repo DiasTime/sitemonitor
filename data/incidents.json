@@ -306,7 +306,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 33
+      "failedChecks": 35
     },
     {
       "id": "zhanaurpaq-kz-2026-09-13T14:09:13.675Z",
@@ -340,6 +340,17 @@
       "statusCode": null,
       "error": "Connection timeout",
       "failedChecks": 2
+    },
+    {
+      "id": "megapolisast-kz-2026-09-15T01:15:11.136Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-09-15T01:15:11.136Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Connection timeout",
+      "failedChecks": 1
     }
   ]
 }
