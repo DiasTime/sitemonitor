@@ -1,102 +1,6 @@
 {
   "entries": [
     {
-      "timestamp": "2026-08-19T22:27:00.421Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 915,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:27:00.421Z",
-      "monitorId": "darynast-kz",
-      "status": "DOWN",
-      "statusCode": null,
-      "responseTime": null,
-      "error": "Connection reset by peer"
-    },
-    {
-      "timestamp": "2026-08-19T22:27:00.421Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1235,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:27:00.421Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1450,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:27:00.421Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1360,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:27:00.421Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1442,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:28:00.430Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 801,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:28:00.430Z",
-      "monitorId": "darynast-kz",
-      "status": "DOWN",
-      "statusCode": null,
-      "responseTime": null,
-      "error": "Connection reset by peer"
-    },
-    {
-      "timestamp": "2026-08-19T22:28:00.430Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1219,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:28:00.430Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1394,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:28:00.430Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1356,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T22:28:00.430Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1394,
-      "error": null
-    },
-    {
       "timestamp": "2026-08-19T23:24:52.277Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -29374,6 +29278,62 @@
       "status": "UP",
       "statusCode": 200,
       "responseTime": 1534,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-18T22:40:41.118Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 974,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-18T22:40:41.118Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1151,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-18T22:40:41.118Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1480,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-18T22:40:41.118Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1007,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-18T22:40:41.118Z",
+      "monitorId": "anarast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1210,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-18T22:40:41.118Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1399,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-18T22:40:41.118Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1611,
       "error": null
     }
   ]
