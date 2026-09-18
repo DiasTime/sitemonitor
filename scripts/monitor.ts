@@ -82,6 +82,19 @@ const COMMIT_INTERVAL_MINUTES = numberFromEnv('COMMIT_INTERVAL_MINUTES', 30)
 const BUFFER_MAX_ENTRIES = numberFromEnv('BUFFER_MAX_ENTRIES', 5_000)
 
 /**
+ * How long a gap in checking has to be before the run reports it.
+ *
+ * A stalled schedule is the one failure this tool cannot see from the outside:
+ * every monitor keeps its last known status, the dashboard keeps showing it,
+ * and an hour nobody checked looks exactly like an hour when everything was
+ * fine. GitHub drops scheduled ticks often enough that this is not theoretical
+ * — it ran at a third of its schedule here for three weeks, unnoticed. So a
+ * gap is announced like an outage, because that is what it is: a window with
+ * no monitoring at all.
+ */
+const STALE_AFTER_MINUTES = numberFromEnv('STALE_AFTER_MINUTES', 90)
+
+/**
  * How long one workflow run keeps checking, in minutes.
  *
  * GitHub's scheduler does not honour a three-minute cron — in practice it fires every
@@ -1128,6 +1141,24 @@ function recoveryMessage(monitor: Monitor, result: CheckResult, downtimeMs: numb
   return lines.join('\n')
 }
 
+function monitoringGapMessage(gapMs: number, lastCheckIso: string, nowIso: string): string {
+  return [
+    '⚠️ MONITORING GAP',
+    '',
+    'Nothing was checked for:',
+    formatDuration(gapMs),
+    '',
+    'Last check before the gap:',
+    formatFullTimestamp(lastCheckIso),
+    '',
+    'Checking resumed:',
+    formatFullTimestamp(nowIso),
+    '',
+    'Any outage inside that window went undetected — the statuses below it are',
+    'older than they look.',
+  ].join('\n')
+}
+
 // ---------------------------------------------------------------------------
 // Aggregation
 // ---------------------------------------------------------------------------
@@ -1438,20 +1469,49 @@ async function runOnce(): Promise<void> {
     subscribersChanged
 
   // --- notifications (always immediate, commit or not) ---------------------
+  const notify = async (message: string): Promise<void> => {
+    const dead = await broadcast(subscribers, message)
+    if (!dead.length) return
+    subscribers = {
+      ...subscribers,
+      subscribers: subscribers.subscribers.filter((entry) => !dead.includes(entry.chatId)),
+    }
+    subscribersChanged = true
+  }
+
+  // A gap in checking is reported before anything else, because it changes how
+  // to read everything else: the statuses this run is about to replace were
+  // last confirmed before the gap, not during it.
+  //
+  // The newest of the three records of "when a check last happened" is used —
+  // status.json (written on every commit), the tail of history.json, and the
+  // between-commit buffer — so a run that only buffered still counts as
+  // coverage, and a lost buffer cache cannot invent a gap on its own.
+  const historyEntries = historyRead.data.entries ?? []
+  const previousCheckAt = [
+    statusRead.data.updatedAt,
+    historyEntries[historyEntries.length - 1]?.timestamp,
+    ...bufferedEntries.map((entry) => entry.timestamp),
+  ].reduce((latest, value) => {
+    const time = value ? new Date(value).getTime() : Number.NaN
+    return Number.isFinite(time) && time > latest ? time : latest
+  }, 0)
+
+  const gapMs = previousCheckAt ? startedAt - previousCheckAt : 0
+  if (gapMs > STALE_AFTER_MINUTES * 60_000) {
+    log(`  Telegram: MONITORING GAP — ${formatDuration(gapMs)} with no checks`)
+    await notify(
+      monitoringGapMessage(gapMs, new Date(previousCheckAt).toISOString(), timestamp),
+    )
+  }
+
   for (const transition of transitions) {
     const message =
       transition.kind === 'down'
         ? downMessage(transition.monitor, transition.result)
         : recoveryMessage(transition.monitor, transition.result, transition.downtimeMs ?? 0)
     log(`  Telegram: ${transition.kind === 'down' ? 'DOWN' : 'RECOVERED'} — ${transition.monitor.name}`)
-    const dead = await broadcast(subscribers, message)
-    if (dead.length) {
-      subscribers = {
-        ...subscribers,
-        subscribers: subscribers.subscribers.filter((entry) => !dead.includes(entry.chatId)),
-      }
-      subscribersChanged = true
-    }
+    await notify(message)
   }
 
   // --- persist -------------------------------------------------------------

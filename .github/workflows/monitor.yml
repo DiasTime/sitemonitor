@@ -2,14 +2,20 @@ name: Website Monitor
 
 on:
   schedule:
-    # Hourly, not every three minutes.
+    # Three offset ticks an hour, to get one real run an hour.
     #
-    # GitHub's scheduler does not honour short crons: a "*/3" schedule was
-    # observed firing every 20-60 minutes, silently dropping the ticks between.
-    # Hourly schedules are honoured reliably, so the run itself does the
-    # three-minute checking (see LOOP_MINUTES below) instead of asking the
-    # scheduler for it.
-    - cron: "0 * * * *"
+    # GitHub's scheduler drops what it cannot serve, and it is not only short
+    # crons that suffer: a plain "0 * * * *" here produced 22-27 runs/day until
+    # 26 Aug and 3-9 runs/day after it — about one tick in three, each started
+    # 0-60 min late. The top of the hour is the most contended slot of all, so
+    # the schedule now asks off the hour and asks three times.
+    #
+    # Asking three times does not mean paying three times: the "Due for a
+    # check?" step below drops any tick that lands too soon after the previous
+    # run, at ~1 minute of runner time instead of a full window.
+    - cron: "7 * * * *"
+    - cron: "27 * * * *"
+    - cron: "47 * * * *"
   workflow_dispatch:
     inputs:
       loop_minutes:
@@ -45,17 +51,62 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The schedule fires more often than the monitor needs, because most
+      # ticks never arrive. This is where the extra ones are given up: a tick
+      # that lands less than MIN_GAP_MINUTES after the last recorded check
+      # exits here, before the expensive steps, and the hour keeps its single
+      # run. Manual and dashboard-triggered runs always go through.
+      - name: Due for a check?
+        id: gate
+        env:
+          MIN_GAP_MINUTES: ${{ vars.MIN_GAP_MINUTES }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          # Every unknown here decides in favour of checking: a gate that fails
+          # closed would take monitoring down over an unreadable timestamp.
+          gap="${MIN_GAP_MINUTES:-45}"
+          case "$gap" in '' | *[!0-9]*) gap=45 ;; esac
+
+          last="$(jq -r '.updatedAt // empty' data/status.json 2>/dev/null || true)"
+          # Not folded into one line: `date -d ""` does not fail, it returns
+          # midnight, which would skip every run in the first 45 minutes of the
+          # day whenever status.json is missing or unreadable.
+          last_epoch=0
+          if [ -n "$last" ]; then
+            last_epoch="$(date -u -d "$last" +%s 2>/dev/null || echo 0)"
+          fi
+
+          if [ "$EVENT_NAME" != "schedule" ] || [ "$last_epoch" -le 0 ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Running (${EVENT_NAME})."
+            exit 0
+          fi
+
+          age=$(( ( $(date -u +%s) - last_epoch ) / 60 ))
+          if [ "$age" -lt "$gap" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Last check was ${age} min ago (< ${gap}) — leaving this hour to the run that already made it."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "Last check was ${age} min ago (>= ${gap}) — running."
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip != 'true'
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
+        if: steps.gate.outputs.skip != 'true'
         run: npm ci
 
       # Carries the between-commit sample buffer from one run to the next, so
       # full resolution is kept without committing on every check.
       - name: Restore sample buffer
+        if: steps.gate.outputs.skip != 'true'
         uses: actions/cache/restore@v4
         with:
           path: .monitor-cache
@@ -65,6 +116,7 @@ jobs:
 
       - name: Check websites
         id: check
+        if: steps.gate.outputs.skip != 'true'
         run: npx tsx scripts/monitor.ts
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -83,20 +135,25 @@ jobs:
           # commits and pushes for itself as soon as a status changes.
           #
           # Deliberately small: runner time is metered on private repositories,
-          # so this is budgeted at ~2 minutes per hour. The interval is 60s
-          # rather than 180s because a 2-minute window at 180s would fit only a
-          # single check. Raise both together via repository variables to buy
-          # more coverage — see the README.
+          # and the schedule above now aims for 24 runs a day rather than 7, so
+          # the per-run window has to come down to pay for the extra runs. At 1
+          # minute this is one check per run — an hourly check, evenly spread.
+          # Raise it (repository variable LOOP_MINUTES) to buy denser coverage
+          # inside the hour, and watch the bill — see the README.
           SEND_TEST_ALERT: ${{ inputs.test_alert }}
-          LOOP_MINUTES: ${{ inputs.loop_minutes || github.event.client_payload.loop_minutes || vars.LOOP_MINUTES || '2' }}
+          LOOP_MINUTES: ${{ inputs.loop_minutes || github.event.client_payload.loop_minutes || vars.LOOP_MINUTES || '1' }}
           LOOP_INTERVAL_SECONDS: ${{ vars.LOOP_INTERVAL_SECONDS || '60' }}
           # Optional tuning — safe to leave unset.
+          # STALE_AFTER_MINUTES: how long a gap in checking has to be before the
+          # run reports it to Telegram. Default 90 — long enough not to fire on
+          # a single late tick, short enough to catch a stalled schedule.
+          STALE_AFTER_MINUTES: ${{ vars.STALE_AFTER_MINUTES }}
           COMMIT_INTERVAL_MINUTES: ${{ vars.COMMIT_INTERVAL_MINUTES }}
           CHECK_TIMEOUT_MS: ${{ vars.CHECK_TIMEOUT_MS }}
           HISTORY_RETENTION_DAYS: ${{ vars.HISTORY_RETENTION_DAYS }}
 
       - name: Save sample buffer
-        if: always()
+        if: always() && steps.gate.outputs.skip != 'true'
         uses: actions/cache/save@v4
         with:
           path: .monitor-cache
@@ -105,7 +162,7 @@ jobs:
       # A looping run pushes as it goes; this catches anything left on disk when
       # the window ends, and is the only commit path when LOOP_MINUTES is 0.
       - name: Commit any remaining results
-        if: always()
+        if: always() && steps.gate.outputs.skip != 'true'
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -134,6 +191,10 @@ jobs:
           {
             echo "### Website Monitor"
             echo ""
+            if [ "${{ steps.gate.outputs.skip }}" = "true" ]; then
+              echo "- Result: skipped — the previous run covered this hour"
+              exit 0
+            fi
             echo "- Result: ${{ steps.check.outputs.summary || 'run did not complete' }}"
             echo "- Last state: ${{ steps.check.outputs.reason || 'n/a' }}"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -222,8 +222,11 @@ your own sites.
 
 **Monitoring — `scripts/monitor.ts`, run by `.github/workflows/monitor.yml`.**
 
-The workflow is scheduled **hourly**, and each run then keeps checking every
-three minutes for 50 minutes before exiting — see
+The schedule asks for a run three times an hour, at `:07`, `:27` and `:47`, and
+the run itself decides whether it is due: anything that lands less than
+`MIN_GAP_MINUTES` (45 by default) after the last recorded check exits straight
+away. GitHub serves only part of what a cron asks for, so asking three times is
+what it takes to get one real run an hour — see
 [why the schedule is hourly](#why-the-schedule-is-hourly). It can also be
 started by hand with `workflow_dispatch`. Each pass:
 
@@ -398,6 +401,31 @@ Response:
 Time:
 19 Aug 2026, 15:48
 ```
+
+**The monitor itself going quiet is also an alert.** If a run starts and the
+last recorded check is more than `STALE_AFTER_MINUTES` old (90 by default), it
+reports the gap before anything else:
+
+```text
+⚠️ MONITORING GAP
+
+Nothing was checked for:
+3 hours 24 minutes
+
+Last check before the gap:
+18 Sept 2026, 08:41 GMT+5
+
+Checking resumed:
+18 Sept 2026, 12:05 GMT+5
+
+Any outage inside that window went undetected — the statuses below it are
+older than they look.
+```
+
+This is the failure that is otherwise invisible: when the schedule stalls, every
+monitor keeps its last known status, the dashboard keeps showing it, and an
+unchecked hour looks exactly like a healthy one. The alert says plainly that the
+green was not measured.
 
 Times in Telegram messages carry their time zone, so an alert is never
 ambiguous. They default to UTC; set the repository variable `DISPLAY_TIMEZONE`
@@ -650,16 +678,39 @@ the ticks it cannot serve — on this repository a three-minute schedule was
 measured firing **4 times in 78 minutes**, at gaps of 31, 21 and 25 minutes. The
 runs all succeeded; GitHub simply never started the others.
 
-So the schedule no longer asks for the interval. It fires **hourly** — a cadence
-GitHub honours reliably — and the run itself does the timing: one job stays
-alive for `LOOP_MINUTES` and checks every `LOOP_INTERVAL_SECONDS`, driven by a
-clock inside the run instead of GitHub's scheduler.
+So the schedule no longer asks for the interval. The run itself does the timing:
+one job stays alive for `LOOP_MINUTES` and checks every `LOOP_INTERVAL_SECONDS`,
+driven by a clock inside the run instead of GitHub's scheduler.
 
-**This deployment is budgeted at 2 minutes of runner time per hour**
-(`LOOP_MINUTES=2`, `LOOP_INTERVAL_SECONDS=60`), which is 2 checks per hour. Note
-what that does and does not buy: a 2-minute window cannot contain three-minute
-checks at all, which is why the interval is 60s here rather than 180s. Raise
-both together to get closer to continuous coverage — see the table below.
+**Hourly is not honoured reliably either.** A plain `cron: "0 * * * *"` produced
+22–27 runs a day until 26 Aug 2026 and 3–9 runs a day after it — about one tick
+in three, each started 0–60 minutes late, with no failed runs and no change on
+this side. Every executed run leaves a commit (the commit interval is 30
+minutes, shorter than the schedule), so the git log doubles as the run log:
+`git log --format='%ad %s' --date=format:'%Y-%m-%d'` counted per day is how the
+gap was measured, and how to re-measure it later.
+
+Hence the current schedule: **three offset ticks an hour** (`:07`, `:27`,
+`:47`), never at the top of the hour, which is the most contended slot. Asking
+three times does not mean paying three times — the **Due for a check?** step
+runs before dependencies are installed and exits at once, for about a minute of
+runner time, whenever the last recorded check is less than `MIN_GAP_MINUTES`
+(45) old. So a served tick either becomes the hour's run or costs a minute, and
+the hour is covered as long as GitHub serves at least one of the three.
+
+Nothing here can make GitHub fire a tick it decided to drop. If the three-tick
+schedule still leaves holes, move the trigger off GitHub entirely: any external
+scheduler that can send an HTTP request once an hour can start this workflow
+through `repository_dispatch` (type `run-check`), which is the same event the
+dashboard's **Run check** button uses.
+
+**This deployment is budgeted at 1 minute of runner time per hour**
+(`LOOP_MINUTES=1`, `LOOP_INTERVAL_SECONDS=60`), which is one check per hour.
+It was 2 while the schedule was delivering ~7 runs a day; now that the schedule
+aims for 24, the window had to come down to pay for the extra runs. Raise
+`LOOP_MINUTES` and `LOOP_INTERVAL_SECONDS` together to get closer to continuous
+coverage — see the table below — and note that a window shorter than
+`LOOP_INTERVAL_SECONDS` fits exactly one check.
 
 A looping run commits and pushes on its own as soon as a status changes, so
 alerts and the dashboard do not wait for the window to end. Set `LOOP_MINUTES`
@@ -685,8 +736,15 @@ minute of runner time:
 | --- | --- | --- |
 | `50` | continuous, at `LOOP_INTERVAL_SECONDS` | ~36,000 |
 | `10` | 10 min of every hour | ~7,300 |
-| `2` (current) | 2 min of every hour — 2 checks | ~1,500 |
-| `0` | one check per hour | ~730 |
+| `2` | 2 min of every hour — 2 checks | ~2,200 |
+| `1` (current) | one check per hour | ~1,500 |
+| `0` | one check per hour, committed by the workflow | ~1,500 |
+
+The window is not the whole bill: checkout, `npm ci` and the push add roughly a
+minute to every run, and the ticks that are served but not due add about a
+minute each. Budget on the order of `(LOOP_MINUTES + 1) × 24 × 30` minutes a
+month, then check the real figure on the billing page after a few days — it is
+the only number that counts.
 
 `LOOP_INTERVAL_SECONDS` must be smaller than the window, or the window fits a
 single check: 2 minutes at the 180s default would be one check per hour, not
@@ -792,8 +850,10 @@ Actions → *Variables*) — all optional:
 | `HISTORY_RETENTION_DAYS` | `30` | How long history is kept |
 | `MAX_HEALTH_BODY_BYTES` | `65536` | How much of a health response is read |
 | `MAX_LOGIN_BODY_BYTES` | `262144` | How much of a login-flow response is read |
-| `LOOP_MINUTES` | `2` | How long one run keeps checking; `0` = one check and exit |
+| `LOOP_MINUTES` | `1` | How long one run keeps checking; `0` = one check and exit |
 | `LOOP_INTERVAL_SECONDS` | `60` | Interval between checks inside a run |
+| `MIN_GAP_MINUTES` | `45` | A scheduled tick landing sooner than this after the last check exits without checking |
+| `STALE_AFTER_MINUTES` | `90` | How long a gap in checking has to be before it is reported to Telegram |
 | `DISPLAY_TIMEZONE` | `UTC` | IANA zone for times in Telegram alerts |
 
 ---
@@ -801,12 +861,17 @@ Actions → *Variables*) — all optional:
 ## 14. Limits and honest caveats
 
 - **The interval is driven by the run, not the schedule.** GitHub will not fire
-  a three-minute cron, so the workflow starts hourly and does its own timing
-  (see [why the schedule is hourly](#why-the-schedule-is-hourly)). At the
-  current `LOOP_MINUTES=2` that means **2 checks per hour**, both inside a
-  2-minute window, and nothing for the remaining 58 minutes. An outage starting
-  just after a window can go unnoticed for nearly an hour. Raise `LOOP_MINUTES`
-  to shrink that gap, at the cost of runner minutes.
+  a three-minute cron, so the workflow starts on an hourly-ish schedule and does
+  its own timing (see [why the schedule is hourly](#why-the-schedule-is-hourly)).
+  At the current `LOOP_MINUTES=1` that means **one check per hour**, and nothing
+  for the other 59 minutes. An outage starting just after a check can go
+  unnoticed for nearly an hour. Raise `LOOP_MINUTES` to shrink that gap, at the
+  cost of runner minutes.
+- **The schedule is GitHub's to keep, and it does not always keep it.** Ticks
+  are dropped without notice — measured here at roughly two in three — which is
+  why three are asked for per hour and why a gap in checking now raises its own
+  Telegram alert. If an hour must genuinely never be missed, trigger the
+  workflow from a scheduler you control via `repository_dispatch` instead.
 - **Runner time is metered on private repositories.** A continuous 50-minute
   window every hour will exceed the free 2,000 minutes/month several times over.
   See [Actions minutes](#actions-minutes).
@@ -895,8 +960,22 @@ re-enable), Actions is disabled for the repository, or you have run out of
 Actions minutes — check <https://github.com/settings/billing>.
 
 **Runs are far apart / checks are less frequent than expected.**
-Look at whether `LOOP_MINUTES` is set low, and remember the gap between hourly
-runs is not covered when it is. See
+Look at whether `LOOP_MINUTES` is set low, and remember the gap between runs is
+not covered when it is. Then count the runs GitHub actually started — every run
+leaves a commit, so
+
+```bash
+git log --format='%ad' --date=format:'%Y-%m-%d' | uniq -c
+```
+
+is a run-per-day histogram. Well under 24 means GitHub is dropping ticks, not
+that the monitor is broken; see
+[why the schedule is hourly](#why-the-schedule-is-hourly).
+
+**A `⚠️ MONITORING GAP` alert arrived.**
+Working as intended: nothing was checked for longer than `STALE_AFTER_MINUTES`,
+and the run that finally happened said so. Usually dropped scheduled ticks. If
+it repeats, move the trigger to a scheduler you control — see
 [why the schedule is hourly](#why-the-schedule-is-hourly).
 
 **Telegram alerts show a time that is not mine.**
