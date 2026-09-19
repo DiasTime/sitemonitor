@@ -1,102 +1,6 @@
 {
   "entries": [
     {
-      "timestamp": "2026-08-19T23:24:52.277Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 949,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:24:52.277Z",
-      "monitorId": "darynast-kz",
-      "status": "DOWN",
-      "statusCode": null,
-      "responseTime": null,
-      "error": "Connection reset by peer"
-    },
-    {
-      "timestamp": "2026-08-19T23:24:52.277Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1415,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:24:52.277Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1695,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:24:52.277Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1429,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:24:52.277Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1527,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:25:52.325Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 931,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:25:52.325Z",
-      "monitorId": "darynast-kz",
-      "status": "DOWN",
-      "statusCode": null,
-      "responseTime": null,
-      "error": "Connection reset by peer"
-    },
-    {
-      "timestamp": "2026-08-19T23:25:52.325Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1263,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:25:52.325Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1278,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:25:52.325Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1188,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-19T23:25:52.325Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1432,
-      "error": null
-    },
-    {
       "timestamp": "2026-08-20T01:20:04.610Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -29334,6 +29238,62 @@
       "status": "UP",
       "statusCode": 200,
       "responseTime": 1611,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T00:40:26.481Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1554,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T00:40:26.481Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1738,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T00:40:26.481Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1661,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T00:40:26.481Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1240,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T00:40:26.481Z",
+      "monitorId": "anarast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1281,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T00:40:26.481Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 2364,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T00:40:26.481Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 3052,
       "error": null
     }
   ]
