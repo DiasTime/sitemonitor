@@ -1,102 +1,6 @@
 {
   "entries": [
     {
-      "timestamp": "2026-08-20T20:30:14.256Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 820,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:30:14.256Z",
-      "monitorId": "darynast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 815,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:30:14.256Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1243,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:30:14.256Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1254,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:30:14.256Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1353,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:30:14.256Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1374,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:31:14.293Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 812,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:31:14.293Z",
-      "monitorId": "darynast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 768,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:31:14.293Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1203,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:31:14.293Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1171,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:31:14.293Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1296,
-      "error": null
-    },
-    {
-      "timestamp": "2026-08-20T20:31:14.293Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1201,
-      "error": null
-    },
-    {
       "timestamp": "2026-08-20T21:29:28.431Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -27686,6 +27590,62 @@
       "status": "UP",
       "statusCode": 200,
       "responseTime": 1648,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T20:31:43.633Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1606,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T20:31:43.633Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1846,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T20:31:43.633Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1743,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T20:31:43.633Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1511,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-19T20:31:43.633Z",
+      "monitorId": "anarast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "Connection timeout"
+    },
+    {
+      "timestamp": "2026-09-19T20:31:43.633Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 1787,
+      "error": "HTTP 502"
+    },
+    {
+      "timestamp": "2026-09-19T20:31:43.633Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1908,
       "error": null
     }
   ]
