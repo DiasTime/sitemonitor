@@ -383,7 +383,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 13
+      "failedChecks": 14
     },
     {
       "id": "anarast-kz-2026-09-19T20:31:43.633Z",
@@ -394,7 +394,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 4
+      "failedChecks": 5
     }
   ]
 }
