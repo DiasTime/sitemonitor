@@ -400,9 +400,9 @@
       "id": "sharyn-kz-2026-09-21T05:08:36.674Z",
       "monitorId": "sharyn-kz",
       "startedAt": "2026-09-21T05:08:36.674Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-21T08:54:23.806Z",
+      "durationMs": 13547132,
+      "status": "resolved",
       "statusCode": null,
       "error": "Connection timeout",
       "failedChecks": 2
