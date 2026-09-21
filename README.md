@@ -1048,8 +1048,37 @@ Checks:
 ```bash
 npm run typecheck
 npm run lint
+npm test
 npm run build
 ```
+
+`.github/workflows/checks.yml` runs the first three on every push and pull
+request that touches something other than `data/`, so the monitor's own hourly
+commits never start a build.
+
+### Tests
+
+`npm test` runs the Node test runner over `tests/*.test.ts` through `tsx`. No
+test framework is installed and none is needed; the suite takes well under a
+second.
+
+What is covered is the judgement, not the plumbing — the decisions that are
+wrong quietly rather than loudly:
+
+| File | What it pins down |
+| --- | --- |
+| `tests/transitions.test.ts` | UP/DOWN transitions, opening and closing incidents, outage duration, reminder scheduling, check totals, untouched disabled monitors |
+| `tests/confirm.test.ts` | Which failures are re-probed and which are believed at once, and how many probes each case costs |
+| `tests/reminders.test.ts` | When an ongoing outage repeats itself |
+| `tests/heartbeat.test.ts` | When a ping starts a run, and the cooldown that stops a burst of them |
+| `tests/security.test.ts` | The SSRF guard: schemes, credentials, internal hostnames, private and reserved addresses |
+| `tests/utils.test.ts` | The text of the alerts — durations, response times, uptime, timestamps and their zone |
+
+The pattern to follow when adding behaviour: put the decision in a pure
+function under `lib/`, and let `scripts/monitor.ts` do the reading, sending and
+committing around it. That is why `lib/transitions.ts` exists apart from the
+script — the script cannot be imported by a test, because importing it runs a
+monitoring pass.
 
 ---
 

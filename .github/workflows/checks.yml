@@ -1,0 +1,46 @@
+name: Checks
+
+# The monitor commits to this repository around the clock, and none of those
+# commits can break anything: they only touch data/. Ignoring that path keeps
+# CI to the pushes a person actually made — which, on a private repository, is
+# also what keeps it off the Actions bill.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/**"
+  pull_request:
+    paths-ignore:
+      - "data/**"
+
+permissions:
+  contents: read
+
+# A newer push makes the previous answer irrelevant.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npm test

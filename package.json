@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "monitor": "tsx scripts/monitor.ts"
+    "monitor": "tsx scripts/monitor.ts",
+    "test": "tsx --test \"tests/*.test.ts\""
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",

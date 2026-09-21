@@ -24,8 +24,8 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 import { confirmFailure } from '../lib/confirm'
-import { isReminderDue } from '../lib/reminders'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
+import { applyResults } from '../lib/transitions'
 import type {
   CheckResult,
   HistoryEntry,
@@ -33,7 +33,6 @@ import type {
   Incident,
   IncidentsFile,
   Monitor,
-  MonitorStatus,
   MonitorsFile,
   ProbeResult,
   StatusFile,
@@ -1376,20 +1375,7 @@ async function runOnce(): Promise<void> {
   const resultById = new Map(results.map((result) => [result.monitorId, result]))
   const monitorById = new Map(monitors.map((monitor) => [monitor.id, monitor]))
 
-  // --- detect transitions --------------------------------------------------
-  interface Transition {
-    monitor: Monitor
-    result: CheckResult
-    kind: 'down' | 'recovered'
-    downtimeMs?: number
-  }
-
-  const transitions: Transition[] = []
-  /** Outages that have been going long enough to be worth repeating. */
-  const reminders: Array<{ monitor: Monitor; incident: Incident; downtimeMs: number }> = []
-  const nextStatus: Record<string, MonitorStatus> = {}
-  let statusChanged = false
-
+  // --- decide what the probes mean ----------------------------------------
   // Entries produced since the last commit: buffered runs plus this one.
   const newEntries: HistoryEntry[] = [
     ...bufferedEntries,
@@ -1403,106 +1389,20 @@ async function runOnce(): Promise<void> {
     })),
   ]
 
+  const { nextStatus, transitions, reminders, statusChanged } = applyResults({
+    monitors,
+    results,
+    previousStatus,
+    incidents,
+    newEntries,
+    timestamp,
+    now: startedAt,
+    reminderIntervalMs: REMINDER_INTERVAL_MS,
+  })
+
   for (const monitor of monitors) {
-    const previous = previousStatus[monitor.id]
     const result = resultById.get(monitor.id)
-
-    // Disabled monitors keep their last known state untouched.
-    if (!result) {
-      if (previous) nextStatus[monitor.id] = previous
-      continue
-    }
-
-    const sinceLastCommit = newEntries.filter((entry) => entry.monitorId === monitor.id)
-    const upCount = sinceLastCommit.filter((entry) => entry.status === 'UP').length
-
-    const changed = !previous || previous.status !== result.status
-    if (changed) statusChanged = true
-
-    if (previous && changed) {
-      if (result.status === 'DOWN') {
-        const incident: Incident = {
-          id: `${monitor.id}-${result.timestamp}`,
-          monitorId: monitor.id,
-          startedAt: result.timestamp,
-          endedAt: null,
-          durationMs: null,
-          status: 'ongoing',
-          statusCode: result.statusCode,
-          error: result.error,
-          failedChecks: 1,
-          lastNotifiedAt: result.timestamp,
-        }
-        incidents.push(incident)
-        transitions.push({ monitor, result, kind: 'down' })
-      } else {
-        const ongoing = [...incidents]
-          .reverse()
-          .find((entry) => entry.monitorId === monitor.id && entry.status === 'ongoing')
-        const startedAt = ongoing ? new Date(ongoing.startedAt).getTime() : new Date(previous.since).getTime()
-        const downtimeMs = Math.max(0, new Date(result.timestamp).getTime() - startedAt)
-        if (ongoing) {
-          ongoing.endedAt = result.timestamp
-          ongoing.durationMs = downtimeMs
-          ongoing.status = 'resolved'
-          ongoing.failedChecks += sinceLastCommit.filter((entry) => entry.status === 'DOWN').length
-        }
-        transitions.push({ monitor, result, kind: 'recovered', downtimeMs })
-      }
-    } else if (previous && result.status === 'DOWN') {
-      // Still down — keep counting failures, and speak up again only once the
-      // reminder interval has passed, so a long outage does not go silent.
-      const ongoing = [...incidents]
-        .reverse()
-        .find((entry) => entry.monitorId === monitor.id && entry.status === 'ongoing')
-      if (ongoing) {
-        ongoing.failedChecks += sinceLastCommit.filter((entry) => entry.status === 'DOWN').length
-
-        if (isReminderDue(ongoing, startedAt, REMINDER_INTERVAL_MS)) {
-          // Marked as told before the message goes out: a Telegram outage must
-          // not turn into a reminder on every run once it comes back.
-          ongoing.lastNotifiedAt = timestamp
-          reminders.push({
-            monitor,
-            incident: ongoing,
-            downtimeMs: Math.max(0, startedAt - new Date(ongoing.startedAt).getTime()),
-          })
-        }
-      }
-    } else if (!previous && result.status === 'DOWN') {
-      // First ever check already fails: open an incident and alert once.
-      incidents.push({
-        id: `${monitor.id}-${result.timestamp}`,
-        monitorId: monitor.id,
-        startedAt: result.timestamp,
-        endedAt: null,
-        durationMs: null,
-        status: 'ongoing',
-        statusCode: result.statusCode,
-        error: result.error,
-        failedChecks: 1,
-        lastNotifiedAt: result.timestamp,
-      })
-      transitions.push({ monitor, result, kind: 'down' })
-    }
-
-    nextStatus[monitor.id] = {
-      id: monitor.id,
-      status: result.status,
-      statusCode: result.statusCode,
-      responseTime: result.responseTime,
-      error: result.error,
-      lastCheck: result.timestamp,
-      since: changed ? result.timestamp : (previous?.since ?? result.timestamp),
-      totalChecks: (previous?.totalChecks ?? 0) + sinceLastCommit.length,
-      totalUp: (previous?.totalUp ?? 0) + upCount,
-      uptime24h: null,
-      uptime7d: null,
-      uptime30d: null,
-      avgResponse24h: null,
-      incidents: 0,
-      reported: result.reported,
-    }
+    if (!result) continue
 
     const symbol = result.status === 'UP' ? 'UP  ' : 'DOWN'
     const detail =
