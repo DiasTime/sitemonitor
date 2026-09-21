@@ -389,12 +389,23 @@
       "id": "anarast-kz-2026-09-19T20:31:43.633Z",
       "monitorId": "anarast-kz",
       "startedAt": "2026-09-19T20:31:43.633Z",
+      "endedAt": "2026-09-21T05:08:36.674Z",
+      "durationMs": 117413041,
+      "status": "resolved",
+      "statusCode": null,
+      "error": "Connection timeout",
+      "failedChecks": 16
+    },
+    {
+      "id": "sharyn-kz-2026-09-21T05:08:36.674Z",
+      "monitorId": "sharyn-kz",
+      "startedAt": "2026-09-21T05:08:36.674Z",
       "endedAt": null,
       "durationMs": null,
       "status": "ongoing",
       "statusCode": null,
       "error": "Connection timeout",
-      "failedChecks": 16
+      "failedChecks": 1
     }
   ]
 }
