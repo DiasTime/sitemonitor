@@ -709,14 +709,28 @@ automatically rather than failing on every future alert.
 
 ## Talking to the bot
 
-The bot understands four commands:
+The bot understands these commands, and offers the common ones as buttons:
 
-| Command | What it does |
-| --- | --- |
-| `/status` | The current board: every enabled monitor, worst first, with how long it has been in that state and when it was last checked |
-| `/start` | Receive alerts in this chat (`/start <passphrase>` when `TELEGRAM_SUBSCRIBE_PASSWORD` is set) |
-| `/stop` | Stop receiving them |
-| `/help` | The list above |
+| Command | Button | What it does |
+| --- | --- | --- |
+| `/status` | 📊 Status | The current board: every enabled monitor, worst first, with how long it has been in that state and when it was last checked |
+| `/check` | 🔄 Check now | Probe every site immediately instead of waiting for the schedule |
+| `/start` | — | Receive alerts in this chat (`/start <passphrase>` when `TELEGRAM_SUBSCRIBE_PASSWORD` is set) |
+| `/stop` | 🔕 Stop alerts | Stop receiving them |
+| `/help` | ❓ Help | The list above |
+| `/menu` | — | Bring the buttons back if they were hidden |
+
+The buttons sit under the input box and stay there. They send ordinary text
+when tapped — that is deliberate: a keyboard that works by sending text works
+whether the bot is being polled by the run or answered by the webhook. The
+board additionally carries **🔄 Refresh** and **▶️ Check now** as inline
+buttons, which need a reply within seconds and are therefore offered only when
+the webhook is registered; refresh rewrites the board in place.
+
+`/check` costs an Actions minute, so a second request within a minute is
+answered with "give it a minute" instead of starting another run. Asked of the
+polled bot, it answers that a check is running already — which is true, since
+a run is what picked the message up.
 
 `/status` answers with the last recorded state — the same data the dashboard
 shows — and says how old it is. If nothing has been checked for longer than
@@ -754,8 +768,11 @@ curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
   -H 'Content-Type: application/json' \
   -d '{"url":"https://your-dashboard.vercel.app/api/telegram",
        "secret_token":"YOUR_TELEGRAM_WEBHOOK_SECRET",
-       "allowed_updates":["message"]}'
+       "allowed_updates":["message","callback_query"]}'
 ```
+
+`callback_query` is what the inline buttons under the board send; leave it out
+and **🔄 Refresh** will do nothing.
 
 3. Optionally give Telegram the command menu, so the bot offers them:
 
@@ -764,8 +781,10 @@ curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setMyCommands" \
   -H 'Content-Type: application/json' \
   -d '{"commands":[
        {"command":"status","description":"How every site is doing"},
+       {"command":"check","description":"Check every site right now"},
        {"command":"start","description":"Receive alerts here"},
        {"command":"stop","description":"Stop receiving alerts"},
+       {"command":"menu","description":"Show the buttons"},
        {"command":"help","description":"What this bot can do"}]}'
 ```
 
@@ -1153,7 +1172,7 @@ wrong quietly rather than loudly:
 | `tests/confirm.test.ts` | Which failures are re-probed and which are believed at once, and how many probes each case costs |
 | `tests/reminders.test.ts` | When an ongoing outage repeats itself |
 | `tests/heartbeat.test.ts` | When a ping starts a run, and the cooldown that stops a burst of them |
-| `tests/telegram.test.ts` | Command parsing, the `/status` board in every state, and the subscriber list |
+| `tests/telegram.test.ts` | Command parsing including button taps, the menu and its callbacks, the `/status` board in every state, and the subscriber list |
 | `tests/security.test.ts` | The SSRF guard: schemes, credentials, internal hostnames, private and reserved addresses |
 | `tests/utils.test.ts` | The text of the alerts — durations, response times, uptime, timestamps and their zone |
 

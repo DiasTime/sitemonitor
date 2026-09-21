@@ -26,8 +26,11 @@ import { fileURLToPath } from 'node:url'
 import { confirmFailure } from '../lib/confirm'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
 import {
+  checkRunningMessage,
   helpMessage,
   identify,
+  mainKeyboard,
+  menuMessage,
   parseCommand,
   passphraseRequiredMessage,
   statusMessage,
@@ -1008,6 +1011,7 @@ async function syncSubscribers(
         chat_id: chat.chatId,
         text: subscribedMessage(),
         disable_web_page_preview: true,
+        reply_markup: mainKeyboard(),
       })
       continue
     }
@@ -1032,6 +1036,8 @@ async function syncSubscribers(
         lastCommitAt: null,
         monitors: {},
       })
+      // No inline buttons here: a "refresh" that only answers when the next
+      // run happens is worse than no button at all. The webhook offers them.
       await telegram('sendMessage', {
         chat_id: chat.chatId,
         text: statusMessage(monitorsFile.monitors ?? [], status, Date.now(), {
@@ -1042,10 +1048,23 @@ async function syncSubscribers(
       continue
     }
 
+    if (command.name === 'check') {
+      // This message is being read by a run that is checking right now, so
+      // asking for a check is already granted.
+      await telegram('sendMessage', { chat_id: chat.chatId, text: checkRunningMessage() })
+      continue
+    }
+
     await telegram('sendMessage', {
       chat_id: chat.chatId,
-      text: command.name === 'help' ? helpMessage() : unknownCommandMessage(),
+      text:
+        command.name === 'help'
+          ? helpMessage()
+          : command.name === 'menu'
+            ? menuMessage()
+            : unknownCommandMessage(),
       disable_web_page_preview: true,
+      reply_markup: mainKeyboard(),
     })
   }
 

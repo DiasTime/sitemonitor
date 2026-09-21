@@ -2,8 +2,12 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import {
+  BUTTONS,
   identify,
+  mainKeyboard,
+  parseCallback,
   parseCommand,
+  statusKeyboard,
   statusMessage,
   subscribe,
   unsubscribe,
@@ -23,6 +27,37 @@ test('a command is recognised however Telegram dressed it up', () => {
     name: 'start',
     argument: 'my passphrase',
   })
+})
+
+test('a tap on the keyboard is the same as typing the command', () => {
+  // Buttons send plain text, which is what lets them work in both the polled
+  // and the webhook-driven bot.
+  assert.deepEqual(parseCommand(BUTTONS.status), { name: 'status', argument: '' })
+  assert.deepEqual(parseCommand(BUTTONS.check), { name: 'check', argument: '' })
+  assert.deepEqual(parseCommand(BUTTONS.help), { name: 'help', argument: '' })
+  assert.deepEqual(parseCommand(BUTTONS.stop), { name: 'stop', argument: '' })
+  assert.deepEqual(parseCommand(` ${BUTTONS.status} `), { name: 'status', argument: '' })
+})
+
+test('every button on the menu is a command the bot answers', () => {
+  const labels = mainKeyboard().keyboard.flat().map((button) => button.text)
+
+  assert.deepEqual(labels, [BUTTONS.status, BUTTONS.check, BUTTONS.help, BUTTONS.stop])
+  for (const label of labels) {
+    assert.ok(parseCommand(label), `${label} parses`)
+  }
+})
+
+test('the board offers refresh and check, and nothing else is accepted', () => {
+  const actions = statusKeyboard().inline_keyboard.flat().map((button) => button.callback_data)
+
+  assert.deepEqual(actions, ['status', 'check'])
+  for (const action of actions) {
+    assert.equal(parseCallback(action), action)
+  }
+  assert.equal(parseCallback('delete-everything'), null)
+  assert.equal(parseCallback(undefined), null)
+  assert.equal(parseCallback(null), null)
 })
 
 test('ordinary chatter is not a command', () => {

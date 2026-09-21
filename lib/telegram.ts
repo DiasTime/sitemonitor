@@ -17,10 +17,20 @@ export interface Command {
   argument: string
 }
 
-/** `/status@SiteMonitorBot now` -> { name: 'status', argument: 'now' } */
+/**
+ * `/status@SiteMonitorBot now` -> { name: 'status', argument: 'now' }
+ *
+ * A tap on the keyboard below arrives as ordinary text, so the button labels
+ * are commands too.
+ */
 export function parseCommand(text: string | null | undefined): Command | null {
   if (typeof text !== 'string') return null
-  const match = /^\/([a-z_]+)(?:@\S+)?\s*([\s\S]*)$/i.exec(text.trim())
+
+  const trimmed = text.trim()
+  const fromButton = BUTTON_COMMANDS.get(trimmed)
+  if (fromButton) return { name: fromButton, argument: '' }
+
+  const match = /^\/([a-z_]+)(?:@\S+)?\s*([\s\S]*)$/i.exec(trimmed)
   if (!match) return null
   return { name: match[1].toLowerCase(), argument: match[2].trim() }
 }
@@ -32,7 +42,8 @@ export function subscribedMessage(): string {
     'You will get a message when a site goes down, another when it comes back, ' +
       'and a reminder while an outage is still going. Nothing in between.',
     '',
-    'Send /status for the current board, /help for everything else.',
+    'The buttons below are always there: the board, a check on demand, and the ' +
+      'way out. /help lists everything.',
   ].join('\n')
 }
 
@@ -49,10 +60,91 @@ export function helpMessage(): string {
     'Site Monitor',
     '',
     '/status — how every monitored site is doing right now',
+    '/check — probe every site immediately, without waiting for the schedule',
     '/start — receive alerts in this chat',
     '/stop — stop receiving them',
+    '/menu — bring the buttons back',
     '/help — this message',
   ].join('\n')
+}
+
+export function menuMessage(): string {
+  return 'Site Monitor. Pick something, or type a command — /help lists them all.'
+}
+
+export function checkStartedMessage(): string {
+  return 'Checking every site now. The board updates in about a minute — /status to see it.'
+}
+
+export function checkBusyMessage(): string {
+  return 'A check was started moments ago. Give it a minute, then /status.'
+}
+
+export function checkRunningMessage(): string {
+  return 'A check is running right now — that is how this message reached you. /status in a minute.'
+}
+
+// ---------------------------------------------------------------------------
+// Buttons
+// ---------------------------------------------------------------------------
+
+/**
+ * The persistent keyboard sits under the input box and sends plain text when
+ * tapped, so it works whether the bot is polled by the run or answered by the
+ * webhook. Inline buttons, which need callbacks answered within seconds, are
+ * only offered by the webhook.
+ */
+export const BUTTONS = {
+  status: '📊 Status',
+  check: '🔄 Check now',
+  help: '❓ Help',
+  stop: '🔕 Stop alerts',
+} as const
+
+/** Button label -> the command it stands for. */
+const BUTTON_COMMANDS = new Map<string, string>([
+  [BUTTONS.status, 'status'],
+  [BUTTONS.check, 'check'],
+  [BUTTONS.help, 'help'],
+  [BUTTONS.stop, 'stop'],
+])
+
+export interface ReplyKeyboard {
+  keyboard: Array<Array<{ text: string }>>
+  resize_keyboard: true
+  is_persistent: true
+}
+
+export interface InlineKeyboard {
+  inline_keyboard: Array<Array<{ text: string; callback_data: string }>>
+}
+
+export function mainKeyboard(): ReplyKeyboard {
+  return {
+    keyboard: [
+      [{ text: BUTTONS.status }, { text: BUTTONS.check }],
+      [{ text: BUTTONS.help }, { text: BUTTONS.stop }],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  }
+}
+
+/** Offered under a board, so it can be refreshed without typing anything. */
+export function statusKeyboard(): InlineKeyboard {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🔄 Refresh', callback_data: 'status' },
+        { text: '▶️ Check now', callback_data: 'check' },
+      ],
+    ],
+  }
+}
+
+/** Callback payloads are free-form strings; only these two mean anything. */
+export function parseCallback(data: string | null | undefined): 'status' | 'check' | null {
+  return data === 'status' || data === 'check' ? data : null
 }
 
 /** Sent when a chat says something that is not a command the bot knows. */
@@ -138,9 +230,18 @@ export interface TelegramMessage {
   from?: { username?: string; first_name?: string }
 }
 
+export interface TelegramCallbackQuery {
+  id: string
+  data?: string
+  message?: TelegramMessage & { message_id: number }
+  from?: { username?: string; first_name?: string }
+}
+
 export interface TelegramUpdate {
   update_id: number
   message?: TelegramMessage
+  /** Only ever delivered to the webhook — an inline button was tapped. */
+  callback_query?: TelegramCallbackQuery
 }
 
 export interface ChatIdentity {
