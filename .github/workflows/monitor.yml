@@ -144,6 +144,12 @@ jobs:
           LOOP_MINUTES: ${{ inputs.loop_minutes || github.event.client_payload.loop_minutes || vars.LOOP_MINUTES || '1' }}
           LOOP_INTERVAL_SECONDS: ${{ vars.LOOP_INTERVAL_SECONDS || '60' }}
           # Optional tuning — safe to leave unset.
+          # CONFIRM_RETRIES: extra probes a failure has to survive before it is
+          # believed (default 2, 0 alerts on the first miss). CONFIRM_DELAY_SECONDS
+          # is the pause between them (default 10). Only failures a second look
+          # could disagree with are retried — never a rejected sign-in.
+          CONFIRM_RETRIES: ${{ vars.CONFIRM_RETRIES }}
+          CONFIRM_DELAY_SECONDS: ${{ vars.CONFIRM_DELAY_SECONDS }}
           # STALE_AFTER_MINUTES: how long a gap in checking has to be before the
           # run reports it to Telegram. Default 90 — long enough not to fire on
           # a single late tick, short enough to catch a stalled schedule.

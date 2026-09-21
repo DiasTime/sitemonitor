@@ -23,6 +23,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
+import { confirmFailure } from '../lib/confirm'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
 import type {
   CheckResult,
@@ -65,8 +66,24 @@ function numberFromEnv(name: string, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? value : fallback
 }
 
+/** Like `numberFromEnv`, but 0 is a meaningful setting rather than "unset". */
+function countFromEnv(name: string, fallback: number): number {
+  const value = Number(process.env[name])
+  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback
+}
+
 /** Per-request timeout. */
 const REQUEST_TIMEOUT_MS = numberFromEnv('CHECK_TIMEOUT_MS', 10_000)
+/**
+ * How many extra probes a failure has to survive before it is believed.
+ *
+ * A single dropped connection used to be enough to open an incident and send
+ * an alert, and with one check an hour that alert then stood for an hour. Set
+ * to 0 to go back to believing the first answer.
+ */
+const CONFIRM_RETRIES = countFromEnv('CONFIRM_RETRIES', 2)
+/** Pause between those probes — long enough to outlast a blip, short enough to fit the run. */
+const CONFIRM_DELAY_MS = numberFromEnv('CONFIRM_DELAY_SECONDS', 10) * 1000
 /** How many sites are probed at the same time. */
 const CONCURRENCY = numberFromEnv('CHECK_CONCURRENCY', 8)
 /** History older than this is dropped on every run. */
@@ -1297,8 +1314,26 @@ async function runOnce(): Promise<void> {
   }
 
   // --- probe every enabled site -------------------------------------------
+  // A failure is probed again before it is believed, so a single dropped
+  // connection does not open an incident. Sites already known to be down are
+  // probed once: the extra looks would change no decision there, and the run
+  // has a budget.
   const results = await mapWithConcurrency(enabled, CONCURRENCY, (monitor) =>
-    checkMonitor(monitor, timestamp),
+    confirmFailure(() => checkMonitor(monitor, timestamp), {
+      retries: CONFIRM_RETRIES,
+      delayMs: CONFIRM_DELAY_MS,
+      confirm: previousStatus[monitor.id]?.status !== 'DOWN',
+      onRetry: (attempt, failure) =>
+        log(
+          `  ? ${monitor.name} — ${failure.error ?? 'failed'}; re-checking ` +
+            `(${attempt}/${CONFIRM_RETRIES}) in ${Math.round(CONFIRM_DELAY_MS / 1000)}s`,
+        ),
+      onDisagree: (attempt, failure) =>
+        log(
+          `  UP ${monitor.name} — recovered on re-check ${attempt}, ` +
+            `not alerting on "${failure.error ?? 'failure'}"`,
+        ),
+    }),
   )
 
   const resultById = new Map(results.map((result) => [result.monitorId, result]))

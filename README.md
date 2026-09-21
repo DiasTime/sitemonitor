@@ -346,6 +346,28 @@ a message every three minutes:
 15:18 UP     →  🟢 SITE RECOVERED
 ```
 
+**A failure is looked at twice before it counts.** One dropped packet used to be
+enough to open an incident and wake someone up, and at one check an hour that
+alert then stood for an hour. Now a failing check is repeated `CONFIRM_RETRIES`
+times (2) `CONFIRM_DELAY_SECONDS` apart (10), and the outage is only declared if
+it survives all of them. A site that answers on the second probe never reaches
+Telegram at all — the run just notes it:
+
+```text
+? Sharyn — Connection timeout; re-checking (1/2) in 10s
+UP Sharyn — recovered on re-check 1, not alerting on "Connection timeout"
+```
+
+Only failures a second look could honestly disagree with are repeated: a
+timeout, a DNS or TLS error, a 5xx, a 408 or a 429. A considered answer from the
+far end — 404, 401, a sign-in the portal rejected, a health endpoint reporting
+trouble — is believed at once. That distinction is not politeness: repeating a
+rejected sign-in is how portal accounts get locked out. A monitor that is
+already down is probed once too, since two more probes would change no decision.
+
+The cost is time, not money: a newly failing site adds about half a minute to
+the run. Set `CONFIRM_RETRIES=0` to go back to believing the first answer.
+
 **Down, with an HTTP response:**
 
 ```text
@@ -917,6 +939,8 @@ Actions → *Variables*) — all optional:
 | --- | --- | --- |
 | `COMMIT_INTERVAL_MINUTES` | `30` | How often results are committed when nothing changed |
 | `CHECK_TIMEOUT_MS` | `10000` | Per-request timeout |
+| `CONFIRM_RETRIES` | `2` | Extra probes a failure must survive before it counts as DOWN; `0` believes the first answer |
+| `CONFIRM_DELAY_SECONDS` | `10` | Pause between those probes |
 | `HISTORY_RETENTION_DAYS` | `30` | How long history is kept |
 | `MAX_HEALTH_BODY_BYTES` | `65536` | How much of a health response is read |
 | `MAX_LOGIN_BODY_BYTES` | `262144` | How much of a login-flow response is read |
@@ -1042,6 +1066,13 @@ git log --format='%ad' --date=format:'%Y-%m-%d' | uniq -c
 is a run-per-day histogram. Well under 24 means GitHub is dropping ticks, not
 that the monitor is broken; see
 [why the schedule is hourly](#why-the-schedule-is-hourly).
+
+**A site alerted as DOWN and recovered a minute later.**
+A failure now has to survive `CONFIRM_RETRIES` extra probes, so a blip that
+short means the site really was unreachable for all of them. If it keeps
+happening on a site you believe is healthy, the far end is probably slower than
+`CHECK_TIMEOUT_MS` under load — raise that, or raise `CONFIRM_DELAY_SECONDS` so
+the probes are spread wider.
 
 **A `⚠️ MONITORING GAP` alert arrived.**
 Working as intended: nothing was checked for longer than `STALE_AFTER_MINUTES`,
