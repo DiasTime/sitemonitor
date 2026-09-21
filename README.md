@@ -336,6 +336,15 @@ cursor. See [who receives alerts](#who-receives-alerts).
 
 ## 10. Alerting rules
 
+> **Everything the bot says is in Russian** — alerts, replies, buttons and the
+> failure descriptions inside them. The dashboard and the run's own log are in
+> English, because they are read by whoever operates the thing rather than by
+> whoever is on call. The wording lives in two places: `lib/telegram.ts` for
+> the bot, and the message builders at the end of `scripts/monitor.ts` for the
+> alerts, with numbers and dates rendered by `lib/ru.ts`. Nothing branches on
+> that text — what a failure *means* is carried by its `FailureKind`, so the
+> wording can be changed freely.
+
 Messages fire on *transitions*, not on checks. A site that is still down does
 not produce one on every check — only when it changes state, and, while an
 outage lasts, on the reminder interval described below:
@@ -344,10 +353,10 @@ outage lasts, on the reminder interval described below:
 15:00 UP     →  nothing
 15:03 UP     →  nothing
 15:06 UP     →  nothing
-15:09 DOWN   →  🔴 SITE DOWN
+15:09 DOWN   →  🔴 САЙТ НЕ ОТВЕЧАЕТ
 15:12 DOWN   →  nothing
 15:15 DOWN   →  nothing
-15:18 UP     →  🟢 SITE RECOVERED
+15:18 UP     →  🟢 САЙТ СНОВА РАБОТАЕТ
 ```
 
 **A failure is looked at twice before it counts.** One dropped packet used to be
@@ -358,8 +367,8 @@ it survives all of them. A site that answers on the second probe never reaches
 Telegram at all — the run just notes it:
 
 ```text
-? Sharyn — Connection timeout; re-checking (1/2) in 10s
-UP Sharyn — recovered on re-check 1, not alerting on "Connection timeout"
+? Sharyn — Таймаут соединения; re-checking (1/2) in 10s
+UP Sharyn — recovered on re-check 1, not alerting on "Таймаут соединения"
 ```
 
 Only failures a second look could honestly disagree with are repeated: a
@@ -380,23 +389,23 @@ indistinguishable from a healthy night. So every
 repeats itself:
 
 ```text
-🔴 SITE STILL DOWN
+🔴 САЙТ ВСЁ ЕЩЁ НЕ ОТВЕЧАЕТ
 
 ZhanaUrpaq
 
-Down for:
-8 hours 12 minutes
+Не отвечает уже:
+8 часов 12 минут
 
-Since:
-21 Sept 2026, 04:04 GMT+5
+Началось:
+21 сент. 2026 г., 04:04 GMT+5
 
-Failed checks:
-9
+Неудачных проверок:
+9 проверок
 
-Error:
-Connection timeout
+Ошибка:
+Таймаут соединения
 
-URL:
+Адрес:
 https://zhanaurpaq.kz
 ```
 
@@ -410,58 +419,58 @@ again.
 **Down, with an HTTP response:**
 
 ```text
-🔴 SITE DOWN
+🔴 САЙТ НЕ ОТВЕЧАЕТ
 
 Example
 
-URL:
+Адрес:
 https://example.com
 
-Status:
+Ответ:
 HTTP 503
 
-Response:
-2.40 s
+Время ответа:
+2,40 с
 
-Time:
-19 Aug 2026, 15:42
+Время:
+19 авг. 2026 г., 15:42 GMT+5
 ```
 
 **Down, with a transport error:**
 
 ```text
-🔴 SITE DOWN
+🔴 САЙТ НЕ ОТВЕЧАЕТ
 
 Example
 
-URL:
+Адрес:
 https://example.com
 
-Error:
-Connection timeout
+Ошибка:
+Таймаут соединения
 
-Time:
-19 Aug 2026, 15:42
+Время:
+19 авг. 2026 г., 15:42 GMT+5
 ```
 
 **Recovered:**
 
 ```text
-🟢 SITE RECOVERED
+🟢 САЙТ СНОВА РАБОТАЕТ
 
 Example
 
-Downtime:
-6 minutes
+Простой:
+6 минут
 
-Status:
+Ответ:
 HTTP 200
 
-Response:
-183 ms
+Время ответа:
+183 мс
 
-Time:
-19 Aug 2026, 15:48
+Время:
+19 авг. 2026 г., 15:48 GMT+5
 ```
 
 **The monitor itself going quiet is also an alert.** If a run starts and the
@@ -469,19 +478,19 @@ last recorded check is more than `STALE_AFTER_MINUTES` old (90 by default), it
 reports the gap before anything else:
 
 ```text
-⚠️ MONITORING GAP
+⚠️ ПРОПУСК В МОНИТОРИНГЕ
 
-Nothing was checked for:
-3 hours 24 minutes
+Проверок не было:
+3 часа 24 минуты
 
-Last check before the gap:
-18 Sept 2026, 08:41 GMT+5
+Последняя проверка до перерыва:
+18 сент. 2026 г., 08:41 GMT+5
 
-Checking resumed:
-18 Sept 2026, 12:05 GMT+5
+Проверки возобновлены:
+18 сент. 2026 г., 12:05 GMT+5
 
-Any outage inside that window went undetected — the statuses below it are
-older than they look.
+Аварии внутри этого окна остались незамеченными — состояния ниже старше,
+чем кажутся.
 ```
 
 This is the failure that is otherwise invisible: when the schedule stalls, every
@@ -544,21 +553,21 @@ marking it as a health endpoint. The alert then says what was reported, instead
 of a bare "HTTP 200" that would read as if nothing were wrong:
 
 ```text
-🔴 HEALTH CHECK FAILED
+🔴 HEALTH-ПРОВЕРКА НЕ ПРОШЛА
 
 Example API health
 
-URL:
+Адрес:
 https://example.com/api/health
 
-Reported:
+Сообщает:
 degraded
 
-Status:
+Ответ:
 HTTP 200
 
-Time:
-19 Aug 2026, 12:08
+Время:
+19 авг. 2026 г., 12:08 GMT+5
 ```
 
 Details worth knowing:
@@ -660,7 +669,7 @@ lives in `PORTAL_CREDENTIALS` alongside the username and password, never in
 `data/monitors.json`.
 
 A down alert names the platform and the time, exactly like any other monitor,
-just headed `🔴 PORTAL LOGIN FAILED` / `🟢 PORTAL LOGIN RECOVERED` instead of
+just headed `🔴 ВХОД В ПОРТАЛ НЕ РАБОТАЕТ` / `🟢 ВХОД В ПОРТАЛ ВОССТАНОВЛЕН` instead of
 `SITE DOWN` / `SITE RECOVERED`.
 
 For local runs, set `PORTAL_CREDENTIALS` in `.env` (see `.env.example`) before
@@ -713,17 +722,17 @@ The bot understands these commands, and offers the common ones as buttons:
 
 | Command | Button | What it does |
 | --- | --- | --- |
-| `/status` | 📊 Status | The current board: every enabled monitor, worst first, with how long it has been in that state and when it was last checked |
-| `/check` | 🔄 Check now | Probe every site immediately instead of waiting for the schedule |
+| `/status` | 📊 Сводка | The current board: every enabled monitor, worst first, with how long it has been in that state and when it was last checked |
+| `/check` | 🔄 Проверить | Probe every site immediately instead of waiting for the schedule |
 | `/start` | — | Receive alerts in this chat (`/start <passphrase>` when `TELEGRAM_SUBSCRIBE_PASSWORD` is set) |
-| `/stop` | 🔕 Stop alerts | Stop receiving them |
-| `/help` | ❓ Help | The list above |
+| `/stop` | 🔕 Отключить | Stop receiving them |
+| `/help` | ❓ Помощь | The list above |
 | `/menu` | — | Bring the buttons back if they were hidden |
 
 The buttons sit under the input box and stay there. They send ordinary text
 when tapped — that is deliberate: a keyboard that works by sending text works
 whether the bot is being polled by the run or answered by the webhook. The
-board additionally carries **🔄 Refresh** and **▶️ Check now** as inline
+board additionally carries **🔄 Обновить** and **▶️ Проверить** as inline
 buttons, which need a reply within seconds and are therefore offered only when
 the webhook is registered; refresh rewrites the board in place.
 
@@ -738,18 +747,18 @@ shows — and says how old it is. If nothing has been checked for longer than
 when someone thinks to ask:
 
 ```text
-🔴 1 of 3 down
+🔴 Не отвечает 1 из 3
 
 🔴 ZhanaUrpaq
-   down 4 hours · Connection timeout
+   не отвечает 4 часа · Таймаут соединения
 
 🟢 Daryn AST
-   up 12 days · 980 ms · 99.87% 24h
+   работает 12 дней · 980 мс · 99,87% за сутки
 
 🟢 Sharyn
-   up 3 days · 1.21 s · 100.00% 24h
+   работает 3 дня · 1,21 с · 100,00% за сутки
 
-Checked 12 minutes ago — 21 Sept 2026, 12:37 GMT+5
+Проверено 12 минут назад — 21 сент. 2026 г., 12:37 GMT+5
 ```
 
 ### Answering in a second instead of within the hour
@@ -772,7 +781,7 @@ curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 ```
 
 `callback_query` is what the inline buttons under the board send; leave it out
-and **🔄 Refresh** will do nothing.
+and **🔄 Обновить** will do nothing.
 
 3. Optionally give Telegram the command menu, so the bot offers them:
 
@@ -1172,6 +1181,7 @@ wrong quietly rather than loudly:
 | `tests/confirm.test.ts` | Which failures are re-probed and which are believed at once, and how many probes each case costs |
 | `tests/reminders.test.ts` | When an ongoing outage repeats itself |
 | `tests/heartbeat.test.ts` | When a ping starts a run, and the cooldown that stops a burst of them |
+| `tests/ru.test.ts` | Russian agreement — "1 час", "2 часа", "5 часов" — and the formatters the alerts are built from |
 | `tests/telegram.test.ts` | Command parsing including button taps, the menu and its callbacks, the `/status` board in every state, and the subscriber list |
 | `tests/security.test.ts` | The SSRF guard: schemes, credentials, internal hostnames, private and reserved addresses |
 | `tests/utils.test.ts` | The text of the alerts — durations, response times, uptime, timestamps and their zone |

@@ -44,6 +44,7 @@ import {
 import { applyResults } from '../lib/transitions'
 import type {
   CheckResult,
+  FailureKind,
   HistoryEntry,
   HistoryFile,
   Incident,
@@ -54,6 +55,7 @@ import type {
   StatusFile,
   SubscribersFile,
 } from '../lib/types'
+import { formatChecksRu, formatDurationRu, formatResponseTimeRu } from '../lib/ru'
 import {
   formatDuration,
   formatFullTimestamp,
@@ -215,44 +217,55 @@ async function mapWithConcurrency<T, R>(
 // HTTP probing (with SSRF protection)
 // ---------------------------------------------------------------------------
 
-/** Human-readable message for a Node network/TLS error. */
+/**
+ * Human-readable message for a Node network/TLS error.
+ *
+ * Russian, because this text is the body of the alert somebody reads at two in
+ * the morning. What the retry policy does with the failure is decided by its
+ * `FailureKind`, not by these words — see `lib/confirm.ts`.
+ */
 function describeError(error: NodeJS.ErrnoException): string {
   const code = error.code || ''
   switch (code) {
     case 'ETIMEDOUT':
     case 'ESOCKETTIMEDOUT':
     case 'UND_ERR_HEADERS_TIMEOUT':
-      return 'Connection timeout'
+      return 'Таймаут соединения'
     case 'ENOTFOUND':
-      return 'DNS error: host not found'
+      return 'Ошибка DNS: имя не найдено'
     case 'EAI_AGAIN':
-      return 'DNS error: lookup failed'
+      return 'Ошибка DNS: не удалось разрешить имя'
     case 'ECONNREFUSED':
-      return 'Connection refused'
+      return 'Соединение отклонено'
     case 'ECONNRESET':
-      return 'Connection reset by peer'
+      return 'Соединение разорвано удалённой стороной'
     case 'EHOSTUNREACH':
-      return 'Host unreachable'
+      return 'Узел недоступен'
     case 'ENETUNREACH':
-      return 'Network unreachable'
+      return 'Сеть недоступна'
     case 'EPROTO':
     case 'EPIPE':
-      return 'Connection error'
+      return 'Ошибка соединения'
     case 'ERR_TLS_CERT_ALTNAME_INVALID':
-      return 'SSL error: certificate does not match hostname'
+      return 'Ошибка SSL: сертификат выдан на другое имя'
     case 'CERT_HAS_EXPIRED':
-      return 'SSL error: certificate has expired'
+      return 'Ошибка SSL: срок сертификата истёк'
     case 'DEPTH_ZERO_SELF_SIGNED_CERT':
     case 'SELF_SIGNED_CERT_IN_CHAIN':
-      return 'SSL error: self-signed certificate'
+      return 'Ошибка SSL: самоподписанный сертификат'
     case 'UNABLE_TO_VERIFY_LEAF_SIGNATURE':
-      return 'SSL error: certificate could not be verified'
+      return 'Ошибка SSL: сертификат не удалось проверить'
     default:
       if (code.startsWith('ERR_TLS') || code.startsWith('ERR_SSL') || code.includes('CERT')) {
-        return `SSL error: ${code}`
+        return `Ошибка SSL: ${code}`
       }
-      return code ? `${code}: ${error.message}` : error.message || 'Request failed'
+      return code ? `${code}: ${error.message}` : error.message || 'Запрос не выполнен'
   }
+}
+
+/** 5xx, 408 and 429 are the server's own trouble; any other code is its answer. */
+function failureForStatus(statusCode: number): FailureKind {
+  return statusCode >= 500 || statusCode === 408 || statusCode === 429 ? 'server' : 'verdict'
 }
 
 /**
@@ -368,6 +381,7 @@ function probe(url: string, options: { readBody?: boolean } = {}): Promise<Probe
             statusCode,
             responseTime,
             error: codeHealthy ? null : `HTTP ${statusCode}`,
+            failure: codeHealthy ? null : failureForStatus(statusCode),
           })
           return
         }
@@ -384,6 +398,7 @@ function probe(url: string, options: { readBody?: boolean } = {}): Promise<Probe
               statusCode,
               responseTime,
               error: `HTTP ${statusCode}`,
+              failure: failureForStatus(statusCode),
               reported,
             })
             return
@@ -393,7 +408,8 @@ function probe(url: string, options: { readBody?: boolean } = {}): Promise<Probe
               status: 'DOWN',
               statusCode,
               responseTime,
-              error: `Reported status "${reported.slice(0, 60)}"`,
+              error: `Сообщает статус «${reported.slice(0, 60)}»`,
+              failure: 'verdict',
               reported,
             })
             return
@@ -423,19 +439,22 @@ function probe(url: string, options: { readBody?: boolean } = {}): Promise<Probe
         status: 'DOWN',
         statusCode: null,
         responseTime: null,
-        error: 'Connection timeout',
+        error: 'Таймаут соединения',
+        failure: 'transport',
       })
     })
 
     request.on('error', (error: NodeJS.ErrnoException) => {
+      const blocked = error.code === 'EBLOCKEDADDRESS'
       finish({
         status: 'DOWN',
         statusCode: null,
         responseTime: null,
-        error:
-          error.code === 'EBLOCKEDADDRESS'
-            ? 'Blocked: resolves to a private address'
-            : describeError(error),
+        error: blocked
+          ? 'Заблокировано: имя разрешается во внутренний адрес'
+          : describeError(error),
+        // A hostname that resolves inwards will keep resolving inwards.
+        failure: blocked ? 'config' : 'transport',
       })
     })
 
@@ -447,11 +466,14 @@ function probe(url: string, options: { readBody?: boolean } = {}): Promise<Probe
 async function checkUrl(url: string, options: { readBody?: boolean } = {}): Promise<ProbeResult> {
   const validation = validateMonitorUrl(url)
   if (!validation.ok) {
+    // The detail comes from the shared validator, which the dashboard also
+    // shows in English; the alert says plainly what kind of problem it is.
     return {
       status: 'DOWN',
       statusCode: null,
       responseTime: null,
-      error: `Invalid URL: ${validation.error}`,
+      error: `Некорректный адрес: ${validation.error}`,
+      failure: 'config',
     }
   }
   if (isBlockedHostname(new URL(validation.url!).hostname)) {
@@ -459,7 +481,8 @@ async function checkUrl(url: string, options: { readBody?: boolean } = {}): Prom
       status: 'DOWN',
       statusCode: null,
       responseTime: null,
-      error: 'Blocked: internal hostname',
+      error: 'Заблокировано: внутреннее имя узла',
+      failure: 'config',
     }
   }
   return probe(validation.url!, options)
@@ -555,7 +578,7 @@ function rawRequest(
         headers: {},
         body: '',
         responseTime: null,
-        error: 'Connection timeout',
+        error: 'Таймаут соединения',
       })
     })
 
@@ -567,7 +590,7 @@ function rawRequest(
         responseTime: null,
         error:
           error.code === 'EBLOCKEDADDRESS'
-            ? 'Blocked: resolves to a private address'
+            ? 'Заблокировано: имя разрешается во внутренний адрес'
             : describeError(error),
       })
     })
@@ -718,7 +741,8 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
       status: 'DOWN',
       statusCode: null,
       responseTime: null,
-      error: `No credentials configured for "${monitor.id}" in PORTAL_CREDENTIALS`,
+      error: `Нет учётных данных для «${monitor.id}» в PORTAL_CREDENTIALS`,
+      failure: 'config',
       timestamp,
       reported: null,
     }
@@ -732,7 +756,8 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
       status: 'DOWN',
       statusCode: page.statusCode,
       responseTime: page.responseTime,
-      error: page.error ?? 'Could not load the sign-in page',
+      error: page.error ?? 'Не удалось открыть страницу входа',
+      failure: page.statusCode === null ? 'transport' : failureForStatus(page.statusCode),
       timestamp,
       reported: null,
     }
@@ -777,7 +802,8 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
       status: 'DOWN',
       statusCode: submission.statusCode,
       responseTime,
-      error: submission.error ?? 'Sign-in request failed',
+      error: submission.error ?? 'Запрос входа не выполнен',
+      failure: 'transport',
       timestamp,
       reported: null,
     }
@@ -803,6 +829,7 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
       statusCode,
       responseTime,
       error: apiErrorMessage() ?? `HTTP ${statusCode}`,
+      failure: failureForStatus(statusCode),
       timestamp,
       reported: null,
     }
@@ -816,7 +843,8 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
       status: 'DOWN',
       statusCode,
       responseTime,
-      error: `Sign-in failed: matched "${monitor.failureText}"`,
+      error: `Вход не выполнен: в ответе найдено «${monitor.failureText}»`,
+      failure: 'verdict',
       timestamp,
       reported: null,
     }
@@ -829,7 +857,8 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
       status: matched ? 'UP' : 'DOWN',
       statusCode,
       responseTime,
-      error: matched ? null : `Sign-in did not report "${monitor.successText}"`,
+      error: matched ? null : `Во входе не найдено «${monitor.successText}»`,
+      failure: matched ? null : 'verdict',
       timestamp,
       reported: null,
     }
@@ -847,7 +876,16 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
     // 200-with-error-body case the status-code check above would miss).
     const message = apiErrorMessage()
     if (message) {
-      return { monitorId: monitor.id, status: 'DOWN', statusCode, responseTime, error: message, timestamp, reported: null }
+      return {
+        monitorId: monitor.id,
+        status: 'DOWN',
+        statusCode,
+        responseTime,
+        error: message,
+        timestamp,
+        reported: null,
+        failure: 'verdict',
+      }
     }
     return { monitorId: monitor.id, status: 'UP', statusCode, responseTime, error: null, timestamp, reported: null }
   }
@@ -858,7 +896,8 @@ async function checkLoginMonitor(monitor: Monitor, timestamp: string): Promise<C
       status: 'DOWN',
       statusCode,
       responseTime,
-      error: 'Sign-in form was shown again after submitting credentials',
+      error: 'После отправки данных снова показана форма входа',
+      failure: 'verdict',
       timestamp,
       reported: null,
     }
@@ -886,6 +925,7 @@ async function checkMonitor(monitor: Monitor, timestamp: string): Promise<CheckR
     error: result.error,
     timestamp,
     reported: result.reported ?? null,
+    failure: result.failure ?? null,
   }
 }
 
@@ -1137,103 +1177,103 @@ async function broadcast(file: SubscribersFile, text: string): Promise<number[]>
 function downMessage(monitor: Monitor, result: CheckResult): string {
   const heading =
     monitor.type === 'health'
-      ? '🔴 HEALTH CHECK FAILED'
+      ? '🔴 HEALTH-ПРОВЕРКА НЕ ПРОШЛА'
       : monitor.type === 'login'
-        ? '🔴 PORTAL LOGIN FAILED'
-        : '🔴 SITE DOWN'
-  const lines = [heading, '', monitor.name, '', 'URL:', monitor.url, '']
+        ? '🔴 ВХОД В ПОРТАЛ НЕ РАБОТАЕТ'
+        : '🔴 САЙТ НЕ ОТВЕЧАЕТ'
+  const lines = [heading, '', monitor.name, '', 'Адрес:', monitor.url, '']
 
   // A health endpoint that answered 200 but reported trouble: say what it
   // reported, since "HTTP 200" would read as if nothing were wrong.
   if (result.statusCode !== null && result.reported !== null) {
-    lines.push('Reported:', result.reported, '')
-    lines.push('Status:', `HTTP ${result.statusCode}`, '')
-    lines.push('Time:', formatFullTimestamp(result.timestamp))
+    lines.push('Сообщает:', result.reported, '')
+    lines.push('Ответ:', `HTTP ${result.statusCode}`, '')
+    lines.push('Время:', formatFullTimestamp(result.timestamp))
     return lines.join('\n')
   }
 
   if (result.statusCode !== null) {
-    lines.push('Status:', `HTTP ${result.statusCode}`, '')
+    lines.push('Ответ:', `HTTP ${result.statusCode}`, '')
     if (result.responseTime !== null) {
-      lines.push('Response:', formatResponseTime(result.responseTime), '')
+      lines.push('Время ответа:', formatResponseTimeRu(result.responseTime), '')
     }
   } else {
-    lines.push('Error:', result.error ?? 'Request failed', '')
+    lines.push('Ошибка:', result.error ?? 'Запрос не выполнен', '')
   }
 
-  lines.push('Time:', formatFullTimestamp(result.timestamp))
+  lines.push('Время:', formatFullTimestamp(result.timestamp))
   return lines.join('\n')
 }
 
 function recoveryMessage(monitor: Monitor, result: CheckResult, downtimeMs: number): string {
   const lines = [
     monitor.type === 'health'
-      ? '🟢 HEALTH CHECK RECOVERED'
+      ? '🟢 HEALTH-ПРОВЕРКА СНОВА ПРОХОДИТ'
       : monitor.type === 'login'
-        ? '🟢 PORTAL LOGIN RECOVERED'
-        : '🟢 SITE RECOVERED',
+        ? '🟢 ВХОД В ПОРТАЛ ВОССТАНОВЛЕН'
+        : '🟢 САЙТ СНОВА РАБОТАЕТ',
     '',
     monitor.name,
     '',
-    'Downtime:',
-    formatDuration(downtimeMs),
+    'Простой:',
+    formatDurationRu(downtimeMs),
     '',
   ]
 
   if (result.statusCode !== null) {
-    lines.push('Status:', `HTTP ${result.statusCode}`, '')
+    lines.push('Ответ:', `HTTP ${result.statusCode}`, '')
   }
   if (result.responseTime !== null) {
-    lines.push('Response:', formatResponseTime(result.responseTime), '')
+    lines.push('Время ответа:', formatResponseTimeRu(result.responseTime), '')
   }
 
-  lines.push('Time:', formatFullTimestamp(result.timestamp))
+  lines.push('Время:', formatFullTimestamp(result.timestamp))
   return lines.join('\n')
 }
 
 function stillDownMessage(monitor: Monitor, incident: Incident, downtimeMs: number): string {
   const lines = [
     monitor.type === 'health'
-      ? '🔴 HEALTH CHECK STILL FAILING'
+      ? '🔴 HEALTH-ПРОВЕРКА ВСЁ ЕЩЁ НЕ ПРОХОДИТ'
       : monitor.type === 'login'
-        ? '🔴 PORTAL LOGIN STILL FAILING'
-        : '🔴 SITE STILL DOWN',
+        ? '🔴 ВХОД В ПОРТАЛ ВСЁ ЕЩЁ НЕ РАБОТАЕТ'
+        : '🔴 САЙТ ВСЁ ЕЩЁ НЕ ОТВЕЧАЕТ',
     '',
     monitor.name,
     '',
-    'Down for:',
-    formatDuration(downtimeMs),
+    'Не отвечает уже:',
+    formatDurationRu(downtimeMs),
     '',
-    'Since:',
+    'Началось:',
     formatFullTimestamp(incident.startedAt),
     '',
-    'Failed checks:',
-    String(incident.failedChecks),
+    'Неудачных проверок:',
+    formatChecksRu(incident.failedChecks),
     '',
   ]
 
-  if (incident.error) lines.push('Error:', incident.error, '')
-  else if (incident.statusCode !== null) lines.push('Status:', `HTTP ${incident.statusCode}`, '')
+  if (incident.error) lines.push('Ошибка:', incident.error, '')
+  else if (incident.statusCode !== null) lines.push('Ответ:', `HTTP ${incident.statusCode}`, '')
 
-  lines.push('URL:', monitor.url)
+  lines.push('Адрес:', monitor.url)
   return lines.join('\n')
 }
 
 function monitoringGapMessage(gapMs: number, lastCheckIso: string, nowIso: string): string {
   return [
-    '⚠️ MONITORING GAP',
+    '⚠️ ПРОПУСК В МОНИТОРИНГЕ',
     '',
-    'Nothing was checked for:',
-    formatDuration(gapMs),
+    'Проверок не было:',
+    formatDurationRu(gapMs),
     '',
-    'Last check before the gap:',
+    'Последняя проверка до перерыва:',
     formatFullTimestamp(lastCheckIso),
     '',
-    'Checking resumed:',
+    'Проверки возобновлены:',
     formatFullTimestamp(nowIso),
     '',
-    'Any outage inside that window went undetected — the statuses below it are',
-    'older than they look.',
+    'Аварии внутри этого окна остались незамеченными — состояния ниже старше,',
+    'чем кажутся.',
   ].join('\n')
 }
 
@@ -1620,14 +1660,14 @@ async function sendTestAlert(): Promise<void> {
   )
 
   const message = [
-    '🧪 TEST ALERT',
+    '🧪 ТЕСТОВОЕ СООБЩЕНИЕ',
     '',
-    'Site Monitor is wired up and can reach you.',
+    'Site Monitor настроен и может до вас достучаться.',
     '',
-    'This was sent by hand from GitHub Actions.',
-    'Nothing is down.',
+    'Отправлено вручную из GitHub Actions.',
+    'Ничего не упало.',
     '',
-    'Time:',
+    'Время:',
     formatFullTimestamp(new Date().toISOString()),
   ].join('\n')
 

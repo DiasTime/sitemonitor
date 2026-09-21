@@ -44,7 +44,7 @@ test('a host is shown without its scheme or path', () => {
 test('an alert timestamp always carries its zone', () => {
   const iso = '2026-09-21T07:04:00.000Z'
   const almaty = formatFullTimestamp(iso, 'Asia/Almaty')
-  assert.match(almaty, /21 Sept 2026, 12:04 GMT\+5/)
+  assert.match(almaty, /21 сент\. 2026 г\., 12:04 GMT\+5/)
 
   // An unknown zone falls back to UTC rather than to the runner's local time.
   assert.match(formatFullTimestamp(iso, 'Mars/Olympus'), /07:04 UTC/)

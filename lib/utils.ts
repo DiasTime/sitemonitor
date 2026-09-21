@@ -64,11 +64,14 @@ function isValidTimeZone(timeZone: string): boolean {
 }
 
 /**
- * "19 Aug 2026, 15:42 GMT+5" — used in Telegram messages.
+ * "19 авг. 2026 г., 15:42 GMT+5" — used in Telegram messages.
  *
  * Alerts are read by a person in one place, so they are rendered in that
  * person's zone rather than the runner's UTC. The zone is always spelled out:
  * a bare time in an alert is worse than useless when it is five hours off.
+ *
+ * Russian, like the rest of what the bot says; the dashboard renders its own
+ * timestamps in the viewer's locale and does not come through here.
  */
 export function formatFullTimestamp(iso: string, timeZone?: string): string {
   const date = new Date(iso)
@@ -77,7 +80,7 @@ export function formatFullTimestamp(iso: string, timeZone?: string): string {
   const requested = timeZone ?? process.env.DISPLAY_TIMEZONE ?? 'UTC'
   const zone = isValidTimeZone(requested) ? requested : 'UTC'
 
-  const formatted = new Intl.DateTimeFormat('en-GB', {
+  const formatted = new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -87,7 +90,7 @@ export function formatFullTimestamp(iso: string, timeZone?: string): string {
     timeZone: zone,
     timeZoneName: 'short',
   }).format(date)
-  // en-GB renders "19 Aug 2026, 15:42 GMT+5" already; normalise stray commas.
+  // ru-RU renders "19 авг. 2026 г., 15:42 GMT+5" already; normalise stray commas.
   return formatted.replace(/,\s+/, ', ')
 }
 

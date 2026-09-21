@@ -1,5 +1,6 @@
 import type { Monitor, StatusFile, Subscriber, SubscribersFile } from './types'
-import { formatDuration, formatFullTimestamp, formatResponseTime, formatUptime } from './utils'
+import { formatDurationRu, formatResponseTimeRu, formatUptimeRu } from './ru'
+import { formatFullTimestamp } from './utils'
 
 /**
  * What the bot understands, and what it says back.
@@ -37,51 +38,51 @@ export function parseCommand(text: string | null | undefined): Command | null {
 
 export function subscribedMessage(): string {
   return [
-    'Subscribed to Site Monitor alerts.',
+    'Оповещения Site Monitor включены.',
     '',
-    'You will get a message when a site goes down, another when it comes back, ' +
-      'and a reminder while an outage is still going. Nothing in between.',
+    'Придёт сообщение, когда сайт перестанет отвечать, и ещё одно, когда он ' +
+      'вернётся, плюс напоминания, пока авария продолжается. Между этим — тишина.',
     '',
-    'The buttons below are always there: the board, a check on demand, and the ' +
-      'way out. /help lists everything.',
+    'Кнопки снизу всегда на месте: сводка, проверка по требованию и выход. ' +
+      'Полный список команд — /help.',
   ].join('\n')
 }
 
 export function unsubscribedMessage(): string {
-  return 'Unsubscribed. Send /start to subscribe again.'
+  return 'Оповещения отключены. Чтобы включить снова — /start.'
 }
 
 export function passphraseRequiredMessage(): string {
-  return 'This bot is private. Send /start followed by the passphrase to subscribe.'
+  return 'Бот закрытый. Отправьте /start и кодовое слово через пробел.'
 }
 
 export function helpMessage(): string {
   return [
     'Site Monitor',
     '',
-    '/status — how every monitored site is doing right now',
-    '/check — probe every site immediately, without waiting for the schedule',
-    '/start — receive alerts in this chat',
-    '/stop — stop receiving them',
-    '/menu — bring the buttons back',
-    '/help — this message',
+    '/status — как сейчас чувствуют себя все сайты',
+    '/check — проверить все сайты сейчас, не дожидаясь расписания',
+    '/start — получать оповещения в этот чат',
+    '/stop — перестать их получать',
+    '/menu — вернуть кнопки',
+    '/help — это сообщение',
   ].join('\n')
 }
 
 export function menuMessage(): string {
-  return 'Site Monitor. Pick something, or type a command — /help lists them all.'
+  return 'Site Monitor. Нажмите кнопку или наберите команду — список в /help.'
 }
 
 export function checkStartedMessage(): string {
-  return 'Checking every site now. The board updates in about a minute — /status to see it.'
+  return 'Проверяю все сайты. Сводка обновится примерно через минуту — /status.'
 }
 
 export function checkBusyMessage(): string {
-  return 'A check was started moments ago. Give it a minute, then /status.'
+  return 'Проверка запущена только что. Подождите минуту и посмотрите /status.'
 }
 
 export function checkRunningMessage(): string {
-  return 'A check is running right now — that is how this message reached you. /status in a minute.'
+  return 'Проверка идёт прямо сейчас — именно она и принесла это сообщение. /status через минуту.'
 }
 
 // ---------------------------------------------------------------------------
@@ -95,10 +96,10 @@ export function checkRunningMessage(): string {
  * only offered by the webhook.
  */
 export const BUTTONS = {
-  status: '📊 Status',
-  check: '🔄 Check now',
-  help: '❓ Help',
-  stop: '🔕 Stop alerts',
+  status: '📊 Сводка',
+  check: '🔄 Проверить',
+  help: '❓ Помощь',
+  stop: '🔕 Отключить',
 } as const
 
 /** Button label -> the command it stands for. */
@@ -135,8 +136,8 @@ export function statusKeyboard(): InlineKeyboard {
   return {
     inline_keyboard: [
       [
-        { text: '🔄 Refresh', callback_data: 'status' },
-        { text: '▶️ Check now', callback_data: 'check' },
+        { text: '🔄 Обновить', callback_data: 'status' },
+        { text: '▶️ Проверить', callback_data: 'check' },
       ],
     ],
   }
@@ -149,7 +150,7 @@ export function parseCallback(data: string | null | undefined): 'status' | 'chec
 
 /** Sent when a chat says something that is not a command the bot knows. */
 export function unknownCommandMessage(): string {
-  return `Not a command I know.\n\n${helpMessage()}`
+  return `Такой команды я не знаю.\n\n${helpMessage()}`
 }
 
 export interface StatusMessageOptions {
@@ -170,7 +171,7 @@ export function statusMessage(
   options: StatusMessageOptions = {},
 ): string {
   const enabled = monitors.filter((monitor) => monitor.enabled !== false)
-  if (!enabled.length) return 'No monitors configured yet.'
+  if (!enabled.length) return 'Мониторы ещё не настроены.'
 
   const states = status.monitors ?? {}
   const ordered = [...enabled].sort((a, b) => {
@@ -180,7 +181,7 @@ export function statusMessage(
 
   const down = ordered.filter((monitor) => states[monitor.id]?.status === 'DOWN').length
   const lines: string[] = [
-    down ? `🔴 ${down} of ${ordered.length} down` : `🟢 All ${ordered.length} up`,
+    down ? `🔴 Не отвечает ${down} из ${ordered.length}` : `🟢 Работают все ${ordered.length}`,
     '',
   ]
 
@@ -188,22 +189,22 @@ export function statusMessage(
     const state = states[monitor.id]
 
     if (!state) {
-      lines.push(`⚪ ${monitor.name}`, '   not checked yet', '')
+      lines.push(`⚪ ${monitor.name}`, '   ещё не проверялся', '')
       continue
     }
 
-    const held = formatDuration(Math.max(0, now - new Date(state.since).getTime()))
+    const held = formatDurationRu(Math.max(0, now - new Date(state.since).getTime()))
 
     if (state.status === 'DOWN') {
-      const why = state.error ?? (state.statusCode !== null ? `HTTP ${state.statusCode}` : 'failed')
-      lines.push(`🔴 ${monitor.name}`, `   down ${held} · ${why}`, '')
+      const why = state.error ?? (state.statusCode !== null ? `HTTP ${state.statusCode}` : 'не отвечает')
+      lines.push(`🔴 ${monitor.name}`, `   не отвечает ${held} · ${why}`, '')
       continue
     }
 
     const detail = [
-      `up ${held}`,
-      formatResponseTime(state.responseTime),
-      `${formatUptime(state.uptime24h)} 24h`,
+      `работает ${held}`,
+      formatResponseTimeRu(state.responseTime),
+      `${formatUptimeRu(state.uptime24h)} за сутки`,
     ].join(' · ')
     lines.push(`🟢 ${monitor.name}`, `   ${detail}`, '')
   }
@@ -211,14 +212,14 @@ export function statusMessage(
   const checkedAt = status.updatedAt ? new Date(status.updatedAt).getTime() : Number.NaN
   if (Number.isFinite(checkedAt)) {
     const age = Math.max(0, now - checkedAt)
-    lines.push(`Checked ${formatDuration(age)} ago — ${formatFullTimestamp(status.updatedAt, options.timeZone)}`)
+    lines.push(`Проверено ${formatDurationRu(age)} назад — ${formatFullTimestamp(status.updatedAt, options.timeZone)}`)
     // The board is only as true as its last check, and a stalled schedule is
     // exactly when someone thinks to ask.
     if (options.staleAfterMs && age >= options.staleAfterMs) {
-      lines.push('', '⚠️ That is older than it should be — nothing has been checked since.')
+      lines.push('', '⚠️ Это дольше, чем должно быть: с тех пор проверок не было.')
     }
   } else {
-    lines.push('No check has been recorded yet.')
+    lines.push('Ни одной проверки пока не записано.')
   }
 
   return lines.join('\n').trimEnd()

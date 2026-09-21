@@ -18,27 +18,27 @@ import type { CheckResult } from './types'
  * of the transport — or of the server admitting its own trouble — are retried.
  */
 export function isTransientFailure(
-  result: Pick<CheckResult, 'status' | 'statusCode' | 'error'>,
+  result: Pick<CheckResult, 'status' | 'statusCode' | 'failure'>,
 ): boolean {
   if (result.status !== 'DOWN') return false
 
-  // Configuration, not weather. These never become UP by asking again, and for
-  // a login monitor "no credentials" would just repeat a pointless wait.
-  if (/^(Invalid URL|Blocked|No credentials configured)/.test(result.error ?? '')) {
-    return false
-  }
+  // The check itself says what kind of failure this was, so the decision does
+  // not depend on the wording of a message — which is translated.
+  //
+  // `transport`: nothing came back at all. The most common false alarm there
+  // is, and the cheapest to disprove. `server`: the far end admitted trouble
+  // of its own — overloaded, restarting, rate-limiting — and may have finished
+  // by the time we ask again.
+  //
+  // Everything else is either a considered answer from the far end or a
+  // misconfiguration on this one. Asking twice does not make either truer, and
+  // repeating a sign-in the portal just refused is how accounts get locked.
+  if (result.failure) return result.failure === 'transport' || result.failure === 'server'
 
-  // Nothing came back at all: DNS, TLS, connection refused, timeout. The most
-  // common false alarm there is, and the cheapest to disprove.
+  // A result from somewhere that did not say. Judge it the same way, by what
+  // the far end managed to answer.
   if (result.statusCode === null) return true
-
-  // The server answered about itself rather than about the request: overloaded,
-  // restarting, rate-limiting. Worth another look in ten seconds.
   return result.statusCode >= 500 || result.statusCode === 408 || result.statusCode === 429
-
-  // Everything else — 4xx, a sign-in the portal refused, a health endpoint
-  // reporting trouble — is a considered answer from the far end. Asking twice
-  // does not make it truer, and for a sign-in it is actively unsafe.
 }
 
 export interface ConfirmOptions {

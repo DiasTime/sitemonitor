@@ -106,10 +106,10 @@ function board(monitors: Monitor[], states: Record<string, MonitorStatus>, over:
 test('everything healthy reads as one line plus the sites', () => {
   const text = board([monitor()], { site: state() })
 
-  assert.match(text, /^🟢 All 1 up/)
+  assert.match(text, /^🟢 Работают все 1/)
   assert.match(text, /🟢 Site/)
-  assert.match(text, /up 3 days · 1\.21 s · 100\.00% 24h/)
-  assert.match(text, /Checked 12 minutes ago/)
+  assert.match(text, /работает 3 дня · 1,21 с · 100,00% за сутки/)
+  assert.match(text, /Проверено 12 минут назад/)
 })
 
 test('an outage leads, with the reason and how long', () => {
@@ -121,16 +121,16 @@ test('an outage leads, with the reason and how long', () => {
         id: 'other',
         status: 'DOWN',
         statusCode: null,
-        error: 'Connection timeout',
+        error: 'Таймаут соединения',
         since: ago(4),
       }),
     },
   )
 
-  assert.match(text, /^🔴 1 of 2 down/)
+  assert.match(text, /^🔴 Не отвечает 1 из 2/)
   // The failing one is listed first, whatever its name.
   assert.ok(text.indexOf('🔴 Other') < text.indexOf('🟢 Site'))
-  assert.match(text, /down 4 hours · Connection timeout/)
+  assert.match(text, /не отвечает 4 часа · Таймаут соединения/)
 })
 
 test('a failure with no message falls back to its status code', () => {
@@ -138,13 +138,13 @@ test('a failure with no message falls back to its status code', () => {
     site: state({ status: 'DOWN', statusCode: 502, error: null, since: ago(1) }),
   })
 
-  assert.match(text, /down 1 hour · HTTP 502/)
+  assert.match(text, /не отвечает 1 час · HTTP 502/)
 })
 
 test('a monitor nobody has checked yet says so', () => {
   const text = board([monitor()], {})
   assert.match(text, /⚪ Site/)
-  assert.match(text, /not checked yet/)
+  assert.match(text, /ещё не проверялся/)
 })
 
 test('disabled monitors are not on the board', () => {
@@ -152,24 +152,24 @@ test('disabled monitors are not on the board', () => {
     site: state(),
   })
 
-  assert.match(text, /All 1 up/)
+  assert.match(text, /Работают все 1/)
   assert.ok(!text.includes('Off'))
 })
 
 test('an empty configuration says that instead of pretending', () => {
-  assert.equal(board([], {}), 'No monitors configured yet.')
+  assert.equal(board([], {}), 'Мониторы ещё не настроены.')
 })
 
 test('a board built on stale data admits it', () => {
   const text = board([monitor()], { site: state() }, { updatedAt: ago(5) })
 
-  assert.match(text, /Checked 5 hours ago/)
-  assert.match(text, /older than it should be/)
+  assert.match(text, /Проверено 5 часов назад/)
+  assert.match(text, /дольше, чем должно быть/)
 })
 
 test('a board with no recorded check at all says that too', () => {
   const text = board([monitor()], { site: state() }, { updatedAt: '' })
-  assert.match(text, /No check has been recorded yet/)
+  assert.match(text, /Ни одной проверки пока не записано/)
 })
 
 test('the timestamp carries the configured zone', () => {

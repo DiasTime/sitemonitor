@@ -129,11 +129,28 @@ export interface IncidentsFile {
 }
 
 /** Result of a single HTTP probe. */
+/**
+ * Why a check failed, recorded where the failure happened rather than guessed
+ * from the wording afterwards.
+ *
+ * - `transport` — nothing came back: DNS, TLS, refused, timed out.
+ * - `server` — the far end admitted trouble of its own: 5xx, 408, 429.
+ * - `verdict` — the far end answered and the answer is a no: 4xx, a rejected
+ *   sign-in, a health endpoint reporting trouble.
+ * - `config` — this side is misconfigured; asking again changes nothing.
+ *
+ * The retry policy reads this. It used to read the error text, which meant the
+ * messages could not be translated without changing behaviour.
+ */
+export type FailureKind = 'transport' | 'server' | 'verdict' | 'config'
+
 export interface ProbeResult {
   status: Status
   statusCode: number | null
   responseTime: number | null
   error: string | null
+  /** Set whenever `status` is DOWN. */
+  failure?: FailureKind | null
   /** Value of the `status` field when the body was JSON with one. */
   reported?: string | null
 }
@@ -147,6 +164,8 @@ export interface CheckResult {
   error: string | null
   timestamp: string
   reported: string | null
+  /** Set whenever `status` is DOWN — see `FailureKind`. */
+  failure?: FailureKind | null
 }
 
 export type HistoryRange = '24h' | '7d' | '30d'
