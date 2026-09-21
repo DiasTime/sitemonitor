@@ -26,6 +26,7 @@ export const DATA_PATHS = {
   status: 'data/status.json',
   history: 'data/history.json',
   incidents: 'data/incidents.json',
+  subscribers: 'data/subscribers.json',
 } as const
 
 /** Hard cap for a single deployment — see the limits section of the README. */

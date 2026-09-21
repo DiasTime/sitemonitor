@@ -25,6 +25,19 @@ import { fileURLToPath } from 'node:url'
 
 import { confirmFailure } from '../lib/confirm'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
+import {
+  helpMessage,
+  identify,
+  parseCommand,
+  passphraseRequiredMessage,
+  statusMessage,
+  subscribe,
+  subscribedMessage,
+  unknownCommandMessage,
+  unsubscribe,
+  unsubscribedMessage,
+  type TelegramUpdate,
+} from '../lib/telegram'
 import { applyResults } from '../lib/transitions'
 import type {
   CheckResult,
@@ -36,7 +49,6 @@ import type {
   MonitorsFile,
   ProbeResult,
   StatusFile,
-  Subscriber,
   SubscribersFile,
 } from '../lib/types'
 import {
@@ -934,27 +946,6 @@ async function telegram<T>(
   }
 }
 
-interface TelegramUpdate {
-  update_id: number
-  message?: {
-    text?: string
-    chat: { id: number; type: string; title?: string; username?: string; first_name?: string }
-    from?: { username?: string; first_name?: string }
-  }
-}
-
-function labelFor(update: NonNullable<TelegramUpdate['message']>): string {
-  const chat = update.chat
-  return (
-    chat.title ||
-    chat.username ||
-    chat.first_name ||
-    update.from?.username ||
-    update.from?.first_name ||
-    String(chat.id)
-  )
-}
-
 /**
  * Pick up `/start` and `/stop` sent to the bot since the last run.
  *
@@ -975,76 +966,91 @@ async function syncSubscribers(
   })
 
   if (!response.ok) {
-    log(`  Telegram getUpdates failed: ${response.description ?? 'unknown error'}`)
+    // 409 means a webhook is registered, so Telegram delivers messages to the
+    // dashboard instead and refuses to hand them over here as well. That is a
+    // working setup, not a failure: the dashboard answers in a second where
+    // this poll would answer within the hour.
+    if (response.error_code === 409) {
+      log('  Telegram: answered by the dashboard webhook — not polling here')
+    } else {
+      log(`  Telegram getUpdates failed: ${response.description ?? 'unknown error'}`)
+    }
     return { file: current, changed: false }
   }
 
   const updates = response.result ?? []
   if (!updates.length) return { file: current, changed: false }
 
-  const subscribers = [...current.subscribers]
-  let offset = current.offset
+  let file: SubscribersFile = { offset: current.offset, subscribers: [...current.subscribers] }
   let changed = false
 
   for (const update of updates) {
-    offset = Math.max(offset, update.update_id + 1)
+    file = { ...file, offset: Math.max(file.offset, update.update_id + 1) }
     const message = update.message
-    if (!message?.text) continue
+    const command = parseCommand(message?.text)
+    if (!message || !command) continue
 
-    const text = message.text.trim()
-    const chatId = message.chat.id
-    const existing = subscribers.findIndex((entry) => entry.chatId === chatId)
+    const chat = identify(message)
 
-    if (/^\/start\b/.test(text)) {
-      if (SUBSCRIBE_PASSWORD) {
-        const supplied = text.replace(/^\/start(@\S+)?\s*/, '')
-        if (supplied !== SUBSCRIBE_PASSWORD) {
-          await telegram('sendMessage', {
-            chat_id: chatId,
-            text: 'This bot is private. Send /start followed by the passphrase to subscribe.',
-          })
-          continue
-        }
+    if (command.name === 'start') {
+      if (SUBSCRIBE_PASSWORD && command.argument !== SUBSCRIBE_PASSWORD) {
+        await telegram('sendMessage', { chat_id: chat.chatId, text: passphraseRequiredMessage() })
+        continue
       }
 
-      if (existing === -1) {
-        const subscriber: Subscriber = {
-          chatId,
-          label: labelFor(message),
-          chatType: message.chat.type,
-          addedAt: new Date().toISOString(),
-        }
-        subscribers.push(subscriber)
+      const added = subscribe(file, chat, new Date().toISOString())
+      if (added.changed) {
+        file = added.file
         changed = true
-        log(`  Telegram: subscribed ${subscriber.label} (${chatId})`)
+        log(`  Telegram: subscribed ${chat.label} (${chat.chatId})`)
       }
       await telegram('sendMessage', {
-        chat_id: chatId,
-        text:
-          'Subscribed to Site Monitor alerts.\n\n' +
-          'You will get a message when a site goes down, and another when it comes back. ' +
-          'Nothing in between.\n\n' +
-          'Send /stop to unsubscribe.',
+        chat_id: chat.chatId,
+        text: subscribedMessage(),
         disable_web_page_preview: true,
       })
       continue
     }
 
-    if (/^\/stop\b/.test(text)) {
-      if (existing !== -1) {
-        log(`  Telegram: unsubscribed ${subscribers[existing].label} (${chatId})`)
-        subscribers.splice(existing, 1)
+    if (command.name === 'stop') {
+      const removed = unsubscribe(file, chat.chatId)
+      if (removed.changed) {
+        file = removed.file
         changed = true
+        log(`  Telegram: unsubscribed ${removed.removed?.label ?? chat.label} (${chat.chatId})`)
       }
-      await telegram('sendMessage', {
-        chat_id: chatId,
-        text: 'Unsubscribed. Send /start to subscribe again.',
-      })
+      await telegram('sendMessage', { chat_id: chat.chatId, text: unsubscribedMessage() })
+      continue
     }
+
+    if (command.name === 'status') {
+      // Read from disk rather than from this run: the board is what has been
+      // recorded so far, and this runs before the run's own probes.
+      const { data: monitorsFile } = await readJson<MonitorsFile>(PATHS.monitors, { monitors: [] })
+      const { data: status } = await readJson<StatusFile>(PATHS.status, {
+        updatedAt: '',
+        lastCommitAt: null,
+        monitors: {},
+      })
+      await telegram('sendMessage', {
+        chat_id: chat.chatId,
+        text: statusMessage(monitorsFile.monitors ?? [], status, Date.now(), {
+          staleAfterMs: STALE_AFTER_MINUTES * 60_000,
+        }),
+        disable_web_page_preview: true,
+      })
+      continue
+    }
+
+    await telegram('sendMessage', {
+      chat_id: chat.chatId,
+      text: command.name === 'help' ? helpMessage() : unknownCommandMessage(),
+      disable_web_page_preview: true,
+    })
   }
 
-  if (offset !== current.offset) changed = true
-  return { file: { offset, subscribers }, changed }
+  if (file.offset !== current.offset) changed = true
+  return { file, changed }
 }
 
 /** Chat ids that should receive alerts: the configured owner plus every subscriber. */

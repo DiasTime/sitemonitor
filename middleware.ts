@@ -5,15 +5,18 @@ import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth'
 /**
  * Paths that must stay reachable without a session.
  *
- * `/api/heartbeat` is the outside clock that repairs a missed schedule, so it
- * is called by machines that have no session and never will: it carries its
- * own optional token instead (HEARTBEAT_TOKEN).
+ * Two of these are called by machines that have no session and never will:
+ * `/api/heartbeat`, the outside clock that repairs a missed schedule, and
+ * `/api/telegram`, the bot's webhook. They carry their own tokens instead —
+ * HEARTBEAT_TOKEN, which is optional, and TELEGRAM_WEBHOOK_SECRET, without
+ * which the webhook refuses to answer at all.
  */
 const PUBLIC_API = [
   '/api/auth/login',
   '/api/auth/logout',
   '/api/auth/session',
   '/api/heartbeat',
+  '/api/telegram',
 ]
 
 export async function middleware(request: NextRequest) {

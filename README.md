@@ -54,6 +54,7 @@ delivers the alerts, and Vercel serves the dashboard.
     - [Health endpoints](#health-endpoints)
     - [Portal login checks](#portal-login-checks)
     - [Who receives alerts](#who-receives-alerts)
+    - [Talking to the bot](#talking-to-the-bot)
     - [Running a check by hand](#running-a-check-by-hand)
     - [Why the schedule is hourly](#why-the-schedule-is-hourly)
     - [The heartbeat endpoint](#the-heartbeat-endpoint)
@@ -685,13 +686,14 @@ and to stop:
 The bot confirms both. Subscribers live in `data/subscribers.json`, so the list
 is versioned like everything else.
 
-**There is no server listening for these messages.** The monitoring run polls
-Telegram's `getUpdates` at the start of every pass and acts on whatever arrived
-since the last one, so a `/start` is picked up on the next run rather than
-instantly — press **Run check** on the dashboard if you do not want to wait.
-Telegram keeps undelivered updates for 24 hours, which comfortably covers the
-gap between runs; the read cursor is stored in `subscribers.json` so an update
-is never handled twice.
+By default **there is no server listening for these messages.** The monitoring
+run polls Telegram's `getUpdates` at the start of every pass and acts on
+whatever arrived since the last one, so a `/start` is picked up on the next run
+rather than instantly — press **Run check** on the dashboard if you do not want
+to wait. Telegram keeps undelivered updates for 24 hours, which comfortably
+covers the gap between runs; the read cursor is stored in `subscribers.json` so
+an update is never handled twice. [Register the webhook](#talking-to-the-bot)
+to get answers in a second instead.
 
 Chats that block or delete the bot answer `403`, and are removed from the list
 automatically rather than failing on every future alert.
@@ -702,6 +704,81 @@ automatically rather than failing on every future alert.
 > subscribes and everything else gets a polite refusal. Note that
 > `data/subscribers.json` records each subscriber's chat id and display name,
 > which is another reason to keep this repository private.
+
+---
+
+## Talking to the bot
+
+The bot understands four commands:
+
+| Command | What it does |
+| --- | --- |
+| `/status` | The current board: every enabled monitor, worst first, with how long it has been in that state and when it was last checked |
+| `/start` | Receive alerts in this chat (`/start <passphrase>` when `TELEGRAM_SUBSCRIBE_PASSWORD` is set) |
+| `/stop` | Stop receiving them |
+| `/help` | The list above |
+
+`/status` answers with the last recorded state — the same data the dashboard
+shows — and says how old it is. If nothing has been checked for longer than
+`STALE_AFTER_MINUTES`, it says that too, because a stalled schedule is exactly
+when someone thinks to ask:
+
+```text
+🔴 1 of 3 down
+
+🔴 ZhanaUrpaq
+   down 4 hours · Connection timeout
+
+🟢 Daryn AST
+   up 12 days · 980 ms · 99.87% 24h
+
+🟢 Sharyn
+   up 3 days · 1.21 s · 100.00% 24h
+
+Checked 12 minutes ago — 21 Sept 2026, 12:37 GMT+5
+```
+
+### Answering in a second instead of within the hour
+
+Polled from the run, a command is answered whenever the next run happens —
+which, on GitHub's schedule, can be an hour. The dashboard can answer instead:
+`POST /api/telegram` is a Telegram webhook, and it replies immediately.
+
+1. Set `TELEGRAM_BOT_TOKEN` and a `TELEGRAM_WEBHOOK_SECRET` (any long random
+   string) in the Vercel project — plus `TELEGRAM_SUBSCRIBE_PASSWORD` if you
+   gate `/start`, and `DISPLAY_TIMEZONE` for the timestamp. Redeploy.
+2. Point Telegram at it:
+
+```bash
+curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://your-dashboard.vercel.app/api/telegram",
+       "secret_token":"YOUR_TELEGRAM_WEBHOOK_SECRET",
+       "allowed_updates":["message"]}'
+```
+
+3. Optionally give Telegram the command menu, so the bot offers them:
+
+```bash
+curl -sS "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setMyCommands" \
+  -H 'Content-Type: application/json' \
+  -d '{"commands":[
+       {"command":"status","description":"How every site is doing"},
+       {"command":"start","description":"Receive alerts here"},
+       {"command":"stop","description":"Stop receiving alerts"},
+       {"command":"help","description":"What this bot can do"}]}'
+```
+
+Telegram refuses `getUpdates` while a webhook is registered, so the run stops
+polling on its own and logs `answered by the dashboard webhook — not polling
+here`. Nothing else changes: alerts are still sent by the run, and `/start` and
+`/stop` still end up in `data/subscribers.json`, committed by the dashboard
+rather than by the run. `deleteWebhook` puts everything back to polling.
+
+The endpoint refuses to answer at all unless `TELEGRAM_WEBHOOK_SECRET` is set,
+and rejects any request without that secret in the
+`X-Telegram-Bot-Api-Secret-Token` header — otherwise anyone who guessed the URL
+could forge updates and make the bot subscribe or message arbitrary chats.
 
 ---
 
@@ -961,6 +1038,11 @@ dashboard at the cost of more commits.
 | `DATA_CACHE_TTL_SECONDS` | no | `20` | In-memory cache for GitHub reads |
 | `HEARTBEAT_TOKEN` | no | — | Shared secret for `/api/heartbeat`; unset leaves it open |
 | `HEARTBEAT_STALE_MINUTES` | no | `75` | How old the last check must be before a ping starts a run |
+| `TELEGRAM_BOT_TOKEN` | no | — | Needed only to answer the bot from the dashboard — see [talking to the bot](#talking-to-the-bot) |
+| `TELEGRAM_WEBHOOK_SECRET` | no | — | Required for `/api/telegram` to answer at all; matched against Telegram's header |
+| `TELEGRAM_SUBSCRIBE_PASSWORD` | no | — | Same passphrase as the Actions secret, so webhook `/start` is gated too |
+| `DISPLAY_TIMEZONE` | no | `UTC` | Zone for the timestamp in `/status` |
+| `STALE_AFTER_MINUTES` | no | `90` | When `/status` warns that its data is old |
 
 **GitHub Actions secrets**
 
@@ -1071,6 +1153,7 @@ wrong quietly rather than loudly:
 | `tests/confirm.test.ts` | Which failures are re-probed and which are believed at once, and how many probes each case costs |
 | `tests/reminders.test.ts` | When an ongoing outage repeats itself |
 | `tests/heartbeat.test.ts` | When a ping starts a run, and the cooldown that stops a burst of them |
+| `tests/telegram.test.ts` | Command parsing, the `/status` board in every state, and the subscriber list |
 | `tests/security.test.ts` | The SSRF guard: schemes, credentials, internal hostnames, private and reserved addresses |
 | `tests/utils.test.ts` | The text of the alerts — durations, response times, uptime, timestamps and their zone |
 
