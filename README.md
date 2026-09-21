@@ -56,6 +56,7 @@ delivers the alerts, and Vercel serves the dashboard.
     - [Who receives alerts](#who-receives-alerts)
     - [Running a check by hand](#running-a-check-by-hand)
     - [Why the schedule is hourly](#why-the-schedule-is-hourly)
+    - [The heartbeat endpoint](#the-heartbeat-endpoint)
 11. [Why it does not commit on every check](#11-why-it-does-not-commit-on-every-check)
 12. [Security](#12-security)
 13. [Configuration reference](#13-configuration-reference)
@@ -698,11 +699,68 @@ runner time, whenever the last recorded check is less than `MIN_GAP_MINUTES`
 (45) old. So a served tick either becomes the hour's run or costs a minute, and
 the hour is covered as long as GitHub serves at least one of the three.
 
-Nothing here can make GitHub fire a tick it decided to drop. If the three-tick
-schedule still leaves holes, move the trigger off GitHub entirely: any external
-scheduler that can send an HTTP request once an hour can start this workflow
-through `repository_dispatch` (type `run-check`), which is the same event the
-dashboard's **Run check** button uses.
+Nothing here can make GitHub fire a tick it decided to drop. Three offset ticks
+took this repository from 6–8 runs a day to 11–13, which is better and still
+not hourly: holes of four and five hours survived. To close them the clock has
+to come from somewhere GitHub does not control — see below.
+
+### The heartbeat endpoint
+
+A monitor that is not running cannot notice that it is not running. The gap is
+only ever discovered by the run that ends it, so "start a check when a gap is
+detected" cannot come from the workflow itself — by the time it could detect
+anything, it is already running. The detection has to happen somewhere that is
+always awake, and the dashboard on Vercel already is.
+
+`GET /api/heartbeat` reads `data/status.json`, and if the last check is older
+than `HEARTBEAT_STALE_MINUTES` (75 by default) it starts a run through the same
+`repository_dispatch` event as the **Run check** button. Otherwise it just
+reports the age. No session is needed; set `HEARTBEAT_TOKEN` in Vercel to
+require one, as `?token=…` or `Authorization: Bearer …`.
+
+```console
+$ curl -s https://your-dashboard.vercel.app/api/heartbeat
+{"lastCheck":"2026-09-21T09:58:11.031Z","ageMinutes":22,"stale":false,"triggered":false}
+
+$ curl -s https://your-dashboard.vercel.app/api/heartbeat
+{"lastCheck":"2026-09-21T05:08:44.512Z","ageMinutes":291,"stale":true,"triggered":true}
+```
+
+Then point anything that can fetch a URL at it — a GitLab pipeline schedule, a
+free uptime service, a cron box, another CI. **Ping it often, every 5–15
+minutes.** That costs nothing: a run is only started when the data is actually
+stale, so a ping every five minutes is still at most one run an hour, and a
+missed hour is repaired within minutes instead of waiting for GitHub to feel
+like it. The `⚠️ MONITORING GAP` alert then means both clocks failed, which is
+worth knowing.
+
+A GitLab schedule (Settings → CI/CD → Schedules, `0 * * * *` or finer) is one
+job:
+
+```yaml
+heartbeat:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - curl -sS --fail "$MONITOR_HEARTBEAT_URL?token=$MONITOR_HEARTBEAT_TOKEN"
+```
+
+Two self-hosted schedulers beat one shared one: GitLab's runs on your instance,
+not in a queue shared with everyone else's crons.
+
+An external scheduler can also skip the endpoint and call GitHub directly, if
+you would rather not have the dashboard in the path — the event is the same:
+
+```bash
+curl -sS --fail -X POST \
+  -H "Authorization: Bearer $GITHUB_PAT" \
+  -H "Accept: application/vnd.github+json" \
+  https://api.github.com/repos/OWNER/REPO/dispatches \
+  -d '{"event_type":"run-check"}'
+```
+
+The difference is what it costs: this starts a run on every tick, while the
+endpoint starts one only when a check is actually missing.
 
 **This deployment is budgeted at 1 minute of runner time per hour**
 (`LOOP_MINUTES=1`, `LOOP_INTERVAL_SECONDS=60`), which is one check per hour.
@@ -794,6 +852,16 @@ dashboard at the cost of more commits.
   session cookie is **HttpOnly**, **Secure** in production, **SameSite=Lax**, and
   carries nothing but an expiry plus an HMAC-SHA256 signature over it. Tampering
   with the expiry invalidates the signature.
+- **`/api/heartbeat` is the one exception**, because the machines that ping it
+  have no session. What it exposes is one timestamp — how long ago a check ran
+  — and what it can do is start the same run the schedule would have started,
+  at most once per five-minute cooldown and only when a check is genuinely
+  missing — and the workflow's concurrency group means even a burst of those
+  queues into one run at a time rather than piling up. (The cooldown lives in
+  the memory of one serverless instance, so a flood spread across instances can
+  get a few through; the staleness check is the bound that always holds.) It
+  cannot read your monitors. Set `HEARTBEAT_TOKEN` if even the timestamp should
+  stay private.
 - Password checks and signature comparisons are constant-time; login is rate
   limited.
 - **SSRF protection.** The monitoring script fetches URLs you supply, so URLs are
@@ -831,6 +899,8 @@ dashboard at the cost of more commits.
 | `GITHUB_BRANCH` | no | `main` | Branch holding the data files |
 | `SESSION_SECRET` | no | derived from `ADMIN_PASSWORD` | Session cookie signing key |
 | `DATA_CACHE_TTL_SECONDS` | no | `20` | In-memory cache for GitHub reads |
+| `HEARTBEAT_TOKEN` | no | — | Shared secret for `/api/heartbeat`; unset leaves it open |
+| `HEARTBEAT_STALE_MINUTES` | no | `75` | How old the last check must be before a ping starts a run |
 
 **GitHub Actions secrets**
 
@@ -868,10 +938,11 @@ Actions → *Variables*) — all optional:
   unnoticed for nearly an hour. Raise `LOOP_MINUTES` to shrink that gap, at the
   cost of runner minutes.
 - **The schedule is GitHub's to keep, and it does not always keep it.** Ticks
-  are dropped without notice — measured here at roughly two in three — which is
-  why three are asked for per hour and why a gap in checking now raises its own
-  Telegram alert. If an hour must genuinely never be missed, trigger the
-  workflow from a scheduler you control via `repository_dispatch` instead.
+  are dropped without notice — measured here at roughly two in three, and still
+  about half after moving to three offset ticks an hour — which is why a gap in
+  checking raises its own Telegram alert. If an hour must genuinely never be
+  missed, do not rely on GitHub's scheduler at all: ping
+  [the heartbeat endpoint](#the-heartbeat-endpoint) from a clock you control.
 - **Runner time is metered on private repositories.** A continuous 50-minute
   window every hour will exceed the free 2,000 minutes/month several times over.
   See [Actions minutes](#actions-minutes).
@@ -975,8 +1046,10 @@ that the monitor is broken; see
 **A `⚠️ MONITORING GAP` alert arrived.**
 Working as intended: nothing was checked for longer than `STALE_AFTER_MINUTES`,
 and the run that finally happened said so. Usually dropped scheduled ticks. If
-it repeats, move the trigger to a scheduler you control — see
-[why the schedule is hourly](#why-the-schedule-is-hourly).
+it repeats, give the deployment an outside clock — see
+[the heartbeat endpoint](#the-heartbeat-endpoint). If one is already pinging,
+the alert means it stopped too: check that the pinger still runs and that
+`curl https://your-dashboard.vercel.app/api/heartbeat` answers.
 
 **Telegram alerts show a time that is not mine.**
 Set the repository variable `DISPLAY_TIMEZONE` to your IANA zone, e.g.

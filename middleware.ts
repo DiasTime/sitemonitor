@@ -2,8 +2,19 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { SESSION_COOKIE, verifySessionToken } from '@/lib/auth'
 
-/** Paths that must stay reachable without a session. */
-const PUBLIC_API = ['/api/auth/login', '/api/auth/logout', '/api/auth/session']
+/**
+ * Paths that must stay reachable without a session.
+ *
+ * `/api/heartbeat` is the outside clock that repairs a missed schedule, so it
+ * is called by machines that have no session and never will: it carries its
+ * own optional token instead (HEARTBEAT_TOKEN).
+ */
+const PUBLIC_API = [
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/auth/session',
+  '/api/heartbeat',
+]
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl
