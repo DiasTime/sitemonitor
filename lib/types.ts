@@ -116,6 +116,12 @@ export interface Incident {
   error: string | null
   /** Number of failed checks observed during the incident. */
   failedChecks: number
+  /**
+   * When Telegram was last told about this incident — the opening alert, or
+   * the most recent reminder. Absent on incidents recorded before reminders
+   * existed, where the opening alert is the notice to count from.
+   */
+  lastNotifiedAt?: string | null
 }
 
 export interface IncidentsFile {

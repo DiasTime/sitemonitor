@@ -325,6 +325,8 @@ on every run:
 
 **`data/incidents.json`** — one record per outage, with `startedAt`, `endedAt`,
 `durationMs`, `status` (`ongoing` / `resolved`) and the failing check's details.
+`lastNotifiedAt` records when Telegram was last told about it, which is what
+the reminder interval counts from.
 
 **`data/subscribers.json`** — the chats that sent `/start`, plus the `getUpdates`
 cursor. See [who receives alerts](#who-receives-alerts).
@@ -333,8 +335,9 @@ cursor. See [who receives alerts](#who-receives-alerts).
 
 ## 10. Alerting rules
 
-Only *transitions* produce messages. A site that is still down does not generate
-a message every three minutes:
+Messages fire on *transitions*, not on checks. A site that is still down does
+not produce one on every check — only when it changes state, and, while an
+outage lasts, on the reminder interval described below:
 
 ```text
 15:00 UP     →  nothing
@@ -367,6 +370,41 @@ already down is probed once too, since two more probes would change no decision.
 
 The cost is time, not money: a newly failing site adds about half a minute to
 the run. Set `CONFIRM_RETRIES=0` to go back to believing the first answer.
+
+**An outage that is still going says so again.** Firing only on transitions has
+a quiet failure of its own: an incident here ran for 33 hours on a single
+message, sent the moment it started. Scrolled past at night, that is
+indistinguishable from a healthy night. So every
+`REMINDER_INTERVAL_MINUTES` (360, i.e. 6 hours) an outage still in progress
+repeats itself:
+
+```text
+🔴 SITE STILL DOWN
+
+ZhanaUrpaq
+
+Down for:
+8 hours 12 minutes
+
+Since:
+21 Sept 2026, 04:04 GMT+5
+
+Failed checks:
+9
+
+Error:
+Connection timeout
+
+URL:
+https://zhanaurpaq.kz
+```
+
+The clock runs from the last message about that incident, not from its start,
+so the reminders are evenly spaced however late the first one was. Reminders
+are sent after the run's real news, and they force a commit of their own —
+otherwise the same reminder would come due again on the next run. Set
+`REMINDER_INTERVAL_MINUTES=0` to announce an outage once and never mention it
+again.
 
 **Down, with an HTTP response:**
 
@@ -941,6 +979,7 @@ Actions → *Variables*) — all optional:
 | `CHECK_TIMEOUT_MS` | `10000` | Per-request timeout |
 | `CONFIRM_RETRIES` | `2` | Extra probes a failure must survive before it counts as DOWN; `0` believes the first answer |
 | `CONFIRM_DELAY_SECONDS` | `10` | Pause between those probes |
+| `REMINDER_INTERVAL_MINUTES` | `360` | How often an ongoing outage repeats itself in Telegram; `0` announces it once |
 | `HISTORY_RETENTION_DAYS` | `30` | How long history is kept |
 | `MAX_HEALTH_BODY_BYTES` | `65536` | How much of a health response is read |
 | `MAX_LOGIN_BODY_BYTES` | `262144` | How much of a login-flow response is read |

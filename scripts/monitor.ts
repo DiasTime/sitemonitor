@@ -24,6 +24,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 import { confirmFailure } from '../lib/confirm'
+import { isReminderDue } from '../lib/reminders'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
 import type {
   CheckResult,
@@ -84,6 +85,14 @@ const REQUEST_TIMEOUT_MS = numberFromEnv('CHECK_TIMEOUT_MS', 10_000)
 const CONFIRM_RETRIES = countFromEnv('CONFIRM_RETRIES', 2)
 /** Pause between those probes — long enough to outlast a blip, short enough to fit the run. */
 const CONFIRM_DELAY_MS = numberFromEnv('CONFIRM_DELAY_SECONDS', 10) * 1000
+/**
+ * How often an outage that is still going says so again.
+ *
+ * Alerts fire on transitions, so a long outage used to produce one message and
+ * then silence — an incident here ran 33 hours on a single notification. Set
+ * to 0 for the old behaviour: announce once, never mention it again.
+ */
+const REMINDER_INTERVAL_MS = countFromEnv('REMINDER_INTERVAL_MINUTES', 360) * 60_000
 /** How many sites are probed at the same time. */
 const CONCURRENCY = numberFromEnv('CHECK_CONCURRENCY', 8)
 /** History older than this is dropped on every run. */
@@ -1158,6 +1167,34 @@ function recoveryMessage(monitor: Monitor, result: CheckResult, downtimeMs: numb
   return lines.join('\n')
 }
 
+function stillDownMessage(monitor: Monitor, incident: Incident, downtimeMs: number): string {
+  const lines = [
+    monitor.type === 'health'
+      ? '🔴 HEALTH CHECK STILL FAILING'
+      : monitor.type === 'login'
+        ? '🔴 PORTAL LOGIN STILL FAILING'
+        : '🔴 SITE STILL DOWN',
+    '',
+    monitor.name,
+    '',
+    'Down for:',
+    formatDuration(downtimeMs),
+    '',
+    'Since:',
+    formatFullTimestamp(incident.startedAt),
+    '',
+    'Failed checks:',
+    String(incident.failedChecks),
+    '',
+  ]
+
+  if (incident.error) lines.push('Error:', incident.error, '')
+  else if (incident.statusCode !== null) lines.push('Status:', `HTTP ${incident.statusCode}`, '')
+
+  lines.push('URL:', monitor.url)
+  return lines.join('\n')
+}
+
 function monitoringGapMessage(gapMs: number, lastCheckIso: string, nowIso: string): string {
   return [
     '⚠️ MONITORING GAP',
@@ -1348,6 +1385,8 @@ async function runOnce(): Promise<void> {
   }
 
   const transitions: Transition[] = []
+  /** Outages that have been going long enough to be worth repeating. */
+  const reminders: Array<{ monitor: Monitor; incident: Incident; downtimeMs: number }> = []
   const nextStatus: Record<string, MonitorStatus> = {}
   let statusChanged = false
 
@@ -1392,6 +1431,7 @@ async function runOnce(): Promise<void> {
           statusCode: result.statusCode,
           error: result.error,
           failedChecks: 1,
+          lastNotifiedAt: result.timestamp,
         }
         incidents.push(incident)
         transitions.push({ monitor, result, kind: 'down' })
@@ -1410,12 +1450,24 @@ async function runOnce(): Promise<void> {
         transitions.push({ monitor, result, kind: 'recovered', downtimeMs })
       }
     } else if (previous && result.status === 'DOWN') {
-      // Still down — keep counting failures, but stay quiet.
+      // Still down — keep counting failures, and speak up again only once the
+      // reminder interval has passed, so a long outage does not go silent.
       const ongoing = [...incidents]
         .reverse()
         .find((entry) => entry.monitorId === monitor.id && entry.status === 'ongoing')
       if (ongoing) {
         ongoing.failedChecks += sinceLastCommit.filter((entry) => entry.status === 'DOWN').length
+
+        if (isReminderDue(ongoing, startedAt, REMINDER_INTERVAL_MS)) {
+          // Marked as told before the message goes out: a Telegram outage must
+          // not turn into a reminder on every run once it comes back.
+          ongoing.lastNotifiedAt = timestamp
+          reminders.push({
+            monitor,
+            incident: ongoing,
+            downtimeMs: Math.max(0, startedAt - new Date(ongoing.startedAt).getTime()),
+          })
+        }
       }
     } else if (!previous && result.status === 'DOWN') {
       // First ever check already fails: open an incident and alert once.
@@ -1429,6 +1481,7 @@ async function runOnce(): Promise<void> {
         statusCode: result.statusCode,
         error: result.error,
         failedChecks: 1,
+        lastNotifiedAt: result.timestamp,
       })
       transitions.push({ monitor, result, kind: 'down' })
     }
@@ -1497,6 +1550,10 @@ async function runOnce(): Promise<void> {
   const shouldCommit =
     statusChanged ||
     incidentsChanged ||
+    // Reminders only move `lastNotifiedAt` on an object the comparison above
+    // sees on both sides, so they have to ask for the commit themselves — or
+    // the same reminder would be due again on the next run.
+    reminders.length > 0 ||
     prunedStatus ||
     firstRun ||
     intervalElapsed ||
@@ -1549,6 +1606,16 @@ async function runOnce(): Promise<void> {
     await notify(message)
   }
 
+  // Said last, after the news: an outage that was already known is the least
+  // urgent thing in the message list, but it must not be the silent one.
+  for (const reminder of reminders) {
+    log(
+      `  Telegram: STILL DOWN — ${reminder.monitor.name} ` +
+        `(${formatDuration(reminder.downtimeMs)})`,
+    )
+    await notify(stillDownMessage(reminder.monitor, reminder.incident, reminder.downtimeMs))
+  }
+
   // --- persist -------------------------------------------------------------
   if (shouldCommit) {
     const statusFile: StatusFile = {
@@ -1567,6 +1634,8 @@ async function runOnce(): Promise<void> {
       ? 'status change'
       : incidentsChanged
         ? 'incident update'
+        : reminders.length
+        ? 'outage reminder'
         : subscribersChanged
         ? 'subscriber update'
         : firstRun

@@ -150,6 +150,9 @@ jobs:
           # could disagree with are retried — never a rejected sign-in.
           CONFIRM_RETRIES: ${{ vars.CONFIRM_RETRIES }}
           CONFIRM_DELAY_SECONDS: ${{ vars.CONFIRM_DELAY_SECONDS }}
+          # REMINDER_INTERVAL_MINUTES: how often an outage that is still going
+          # says so again (default 360, 0 announces it once and never again).
+          REMINDER_INTERVAL_MINUTES: ${{ vars.REMINDER_INTERVAL_MINUTES }}
           # STALE_AFTER_MINUTES: how long a gap in checking has to be before the
           # run reports it to Telegram. Default 90 — long enough not to fire on
           # a single late tick, short enough to catch a stalled schedule.
