@@ -24,6 +24,7 @@ import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
 import { confirmFailure } from '../lib/confirm'
+import { countFromEnv, numberFromEnv } from '../lib/env'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
 import {
   checkRunningMessage,
@@ -76,17 +77,6 @@ const PATHS = {
   incidents: path.join(ROOT, 'data/incidents.json'),
   subscribers: path.join(ROOT, 'data/subscribers.json'),
   buffer: path.join(ROOT, '.monitor-cache/pending-history.json'),
-}
-
-function numberFromEnv(name: string, fallback: number): number {
-  const value = Number(process.env[name])
-  return Number.isFinite(value) && value > 0 ? value : fallback
-}
-
-/** Like `numberFromEnv`, but 0 is a meaningful setting rather than "unset". */
-function countFromEnv(name: string, fallback: number): number {
-  const value = Number(process.env[name])
-  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : fallback
 }
 
 /** Per-request timeout. */

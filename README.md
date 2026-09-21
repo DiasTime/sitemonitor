@@ -1081,7 +1081,12 @@ dashboard at the cost of more commits.
 | `PORTAL_CREDENTIALS` | no | Credentials for `login` monitors — see [Portal login checks](#portal-login-checks) |
 
 **GitHub Actions repository variables** (Settings → Secrets and variables →
-Actions → *Variables*) — all optional:
+Actions → *Variables*) — all optional. A variable you have not defined reaches
+the run as an empty string rather than as nothing at all, which the run treats
+as unset, so the defaults below are what actually applies until you set one.
+Your editor may flag `${{ vars.SOMETHING }}` with *"Context access might be
+invalid"* for the same reason: it is a hint that the variable is not defined,
+not an error.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
@@ -1182,6 +1187,7 @@ wrong quietly rather than loudly:
 | `tests/reminders.test.ts` | When an ongoing outage repeats itself |
 | `tests/heartbeat.test.ts` | When a ping starts a run, and the cooldown that stops a burst of them |
 | `tests/ru.test.ts` | Russian agreement — "1 час", "2 часа", "5 часов" — and the formatters the alerts are built from |
+| `tests/env.test.ts` | That an undefined repository variable falls back to the default instead of reading as zero |
 | `tests/telegram.test.ts` | Command parsing including button taps, the menu and its callbacks, the `/status` board in every state, and the subscriber list |
 | `tests/security.test.ts` | The SSRF guard: schemes, credentials, internal hostnames, private and reserved addresses |
 | `tests/utils.test.ts` | The text of the alerts — durations, response times, uptime, timestamps and their zone |
