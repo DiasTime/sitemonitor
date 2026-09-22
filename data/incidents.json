@@ -430,6 +430,18 @@
       "error": "HTTP 502",
       "failedChecks": 3,
       "lastNotifiedAt": "2026-09-21T23:12:04.422Z"
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-09-22T09:07:15.988Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-09-22T09:07:15.988Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-22T09:07:15.988Z"
     }
   ]
 }
