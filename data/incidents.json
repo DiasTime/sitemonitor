@@ -411,12 +411,12 @@
       "id": "zhanaurpaq-kz-2026-09-21T23:12:04.422Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-09-21T23:12:04.422Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-22T06:10:14.458Z",
+      "durationMs": 25090036,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 6,
+      "failedChecks": 8,
       "lastNotifiedAt": "2026-09-22T05:30:09.859Z"
     },
     {
