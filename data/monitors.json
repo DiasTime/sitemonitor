@@ -74,9 +74,24 @@
     {
       "id": "gakkuast-kz",
       "name": "Gakku",
-      "url": "https://gakkuast.kz/",
+      "url": "https://gakkuast.kz/login",
       "enabled": true,
+      "type": "login",
+      "loginUrl": "https://gakkuast.kz/api/auth/login",
+      "loginBodyType": "json",
+      "successText": "accessToken",
       "createdAt": "2026-09-22T09:56:51.761Z"
+    },
+    {
+      "id": "aqqain-kz",
+      "name": "Aqqain",
+      "url": "https://aqqain.kz/login",
+      "enabled": true,
+      "type": "login",
+      "loginUrl": "https://aqqain.kz/api/auth/login",
+      "loginBodyType": "json",
+      "successText": "accessToken",
+      "createdAt": "2026-09-22T10:43:00.000Z"
     }
   ]
 }
