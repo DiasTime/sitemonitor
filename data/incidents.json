@@ -488,8 +488,20 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 1,
+      "failedChecks": 5,
       "lastNotifiedAt": "2026-09-23T16:15:17.865Z"
+    },
+    {
+      "id": "baimura-vms-svoydom-kz-2026-09-23T17:15:48.639Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "startedAt": "2026-09-23T17:15:48.639Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Ошибка SSL: срок сертификата истёк",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-23T17:15:48.639Z"
     }
   ]
 }
