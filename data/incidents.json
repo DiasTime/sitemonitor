@@ -466,6 +466,18 @@
       "error": "HTTP 502",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-09-23T04:02:15.350Z"
+    },
+    {
+      "id": "sharyn-kz-2026-09-23T07:10:42.214Z",
+      "monitorId": "sharyn-kz",
+      "startedAt": "2026-09-23T07:10:42.214Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-23T07:10:42.214Z"
     }
   ]
 }
