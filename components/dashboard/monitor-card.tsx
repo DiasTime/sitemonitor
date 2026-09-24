@@ -9,10 +9,12 @@ import {
   Loader2,
   MoreHorizontal,
   Pause,
+  Pencil,
   Play,
   Trash2,
 } from 'lucide-react'
 
+import { EditMonitorDialog } from '@/components/dashboard/add-monitor-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -33,6 +35,7 @@ interface MonitorCardProps {
 
 export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
   const [menuOpen, setMenuOpen] = React.useState(false)
+  const [editOpen, setEditOpen] = React.useState(false)
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const menuRef = React.useRef<HTMLDivElement>(null)
@@ -133,6 +136,17 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
               <button
                 type="button"
                 className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setEditOpen(true)
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </button>
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
                 onClick={() => mutate('toggle')}
               >
                 {monitor.enabled ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
@@ -187,6 +201,13 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
       </div>
 
       <span className="sr-only">{hostnameOf(monitor.url)}</span>
+
+      <EditMonitorDialog
+        monitor={monitor}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={onChanged}
+      />
     </Card>
   )
 }

@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import type { MonitorType } from '@/lib/types'
+import type { Monitor, MonitorType } from '@/lib/types'
 
 /** Wording differs per kind, everything else about the form is identical. */
 const COPY: Record<MonitorType, {
@@ -65,6 +65,51 @@ const COPY: Record<MonitorType, {
 
 export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
   const [open, setOpen] = React.useState(false)
+  return (
+    <MonitorDialog
+      open={open}
+      onOpenChange={setOpen}
+      onSaved={onAdded}
+      trigger={
+        <Button size="sm">
+          <Plus />
+          Add monitor
+        </Button>
+      }
+    />
+  )
+}
+
+/** The add form, prefilled with `monitor` and saved back to it in place. */
+export function EditMonitorDialog({
+  monitor,
+  open,
+  onOpenChange,
+  onSaved,
+}: {
+  monitor: Monitor
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSaved: () => void
+}) {
+  return <MonitorDialog monitor={monitor} open={open} onOpenChange={onOpenChange} onSaved={onSaved} />
+}
+
+function MonitorDialog({
+  monitor,
+  open,
+  onOpenChange,
+  onSaved,
+  trigger,
+}: {
+  /** Set when editing. */
+  monitor?: Monitor
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSaved: () => void
+  trigger?: React.ReactNode
+}) {
+  const editing = monitor !== undefined
   const [type, setType] = React.useState<MonitorType>('website')
   const [url, setUrl] = React.useState('')
   const [name, setName] = React.useState('')
@@ -79,18 +124,25 @@ export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
 
   const copy = COPY[type]
 
-  function reset() {
-    setType('website')
-    setUrl('')
-    setName('')
-    setLoginUrl('')
-    setLoginBodyType('form')
-    setUsernameField('')
-    setPasswordField('')
-    setSuccessText('')
-    setFailureText('')
+  /** Back to an empty form, or to the monitor's saved values when editing. */
+  const reset = React.useCallback(() => {
+    setType(monitor?.type ?? 'website')
+    setUrl(monitor?.url ?? '')
+    setName(monitor?.name ?? '')
+    setLoginUrl(monitor?.loginUrl ?? '')
+    setLoginBodyType(monitor?.loginBodyType ?? 'form')
+    setUsernameField(monitor?.usernameField ?? '')
+    setPasswordField(monitor?.passwordField ?? '')
+    setSuccessText(monitor?.successText ?? '')
+    setFailureText(monitor?.failureText ?? '')
     setError(null)
-  }
+  }, [monitor])
+
+  // Load the latest saved values each time the edit form opens.
+  React.useEffect(() => {
+    if (open && editing) reset()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -98,8 +150,8 @@ export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
     setError(null)
 
     try {
-      const response = await fetch('/api/monitors', {
-        method: 'POST',
+      const response = await fetch(monitor ? `/api/monitors/${monitor.id}` : '/api/monitors', {
+        method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url,
@@ -120,13 +172,19 @@ export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
       const body = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        setError(typeof body?.error === 'string' ? body.error : 'Could not add the monitor')
+        setError(
+          typeof body?.error === 'string'
+            ? body.error
+            : editing
+              ? 'Could not save the monitor'
+              : 'Could not add the monitor',
+        )
         return
       }
 
       reset()
-      setOpen(false)
-      onAdded()
+      onOpenChange(false)
+      onSaved()
     } catch (cause) {
       setError((cause as Error).message)
     } finally {
@@ -138,21 +196,22 @@ export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        setOpen(next)
+        onOpenChange(next)
         if (!next) reset()
       }}
     >
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus />
-          Add monitor
-        </Button>
-      </DialogTrigger>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{copy.title}</DialogTitle>
-          <DialogDescription>{copy.description}</DialogDescription>
+          <DialogTitle>{monitor ? `Edit ${monitor.name}` : copy.title}</DialogTitle>
+          <DialogDescription>
+            {monitor
+              ? type === 'login'
+                ? `Changes apply from the next monitoring run. The id stays "${monitor.id}", so its PORTAL_CREDENTIALS entry, history and incidents are kept.`
+                : 'Changes apply from the next monitoring run. History and incidents are kept.'
+              : copy.description}
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs
@@ -294,7 +353,7 @@ export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
           <DialogFooter>
             <Button type="submit" disabled={pending || !url}>
               {pending && <Loader2 className="animate-spin" />}
-              {copy.submit}
+              {editing ? 'Save changes' : copy.submit}
             </Button>
           </DialogFooter>
         </form>

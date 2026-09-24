@@ -116,8 +116,18 @@ export type MutationResult =
   | { ok: true; monitor: Monitor }
   | { ok: false; error: string; status: number }
 
-/** Validate and append a monitor to `data/monitors.json`. */
-export async function addMonitor(input: AddMonitorInput): Promise<MutationResult> {
+type LoginFields = Pick<
+  Monitor,
+  'loginUrl' | 'loginBodyType' | 'usernameField' | 'passwordField' | 'successText' | 'failureText'
+>
+
+/** Everything about a monitor that the dashboard form controls. */
+type MonitorFields = Pick<Monitor, 'name' | 'url'> & { type: MonitorType; loginFields: LoginFields }
+
+/** Validate the form fields shared by adding and editing a monitor. */
+function validateMonitorInput(
+  input: AddMonitorInput,
+): { ok: true; fields: MonitorFields } | { ok: false; error: string; status: number } {
   const urlCheck = validateMonitorUrl(input.url)
   if (!urlCheck.ok) return { ok: false, error: urlCheck.error!, status: 400 }
   const url = urlCheck.url!
@@ -139,10 +149,7 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
   const type: MonitorType =
     input.type === 'health' ? 'health' : input.type === 'login' ? 'login' : 'website'
 
-  let loginFields: Pick<
-    Monitor,
-    'loginUrl' | 'loginBodyType' | 'usernameField' | 'passwordField' | 'successText' | 'failureText'
-  > = {}
+  let loginFields: LoginFields = {}
   if (type === 'login') {
     const loginUrlCheck =
       input.loginUrl === undefined || input.loginUrl === '' || input.loginUrl === null
@@ -178,6 +185,15 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
       ...(failureTextCheck.text ? { failureText: failureTextCheck.text } : {}),
     }
   }
+
+  return { ok: true, fields: { name, url, type, loginFields } }
+}
+
+/** Validate and append a monitor to `data/monitors.json`. */
+export async function addMonitor(input: AddMonitorInput): Promise<MutationResult> {
+  const validation = validateMonitorInput(input)
+  if (!validation.ok) return validation
+  const { name, url, type, loginFields } = validation.fields
 
   let created: Monitor | null = null
   let failure: { error: string; status: number } | null = null
@@ -218,6 +234,64 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
   if (failure) return { ok: false, ...(failure as { error: string; status: number }) }
   if (!created) return { ok: false, error: 'Monitor could not be created', status: 500 }
   return { ok: true, monitor: created }
+}
+
+/** Field-by-field equality, so a key order difference in the file is not a change. */
+function sameMonitor(a: Monitor, b: Monitor): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)] as (keyof Monitor)[])
+  return [...keys].every((key) => a[key] === b[key])
+}
+
+/**
+ * Replace a monitor's settings. The id is kept, so its history, incidents and
+ * `PORTAL_CREDENTIALS` entry stay attached; `enabled` and `createdAt` are kept too.
+ */
+export async function updateMonitor(id: string, input: AddMonitorInput): Promise<MutationResult> {
+  if (!isValidMonitorId(id)) return { ok: false, error: 'Invalid monitor id', status: 400 }
+
+  const validation = validateMonitorInput(input)
+  if (!validation.ok) return validation
+  const { name, url, type, loginFields } = validation.fields
+
+  let updated: Monitor | null = null
+  let failure: { error: string; status: number } | null = null
+
+  await updateJsonFile<MonitorsFile>(
+    DATA_PATHS.monitors,
+    EMPTY_MONITORS,
+    (current) => {
+      updated = null
+      failure = null
+      const monitors = Array.isArray(current.monitors) ? current.monitors : []
+      const match = monitors.find((monitor) => monitor.id === id)
+      if (!match) {
+        failure = { error: 'Monitor not found', status: 404 }
+        return null
+      }
+      if (monitors.some((monitor) => monitor.id !== id && monitor.url === url)) {
+        failure = { error: 'This URL is already being monitored', status: 409 }
+        return null
+      }
+
+      const next: Monitor = {
+        id: match.id,
+        name,
+        url,
+        enabled: match.enabled,
+        ...(type !== 'website' ? { type } : {}),
+        ...loginFields,
+        ...(match.createdAt ? { createdAt: match.createdAt } : {}),
+      }
+      updated = next
+      if (sameMonitor(next, match)) return null
+      return { monitors: monitors.map((monitor) => (monitor.id === id ? next : monitor)) }
+    },
+    `chore(monitors): edit ${id}`,
+  )
+
+  if (failure) return { ok: false, ...(failure as { error: string; status: number }) }
+  if (!updated) return { ok: false, error: 'Monitor could not be updated', status: 500 }
+  return { ok: true, monitor: updated }
 }
 
 /** Remove a monitor. Its status/history/incident rows are pruned by the next monitoring run. */

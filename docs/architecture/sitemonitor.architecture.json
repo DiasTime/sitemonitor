@@ -1,0 +1,428 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Site Monitor Architecture",
+    "locale": "en",
+    "output": "sitemonitor-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/DiasTime/sitemonitor",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "a2ca2ad60edbbbb83d81a30bb773b06c11c5b78c"
+    },
+    "views": [
+      {
+        "id": "check-to-dashboard",
+        "label": "Check to dashboard",
+        "focus": [
+          "triggers",
+          "runner",
+          "repo",
+          "ghapi",
+          "routes",
+          "session",
+          "dashboard"
+        ],
+        "note": "A probe result is committed to data/*.json, then read back through the GitHub API by the dashboard."
+      },
+      {
+        "id": "run-side-effects",
+        "label": "Monitor run side effects",
+        "focus": [
+          "runner",
+          "sites",
+          "buffer",
+          "telegram"
+        ],
+        "note": "One run probes sites, carries its sample buffer, and alerts on transitions."
+      },
+      {
+        "id": "machine-callers",
+        "label": "Machine callers",
+        "focus": [
+          "telegram",
+          "pinger",
+          "routes"
+        ],
+        "note": "Two sessionless callers reach Vercel with their own tokens."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "triggers",
+      "type": "cloud",
+      "label": "Workflow triggers",
+      "sublabel": "cron :07 :27 :47",
+      "tag": "+ repository_dispatch",
+      "pos": [
+        40,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": ".github/workflows/monitor.yml",
+          "line": 3,
+          "end_line": 43,
+          "label": "on: schedule"
+        }
+      ]
+    },
+    {
+      "id": "runner",
+      "type": "backend",
+      "label": "Monitor run",
+      "sublabel": "scripts/monitor.ts",
+      "tag": "Actions runner",
+      "pos": [
+        260,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/monitor.ts",
+          "label": "probe + alert"
+        },
+        {
+          "path": ".github/workflows/monitor.yml",
+          "line": 58,
+          "label": "job steps"
+        }
+      ]
+    },
+    {
+      "id": "repo",
+      "type": "database",
+      "label": "Repo data/",
+      "sublabel": "*.json on main",
+      "tag": "source of truth",
+      "pos": [
+        480,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "data/status.json"
+        },
+        {
+          "path": "data/monitors.json"
+        }
+      ]
+    },
+    {
+      "id": "ghapi",
+      "type": "cloud",
+      "label": "GitHub REST API",
+      "sublabel": "contents, dispatches",
+      "pos": [
+        700,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "lib/github.ts",
+          "label": "API client"
+        }
+      ]
+    },
+    {
+      "id": "routes",
+      "type": "backend",
+      "label": "Route handlers",
+      "sublabel": "Next.js /api/*",
+      "tag": "20 s file cache",
+      "pos": [
+        920,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "lib/storage.ts"
+        },
+        {
+          "path": "app/api/status/route.ts"
+        }
+      ]
+    },
+    {
+      "id": "session",
+      "type": "security",
+      "label": "Session middleware",
+      "sublabel": "HMAC cookie",
+      "pos": [
+        1140,
+        240
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "middleware.ts"
+        },
+        {
+          "path": "lib/auth.ts"
+        }
+      ]
+    },
+    {
+      "id": "dashboard",
+      "type": "frontend",
+      "label": "Dashboard",
+      "sublabel": "browser, polls 30 s",
+      "pos": [
+        1140,
+        420
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "components/dashboard/dashboard-client.tsx"
+        }
+      ]
+    },
+    {
+      "id": "sites",
+      "type": "external",
+      "label": "Monitored sites",
+      "sublabel": "website, health, login",
+      "pos": [
+        260,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "telegram",
+      "type": "external",
+      "label": "Telegram Bot API",
+      "sublabel": "alerts, commands",
+      "pos": [
+        810,
+        60
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "lib/telegram.ts"
+        },
+        {
+          "path": "app/api/telegram/route.ts"
+        }
+      ]
+    },
+    {
+      "id": "buffer",
+      "type": "database",
+      "label": "Actions cache",
+      "sublabel": ".monitor-cache buffer",
+      "pos": [
+        260,
+        420
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "pinger",
+      "type": "external",
+      "label": "Heartbeat pinger",
+      "sublabel": "any external cron",
+      "pos": [
+        920,
+        420
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "app/api/heartbeat/route.ts"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "GitHub: repo owner",
+      "wraps": [
+        "triggers",
+        "runner",
+        "repo",
+        "ghapi",
+        "buffer"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "Actions secrets",
+      "wraps": [
+        "runner"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Vercel iad1: server-only env",
+      "wraps": [
+        "routes",
+        "session"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "start-job",
+      "from": "triggers",
+      "to": "runner",
+      "label": "start job",
+      "variant": "emphasis"
+    },
+    {
+      "id": "commit-data",
+      "from": "runner",
+      "to": "repo",
+      "label": "git push",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-reads-repo",
+      "from": "ghapi",
+      "to": "repo",
+      "label": "contents",
+      "variant": "emphasis"
+    },
+    {
+      "id": "routes-call-api",
+      "from": "routes",
+      "to": "ghapi",
+      "label": "PAT",
+      "variant": "emphasis"
+    },
+    {
+      "id": "session-to-routes",
+      "from": "session",
+      "to": "routes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "dashboard-to-session",
+      "from": "dashboard",
+      "to": "session",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "probe-sites",
+      "from": "runner",
+      "to": "sites",
+      "label": "HTTP probe",
+      "labelDy": -40
+    },
+    {
+      "id": "carry-buffer",
+      "from": "runner",
+      "to": "buffer",
+      "label": "samples",
+      "variant": "dashed",
+      "labelDy": 24
+    },
+    {
+      "id": "send-alerts",
+      "from": "runner",
+      "to": "telegram",
+      "label": "alerts",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "telegram-webhook",
+      "from": "telegram",
+      "to": "routes",
+      "label": "webhook",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "heartbeat-ping",
+      "from": "pinger",
+      "to": "routes",
+      "label": "heartbeat",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Primary path",
+      "items": [
+        "Cron tick runs only if last check is 45+ min old",
+        "8 parallel probes, 10 s timeout, 2 re-checks",
+        "Pushed mid-run; dashboard polls every 30 s"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Triggers and alerts",
+      "items": [
+        "3 cron ticks/hour aim for 1 real run",
+        "Run check, heartbeat, bot /check: repository_dispatch",
+        "Alerts on transitions, 6 h reminders, gap alert"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Trust boundaries",
+      "items": [
+        "Bot token, portal creds: Actions secrets only",
+        "Vercel: fine-grained PAT, server-only env",
+        "Webhook secret required; heartbeat token optional"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Concurrent writes",
+      "items": [
+        "One monitor run at a time, never cancelled",
+        "API writes retry SHA conflicts, 4 attempts",
+        "Final push rebases and retries 5 times"
+      ]
+    }
+  ]
+}
