@@ -9,6 +9,7 @@
       "loginUrl": "https://sharyn.kz/api/auth/login",
       "loginBodyType": "json",
       "successText": "accessToken",
+      "sslExpiresAt": "2026-12-23",
       "createdAt": "2026-08-19T11:49:54.995Z"
     },
     {
