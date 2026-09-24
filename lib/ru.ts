@@ -49,6 +49,24 @@ export function formatDurationRu(ms: number | null | undefined): string {
   return restHours ? `${say(days, DAYS)} ${say(restHours, HOURS)}` : say(days, DAYS)
 }
 
+/** 5 -> "5 дней" */
+export function formatDaysRu(count: number): string {
+  return say(count, DAYS)
+}
+
+/** "2026-10-01" -> "1 октября 2026 г." — a calendar date, so no zone applies. */
+export function formatDateRu(date: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
+  if (!match) return date
+  const time = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(time)
+}
+
 /** 3 -> "3 проверки" */
 export function formatChecksRu(count: number): string {
   return say(count, CHECKS)

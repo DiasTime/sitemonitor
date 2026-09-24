@@ -64,6 +64,7 @@ export async function PUT(request: Request, { params }: Params) {
       passwordField: body?.passwordField,
       successText: body?.successText,
       failureText: body?.failureText,
+      sslExpiresAt: body?.sslExpiresAt,
     })
     if (!result.ok) return jsonResponse({ error: result.error }, { status: result.status })
     return jsonResponse({ monitor: result.monitor })

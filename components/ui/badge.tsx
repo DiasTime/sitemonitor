@@ -13,6 +13,8 @@ const badgeVariants = cva(
         up: 'border-up/25 bg-up/10 text-up',
         down: 'border-down/25 bg-down/10 text-down',
         checking: 'border-checking/25 bg-checking/10 text-checking',
+        // Same amber as `checking`: not down yet, but needs someone's attention.
+        warn: 'border-checking/25 bg-checking/10 text-checking',
       },
     },
     defaultVariants: {

@@ -8,6 +8,7 @@ import { AppHeader } from '@/components/dashboard/app-header'
 import { ResponseTimeChart } from '@/components/charts/response-time-chart'
 import { HistoryTable } from '@/components/monitor/history-table'
 import { IncidentList } from '@/components/monitor/incident-list'
+import { SslBadge } from '@/components/monitor/ssl-badge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
@@ -152,6 +153,7 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
                   Login check
                 </Badge>
               )}
+              <SslBadge expiresAt={monitor.sslExpiresAt} />
             </div>
             <a
               href={monitor.url}

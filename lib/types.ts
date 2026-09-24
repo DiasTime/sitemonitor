@@ -47,6 +47,11 @@ export interface Monitor {
   successText?: string
   /** Substring whose presence in the response marks the sign-in as failed. */
   failureText?: string
+  /**
+   * When the site's SSL certificate expires, as entered on the dashboard
+   * ("2026-10-01"). Telegram is warned ahead of it — see lib/ssl.ts.
+   */
+  sslExpiresAt?: string
 }
 
 export interface MonitorsFile {
@@ -87,6 +92,11 @@ export interface StatusFile {
   /** ISO timestamp of the last run whose results were committed. */
   lastCommitAt: string | null
   monitors: Record<string, MonitorStatus>
+  /**
+   * SSL expiry notices already sent, by monitor id — the `key` from
+   * `sslNoticeDue`, so each one goes out once rather than every run.
+   */
+  sslNotices?: Record<string, string>
 }
 
 export interface HistoryEntry {

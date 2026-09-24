@@ -119,6 +119,7 @@ function MonitorDialog({
   const [passwordField, setPasswordField] = React.useState('')
   const [successText, setSuccessText] = React.useState('')
   const [failureText, setFailureText] = React.useState('')
+  const [sslExpiresAt, setSslExpiresAt] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
   const [pending, setPending] = React.useState(false)
 
@@ -135,6 +136,7 @@ function MonitorDialog({
     setPasswordField(monitor?.passwordField ?? '')
     setSuccessText(monitor?.successText ?? '')
     setFailureText(monitor?.failureText ?? '')
+    setSslExpiresAt(monitor?.sslExpiresAt ?? '')
     setError(null)
   }, [monitor])
 
@@ -157,6 +159,8 @@ function MonitorDialog({
           url,
           name: name.trim() || undefined,
           type,
+          // Always sent, so clearing the field in the edit form clears the date.
+          sslExpiresAt,
           ...(type === 'login'
             ? {
                 loginUrl: loginUrl.trim() || undefined,
@@ -258,6 +262,22 @@ function MonitorDialog({
             />
             <p className="text-xs text-muted-foreground">
               Optional — the hostname is used when left empty.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="sslExpiresAt">SSL certificate expires</Label>
+            <Input
+              id="sslExpiresAt"
+              type="date"
+              min="2000-01-01"
+              max="2100-12-31"
+              className="w-full sm:w-48 [color-scheme:light] dark:[color-scheme:dark]"
+              value={sslExpiresAt}
+              onChange={(event) => setSslExpiresAt(event.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional. Telegram is warned 5 days before this date and again on the day.
             </p>
           </div>
 

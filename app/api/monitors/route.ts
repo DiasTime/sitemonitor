@@ -24,6 +24,7 @@ interface AddMonitorBody {
   passwordField?: unknown
   successText?: unknown
   failureText?: unknown
+  sslExpiresAt?: unknown
 }
 
 /** POST /api/monitors — add a site (writes data/monitors.json through the GitHub API). */
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       passwordField: body?.passwordField,
       successText: body?.successText,
       failureText: body?.failureText,
+      sslExpiresAt: body?.sslExpiresAt,
     })
     if (!result.ok) {
       return jsonResponse({ error: result.error }, { status: result.status })

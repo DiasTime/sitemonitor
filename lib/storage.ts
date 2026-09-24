@@ -8,6 +8,7 @@ import {
   validateMonitorName,
   validateMonitorUrl,
 } from '@/lib/security'
+import { validateSslDate } from '@/lib/ssl'
 import { hostnameOf, slugify } from '@/lib/utils'
 import type {
   HistoryEntry,
@@ -110,6 +111,8 @@ export interface AddMonitorInput {
   passwordField?: unknown
   successText?: unknown
   failureText?: unknown
+  /** Any type — "YYYY-MM-DD", blank to clear. */
+  sslExpiresAt?: unknown
 }
 
 export type MutationResult =
@@ -122,7 +125,10 @@ type LoginFields = Pick<
 >
 
 /** Everything about a monitor that the dashboard form controls. */
-type MonitorFields = Pick<Monitor, 'name' | 'url'> & { type: MonitorType; loginFields: LoginFields }
+type MonitorFields = Pick<Monitor, 'name' | 'url' | 'sslExpiresAt'> & {
+  type: MonitorType
+  loginFields: LoginFields
+}
 
 /** Validate the form fields shared by adding and editing a monitor. */
 function validateMonitorInput(
@@ -148,6 +154,10 @@ function validateMonitorInput(
   }
   const type: MonitorType =
     input.type === 'health' ? 'health' : input.type === 'login' ? 'login' : 'website'
+
+  const sslCheck = validateSslDate(input.sslExpiresAt)
+  if (!sslCheck.ok) return { ok: false, error: sslCheck.error!, status: 400 }
+  const sslExpiresAt = sslCheck.date
 
   let loginFields: LoginFields = {}
   if (type === 'login') {
@@ -186,14 +196,14 @@ function validateMonitorInput(
     }
   }
 
-  return { ok: true, fields: { name, url, type, loginFields } }
+  return { ok: true, fields: { name, url, type, loginFields, sslExpiresAt } }
 }
 
 /** Validate and append a monitor to `data/monitors.json`. */
 export async function addMonitor(input: AddMonitorInput): Promise<MutationResult> {
   const validation = validateMonitorInput(input)
   if (!validation.ok) return validation
-  const { name, url, type, loginFields } = validation.fields
+  const { name, url, type, loginFields, sslExpiresAt } = validation.fields
 
   let created: Monitor | null = null
   let failure: { error: string; status: number } | null = null
@@ -223,6 +233,7 @@ export async function addMonitor(input: AddMonitorInput): Promise<MutationResult
         enabled: true,
         ...(type !== 'website' ? { type } : {}),
         ...loginFields,
+        ...(sslExpiresAt ? { sslExpiresAt } : {}),
         createdAt: new Date().toISOString(),
       }
       created = monitor
@@ -251,7 +262,7 @@ export async function updateMonitor(id: string, input: AddMonitorInput): Promise
 
   const validation = validateMonitorInput(input)
   if (!validation.ok) return validation
-  const { name, url, type, loginFields } = validation.fields
+  const { name, url, type, loginFields, sslExpiresAt } = validation.fields
 
   let updated: Monitor | null = null
   let failure: { error: string; status: number } | null = null
@@ -280,6 +291,7 @@ export async function updateMonitor(id: string, input: AddMonitorInput): Promise
         enabled: match.enabled,
         ...(type !== 'website' ? { type } : {}),
         ...loginFields,
+        ...(sslExpiresAt ? { sslExpiresAt } : {}),
         ...(match.createdAt ? { createdAt: match.createdAt } : {}),
       }
       updated = next

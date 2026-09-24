@@ -56,7 +56,14 @@ import type {
   StatusFile,
   SubscribersFile,
 } from '../lib/types'
-import { formatChecksRu, formatDurationRu, formatResponseTimeRu } from '../lib/ru'
+import {
+  formatChecksRu,
+  formatDateRu,
+  formatDaysRu,
+  formatDurationRu,
+  formatResponseTimeRu,
+} from '../lib/ru'
+import { DEFAULT_SSL_WARNING_DAYS, isNoticeFor, sslNoticeDue, type SslNotice } from '../lib/ssl'
 import {
   formatDuration,
   formatFullTimestamp,
@@ -99,6 +106,14 @@ const CONFIRM_DELAY_MS = numberFromEnv('CONFIRM_DELAY_SECONDS', 10) * 1000
  * to 0 for the old behaviour: announce once, never mention it again.
  */
 const REMINDER_INTERVAL_MS = countFromEnv('REMINDER_INTERVAL_MINUTES', 360) * 60_000
+/**
+ * How many days before a monitor's SSL expiry date Telegram is warned; a
+ * second notice follows on the day itself. Not configurable, so the
+ * dashboard's amber badge and the alert always agree.
+ */
+const SSL_WARNING_DAYS = DEFAULT_SSL_WARNING_DAYS
+/** The zone "today" is counted in for SSL expiry dates — the reader's, like alert times. */
+const DISPLAY_TIMEZONE = process.env.DISPLAY_TIMEZONE?.trim() || 'UTC'
 /** How many sites are probed at the same time. */
 const CONCURRENCY = numberFromEnv('CHECK_CONCURRENCY', 8)
 /** History older than this is dropped on every run. */
@@ -1249,6 +1264,35 @@ function stillDownMessage(monitor: Monitor, incident: Incident, downtimeMs: numb
   return lines.join('\n')
 }
 
+function sslMessage(monitor: Monitor, expiresAt: string, notice: SslNotice): string {
+  const heading =
+    notice.stage === 'soon'
+      ? '🔒 SSL-СЕРТИФИКАТ СКОРО ИСТЕЧЁТ'
+      : notice.daysLeft === 0
+        ? '⛔ SSL-СЕРТИФИКАТ ИСТЕКАЕТ СЕГОДНЯ'
+        : '⛔ SSL-СЕРТИФИКАТ ИСТЁК'
+  const when =
+    notice.daysLeft > 0
+      ? `через ${formatDaysRu(notice.daysLeft)}`
+      : notice.daysLeft === 0
+        ? 'сегодня'
+        : `${formatDaysRu(-notice.daysLeft)} назад`
+
+  return [
+    heading,
+    '',
+    monitor.name,
+    '',
+    'Срок действия:',
+    `${formatDateRu(expiresAt)} (${when})`,
+    '',
+    'Адрес:',
+    monitor.url,
+    '',
+    'После продления укажите новую дату в настройках монитора на дашборде.',
+  ].join('\n')
+}
+
 function monitoringGapMessage(gapMs: number, lastCheckIso: string, nowIso: string): string {
   return [
     '⚠️ ПРОПУСК В МОНИТОРИНГЕ',
@@ -1468,6 +1512,35 @@ async function runOnce(): Promise<void> {
     log(`  ${symbol} ${monitor.name} (${hostnameOf(monitor.url)}) — ${detail}`)
   }
 
+  // --- SSL expiry ----------------------------------------------------------
+  // Each notice is remembered by date and stage, so it goes out once. A
+  // paused monitor sends nothing but keeps what it was told, so resuming it
+  // does not repeat an old warning; a changed or cleared date drops it.
+  const previousSslNotices = statusRead.data.sslNotices ?? {}
+  const sslNotices: Record<string, string> = {}
+  const sslAlerts: { monitor: Monitor; expiresAt: string; notice: SslNotice }[] = []
+  for (const monitor of monitors) {
+    const expiresAt = monitor.sslExpiresAt
+    if (!expiresAt) continue
+    const last = previousSslNotices[monitor.id]
+    const notice =
+      monitor.enabled !== false
+        ? sslNoticeDue(expiresAt, last, startedAt, {
+            warningDays: SSL_WARNING_DAYS,
+            timeZone: DISPLAY_TIMEZONE,
+          })
+        : null
+    if (notice) {
+      sslNotices[monitor.id] = notice.key
+      sslAlerts.push({ monitor, expiresAt, notice })
+    } else if (isNoticeFor(expiresAt, last)) {
+      sslNotices[monitor.id] = last
+    }
+  }
+  const sslNoticesChanged =
+    JSON.stringify(Object.entries(sslNotices).sort()) !==
+    JSON.stringify(Object.entries(previousSslNotices).sort())
+
   // Monitors deleted from monitors.json should not linger in status.json.
   const prunedStatus = Object.keys(previousStatus).some((id) => !monitorById.has(id))
 
@@ -1509,6 +1582,8 @@ async function runOnce(): Promise<void> {
     // sees on both sides, so they have to ask for the commit themselves — or
     // the same reminder would be due again on the next run.
     reminders.length > 0 ||
+    // Like reminders: without a commit the notice would be sent again next run.
+    sslNoticesChanged ||
     prunedStatus ||
     firstRun ||
     intervalElapsed ||
@@ -1571,12 +1646,21 @@ async function runOnce(): Promise<void> {
     await notify(stillDownMessage(reminder.monitor, reminder.incident, reminder.downtimeMs))
   }
 
+  for (const alert of sslAlerts) {
+    log(
+      `  Telegram: SSL ${alert.notice.stage.toUpperCase()} — ${alert.monitor.name} ` +
+        `(${alert.expiresAt}, ${alert.notice.daysLeft} day(s) left)`,
+    )
+    await notify(sslMessage(alert.monitor, alert.expiresAt, alert.notice))
+  }
+
   // --- persist -------------------------------------------------------------
   if (shouldCommit) {
     const statusFile: StatusFile = {
       updatedAt: timestamp,
       lastCommitAt: timestamp,
       monitors: nextStatus,
+      ...(Object.keys(sslNotices).length ? { sslNotices } : {}),
     }
     await writeJson(PATHS.status, statusFile)
     await writeJson(PATHS.history, { entries: history } satisfies HistoryFile)
@@ -1591,6 +1675,8 @@ async function runOnce(): Promise<void> {
         ? 'incident update'
         : reminders.length
         ? 'outage reminder'
+        : sslAlerts.length
+        ? 'ssl expiry notice'
         : subscribersChanged
         ? 'subscriber update'
         : firstRun

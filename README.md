@@ -416,6 +416,29 @@ otherwise the same reminder would come due again on the next run. Set
 `REMINDER_INTERVAL_MINUTES=0` to announce an outage once and never mention it
 again.
 
+**SSL certificates are tracked by a date you enter.** Each monitor's form has
+an optional *SSL certificate expires* date. Five days before it Telegram is
+warned once, and once more on the day itself; the dashboard shows the days
+left on the card, amber inside those five days and red from the expiry day on.
+"Today" is counted in `DISPLAY_TIMEZONE`, like alert times. Which notices were
+sent is kept in `status.json` under `sslNotices`, keyed by date, so entering
+the new date after a renewal starts the cycle over. A paused monitor sends
+none. The logic lives in `lib/ssl.ts`.
+
+```text
+🔒 SSL-СЕРТИФИКАТ СКОРО ИСТЕЧЁТ
+
+Шарын
+
+Срок действия:
+27 сентября 2026 г. (через 5 дней)
+
+Адрес:
+https://sharyn.kz
+
+После продления укажите новую дату в настройках монитора на дашборде.
+```
+
 **Down, with an HTTP response:**
 
 ```text

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import { EditMonitorDialog } from '@/components/dashboard/add-monitor-dialog'
+import { SslBadge } from '@/components/monitor/ssl-badge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -165,7 +166,7 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
         </div>
       </div>
 
-      <div className="flex items-baseline gap-4 px-5 text-sm">
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 px-5 text-sm">
         <span className="tabular font-medium">{formatResponseTime(state?.responseTime)}</span>
         <span className="tabular text-muted-foreground">
           {formatUptime(state?.uptime30d)} uptime
@@ -175,6 +176,7 @@ export function MonitorCard({ monitor, onChanged }: MonitorCardProps) {
             {state.reported}
           </Badge>
         )}
+        <SslBadge expiresAt={monitor.sslExpiresAt} />
       </div>
 
       {state?.status === 'DOWN' && state.error && (
