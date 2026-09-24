@@ -488,7 +488,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 15,
+      "failedChecks": 16,
       "lastNotifiedAt": "2026-09-24T05:20:55.510Z"
     },
     {
@@ -500,7 +500,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 11,
+      "failedChecks": 12,
       "lastNotifiedAt": "2026-09-24T01:40:18.470Z"
     },
     {
@@ -514,6 +514,18 @@
       "error": "Таймаут соединения",
       "failedChecks": 5,
       "lastNotifiedAt": "2026-09-24T03:53:57.560Z"
+    },
+    {
+      "id": "darynast-kz-2026-09-24T06:32:04.486Z",
+      "monitorId": "darynast-kz",
+      "startedAt": "2026-09-24T06:32:04.486Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Ошибка SSL: срок сертификата истёк",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-24T06:32:04.486Z"
     }
   ]
 }
