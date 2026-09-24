@@ -488,7 +488,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 7,
+      "failedChecks": 8,
       "lastNotifiedAt": "2026-09-23T23:12:06.755Z"
     },
     {
@@ -500,8 +500,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 3,
-      "lastNotifiedAt": "2026-09-23T17:15:48.639Z"
+      "failedChecks": 4,
+      "lastNotifiedAt": "2026-09-24T01:40:18.470Z"
     }
   ]
 }
