@@ -45,6 +45,7 @@
       "loginUrl": "https://megapolisast.kz/api/auth/login",
       "loginBodyType": "json",
       "successText": "accessToken",
+      "sslExpiresAt": "2026-10-27",
       "createdAt": "2026-08-19T11:52:17.833Z"
     },
     {
