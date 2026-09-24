@@ -33,6 +33,7 @@
       "loginUrl": "https://zhanaurpaq.kz/api/auth/login",
       "loginBodyType": "json",
       "successText": "accessToken",
+      "sslExpiresAt": "2026-11-11",
       "createdAt": "2026-08-19T11:50:46.187Z"
     },
     {
