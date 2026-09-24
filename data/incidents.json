@@ -519,13 +519,25 @@
       "id": "darynast-kz-2026-09-24T06:32:04.486Z",
       "monitorId": "darynast-kz",
       "startedAt": "2026-09-24T06:32:04.486Z",
+      "endedAt": "2026-09-24T09:34:45.600Z",
+      "durationMs": 10961114,
+      "status": "resolved",
+      "statusCode": null,
+      "error": "Ошибка SSL: срок сертификата истёк",
+      "failedChecks": 5,
+      "lastNotifiedAt": "2026-09-24T06:32:04.486Z"
+    },
+    {
+      "id": "sharyn-kz-2026-09-24T09:34:45.600Z",
+      "monitorId": "sharyn-kz",
+      "startedAt": "2026-09-24T09:34:45.600Z",
       "endedAt": null,
       "durationMs": null,
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 3,
-      "lastNotifiedAt": "2026-09-24T06:32:04.486Z"
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-24T09:34:45.600Z"
     }
   ]
 }

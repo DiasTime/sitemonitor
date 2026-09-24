@@ -61,6 +61,7 @@
       "url": "https://olen.vms.svoydom.kz/api/health",
       "enabled": true,
       "type": "health",
+      "sslExpiresAt": "2026-12-23",
       "createdAt": "2026-08-19T12:40:26.148Z"
     },
     {
@@ -69,6 +70,7 @@
       "url": "https://baimura.vms.svoydom.kz/api/health",
       "enabled": true,
       "type": "health",
+      "sslExpiresAt": "2026-12-23",
       "createdAt": "2026-08-19T12:41:22.405Z"
     },
     {
