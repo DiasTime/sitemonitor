@@ -84,6 +84,7 @@
       "loginUrl": "https://gakkuast.kz/api/auth/login",
       "loginBodyType": "json",
       "successText": "accessToken",
+      "sslExpiresAt": "2026-12-21",
       "createdAt": "2026-09-22T09:56:51.761Z"
     },
     {
