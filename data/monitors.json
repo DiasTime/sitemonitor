@@ -60,7 +60,7 @@
     {
       "id": "olen-vms-svoydom-kz-2",
       "name": "OLEN VMS",
-      "url": "https://olen.vms.svoydom.kz/api/health",
+      "url": "https://olenast.kz/api/health",
       "enabled": true,
       "type": "health",
       "sslExpiresAt": "2026-12-23",
