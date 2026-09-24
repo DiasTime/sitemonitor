@@ -21,6 +21,7 @@
       "loginUrl": "https://darynast.kz/api/auth/login",
       "loginBodyType": "json",
       "successText": "accessToken",
+      "sslExpiresAt": "2026-12-23",
       "createdAt": "2026-08-19T11:50:25.086Z"
     },
     {
