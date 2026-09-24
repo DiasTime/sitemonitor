@@ -536,7 +536,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 1,
+      "failedChecks": 4,
       "lastNotifiedAt": "2026-09-24T09:34:45.600Z"
     }
   ]
