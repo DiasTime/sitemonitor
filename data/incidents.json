@@ -538,6 +538,18 @@
       "error": "Ошибка SSL: срок сертификата истёк",
       "failedChecks": 5,
       "lastNotifiedAt": "2026-09-24T09:34:45.600Z"
+    },
+    {
+      "id": "megapolisast-kz-2026-09-25T05:26:41.489Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-09-25T05:26:41.489Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Соединение отклонено",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-25T05:26:41.489Z"
     }
   ]
 }
