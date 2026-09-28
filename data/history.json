@@ -24951,6 +24951,78 @@
       "statusCode": 200,
       "responseTime": 1214,
       "error": null
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1367,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1059,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1099,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "megapolisast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "Ошибка SSL: сертификат выдан на другое имя"
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "anarast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1066,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 7925,
+      "error": "HTTP 502"
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1434,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "gakkuast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1144,
+      "error": null
+    },
+    {
+      "timestamp": "2026-09-28T10:33:01.351Z",
+      "monitorId": "aqqain-kz",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 786,
+      "error": "HTTP 502"
     }
   ]
 }

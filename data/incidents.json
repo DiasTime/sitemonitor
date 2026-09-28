@@ -572,8 +572,32 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: сертификат выдан на другое имя",
-      "failedChecks": 2,
+      "failedChecks": 3,
       "lastNotifiedAt": "2026-09-28T09:55:19.938Z"
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-09-28T10:33:01.351Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-09-28T10:33:01.351Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-28T10:33:01.351Z"
+    },
+    {
+      "id": "aqqain-kz-2026-09-28T10:33:01.351Z",
+      "monitorId": "aqqain-kz",
+      "startedAt": "2026-09-28T10:33:01.351Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-28T10:33:01.351Z"
     }
   ]
 }
