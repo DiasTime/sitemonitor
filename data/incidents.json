@@ -550,6 +550,54 @@
       "error": "Соединение отклонено",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-09-25T05:26:41.489Z"
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-09-28T05:55:23.521Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-09-28T05:55:23.521Z",
+      "endedAt": "2026-09-28T06:12:50.180Z",
+      "durationMs": 1046659,
+      "status": "resolved",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-28T05:55:23.521Z"
+    },
+    {
+      "id": "megapolisast-kz-2026-09-28T09:55:19.938Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-09-28T09:55:19.938Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Ошибка SSL: сертификат выдан на другое имя",
+      "failedChecks": 6,
+      "lastNotifiedAt": "2026-09-28T09:55:19.938Z"
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-09-28T10:33:01.351Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-09-28T10:33:01.351Z",
+      "endedAt": "2026-09-28T10:39:38.871Z",
+      "durationMs": 397520,
+      "status": "resolved",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-28T10:33:01.351Z"
+    },
+    {
+      "id": "aqqain-kz-2026-09-28T10:33:01.351Z",
+      "monitorId": "aqqain-kz",
+      "startedAt": "2026-09-28T10:33:01.351Z",
+      "endedAt": "2026-09-28T10:39:38.871Z",
+      "durationMs": 397520,
+      "status": "resolved",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-09-28T10:33:01.351Z"
     }
   ]
 }
