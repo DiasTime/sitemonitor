@@ -2,80 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Radius system: interactive controls (buttons, inputs, badges) use `rounded-md`
+ * (8px), surfaces (panels, dialogs, list containers) use `rounded-xl` (14px).
+ * One cool zinc gray family throughout; `--up` doubles as the brand accent.
+ */
 @layer base {
   :root {
-    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-      'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-      'Liberation Mono', monospace;
+    --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+      BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas,
+      monospace;
 
-    --background: 0 0% 100%;
-    --foreground: 240 10% 4%;
+    --background: 240 14% 98.5%;
+    --foreground: 240 10% 6%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card-foreground: 240 10% 6%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
+    --popover-foreground: 240 10% 6%;
 
-    --primary: 240 6% 10%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 240 8% 9%;
+    --primary-foreground: 240 10% 98%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
+    --secondary: 240 6% 94.5%;
+    --secondary-foreground: 240 8% 10%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 240 6% 94.5%;
+    --muted-foreground: 240 4% 42%;
 
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 6% 10%;
+    --accent: 240 6% 93%;
+    --accent-foreground: 240 8% 10%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 356 66% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 240 5% 65%;
+    --border: 240 6% 89%;
+    --input: 240 6% 87%;
+    --ring: 152 50% 38%;
 
-    --up: 142 71% 40%;
-    --down: 0 72% 51%;
-    --checking: 38 92% 50%;
+    --up: 152 58% 36%;
+    --down: 356 66% 50%;
+    --checking: 36 88% 46%;
 
     --radius: 0.5rem;
+    --shadow-tint: 240 20% 20%;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 95%;
+    --background: 240 8% 4.5%;
+    --foreground: 240 6% 95%;
 
-    --card: 240 8% 6%;
-    --card-foreground: 0 0% 95%;
+    --card: 240 7% 7%;
+    --card-foreground: 240 6% 95%;
 
-    --popover: 240 8% 6%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 240 7% 8%;
+    --popover-foreground: 240 6% 95%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 6% 10%;
+    --primary: 240 6% 95%;
+    --primary-foreground: 240 8% 8%;
 
-    --secondary: 240 4% 12%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 240 5% 12%;
+    --secondary-foreground: 240 6% 95%;
 
-    --muted: 240 4% 12%;
-    --muted-foreground: 240 5% 60%;
+    --muted: 240 5% 11%;
+    --muted-foreground: 240 5% 62%;
 
-    --accent: 240 4% 14%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 240 5% 13%;
+    --accent-foreground: 240 6% 95%;
 
-    --destructive: 0 63% 46%;
+    --destructive: 356 70% 56%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5% 16%;
+    --border: 240 5% 14.5%;
     --input: 240 5% 18%;
-    --ring: 240 5% 40%;
+    --ring: 152 50% 48%;
 
-    --up: 142 69% 45%;
-    --down: 0 84% 60%;
-    --checking: 38 92% 50%;
+    --up: 152 54% 48%;
+    --down: 356 76% 62%;
+    --checking: 38 90% 56%;
+
+    --shadow-tint: 240 30% 2%;
   }
 }
 
@@ -86,16 +94,27 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   ::selection {
-    @apply bg-foreground/10;
+    background: hsl(var(--up) / 0.22);
   }
 }
 
@@ -105,10 +124,88 @@
   }
 
   .grid-bg {
-    background-image: radial-gradient(
-      hsl(var(--border)) 1px,
-      transparent 1px
-    );
+    background-image: radial-gradient(hsl(var(--border)) 1px, transparent 1px);
     background-size: 28px 28px;
+  }
+
+  /* Hairline grid used behind the landing hero. */
+  .line-grid {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.7) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.7) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  /* Tinted, single-light-source elevation. */
+  .shadow-panel {
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
+      0 1px 2px hsl(var(--shadow-tint) / 0.06),
+      0 12px 32px -12px hsl(var(--shadow-tint) / 0.18);
+  }
+
+  .dark .shadow-panel {
+    box-shadow:
+      0 1px 0 0 hsl(0 0% 100% / 0.05) inset,
+      0 1px 2px hsl(var(--shadow-tint) / 0.5),
+      0 24px 48px -16px hsl(var(--shadow-tint) / 0.8);
+  }
+
+  /* Staggered entry. Children set `--i` for their position in the sequence. */
+  .reveal {
+    animation: reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+
+  /* Scroll-driven reveal where supported; plain visible content elsewhere. */
+  @supports (animation-timeline: view()) {
+    .reveal-on-scroll {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Subtle grain, fixed and non-interactive so it never repaints on scroll. */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reveal,
+  .reveal-on-scroll,
+  .animate-sweep {
+    animation: none !important;
   }
 }

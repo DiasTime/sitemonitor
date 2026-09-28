@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
+import { useI18n } from '@/components/i18n/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ export function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const next = safeNext(params.get('next'))
+  const { t } = useI18n()
 
   const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
@@ -38,7 +40,7 @@ export function LoginForm() {
       const body = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        setError(typeof body?.error === 'string' ? body.error : 'Sign in failed')
+        setError(typeof body?.error === 'string' ? body.error : t.login.failed)
         return
       }
 
@@ -54,13 +56,13 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>Enter the admin password to open the dashboard.</CardDescription>
+        <CardTitle>{t.login.title}</CardTitle>
+        <CardDescription>{t.login.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t.login.password}</Label>
             <Input
               id="password"
               type="password"
@@ -81,7 +83,7 @@ export function LoginForm() {
 
           <Button type="submit" className="w-full" disabled={pending || !password}>
             {pending && <Loader2 className="animate-spin" />}
-            Sign in
+            {t.login.submit}
           </Button>
         </form>
       </CardContent>

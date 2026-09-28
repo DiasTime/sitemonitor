@@ -31,3 +31,33 @@ yarn-error.log*
 
 # monitor runtime cache (persisted through actions/cache, never committed)
 .monitor-cache
+CLAUDE.md
+skills-lock.json
+.agents/skills/brandkit/SKILL.md
+.agents/skills/design-taste-frontend-v1/SKILL.md
+.agents/skills/full-output-enforcement/SKILL.md
+.agents/skills/gpt-taste/SKILL.md
+.agents/skills/high-end-visual-design/SKILL.md
+.agents/skills/image-to-code/SKILL.md
+.agents/skills/imagegen-frontend-mobile/SKILL.md
+.agents/skills/imagegen-frontend-web/SKILL.md
+.agents/skills/industrial-brutalist-ui/SKILL.md
+.agents/skills/minimalist-ui/SKILL.md
+.agents/skills/redesign-existing-projects/SKILL.md
+.agents/skills/stitch-design-taste/DESIGN.md
+.agents/skills/stitch-design-taste/SKILL.md
+.claude/skills/brandkit/SKILL.md
+.claude/skills/design-taste-frontend/SKILL.md
+.claude/skills/design-taste-frontend-v1/SKILL.md
+.claude/skills/full-output-enforcement/SKILL.md
+.claude/skills/gpt-taste/SKILL.md
+.claude/skills/high-end-visual-design/SKILL.md
+.claude/skills/image-to-code/SKILL.md
+.claude/skills/imagegen-frontend-mobile/SKILL.md
+.claude/skills/imagegen-frontend-web/SKILL.md
+.claude/skills/industrial-brutalist-ui/SKILL.md
+.claude/skills/minimalist-ui/SKILL.md
+.claude/skills/redesign-existing-projects/SKILL.md
+.claude/skills/stitch-design-taste/DESIGN.md
+.claude/skills/stitch-design-taste/SKILL.md
+.agents/skills/design-taste-frontend/SKILL.md

@@ -6,6 +6,7 @@ import { Activity, ArrowLeft, ExternalLink, KeyRound, TriangleAlert } from 'luci
 
 import { AppHeader } from '@/components/dashboard/app-header'
 import { ResponseTimeChart } from '@/components/charts/response-time-chart'
+import { useI18n } from '@/components/i18n/i18n-provider'
 import { HistoryTable } from '@/components/monitor/history-table'
 import { IncidentList } from '@/components/monitor/incident-list'
 import { SslBadge } from '@/components/monitor/ssl-badge'
@@ -16,13 +17,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusDot } from '@/components/ui/status-dot'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { usePoll } from '@/components/ui/use-poll'
-import {
-  formatExact,
-  formatNumber,
-  formatRelative,
-  formatResponseTime,
-  formatUptime,
-} from '@/lib/utils'
 import type {
   HistoryRange,
   HistoryResponse,
@@ -31,11 +25,7 @@ import type {
   UiStatus,
 } from '@/lib/types'
 
-const RANGES: { value: HistoryRange; label: string }[] = [
-  { value: '24h', label: '24H' },
-  { value: '7d', label: '7D' },
-  { value: '30d', label: '30D' },
-]
+const RANGES: HistoryRange[] = ['24h', '7d', '30d']
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -49,6 +39,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export function MonitorDetail({ monitorId }: { monitorId: string }) {
+  const { t: messages, format } = useI18n()
+  const t = messages.detail
   const [range, setRange] = React.useState<HistoryRange>('24h')
 
   const status = usePoll<StatusResponse>('/api/status', 30_000)
@@ -85,13 +77,13 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
           <Card className="flex flex-col items-center gap-4 px-6 py-16 text-center">
             <TriangleAlert className="h-6 w-6 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium">Monitor not found</p>
+              <p className="text-sm font-medium">{t.notFound}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {status.error ?? 'It may have been removed from data/monitors.json.'}
+                {status.error ?? t.notFoundBody}
               </p>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link href="/dashboard">Back to dashboard</Link>
+              <Link href="/dashboard">{t.back}</Link>
             </Button>
           </Card>
         </main>
@@ -101,12 +93,12 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
 
   const uiStatus: UiStatus = !monitor.enabled ? 'CHECKING' : (state?.status ?? 'CHECKING')
   const headline = !monitor.enabled
-    ? 'Paused'
+    ? t.paused
     : state?.status === 'UP'
-      ? 'Operational'
+      ? t.operational
       : state?.status === 'DOWN'
-        ? 'Down'
-        : 'Waiting for the first check'
+        ? t.down
+        : t.waiting
 
   const openIncident = incidents.data?.incidents.find((entry) => entry.status === 'ongoing')
 
@@ -118,7 +110,7 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
         <Button asChild variant="ghost" size="sm" className="-ml-3">
           <Link href="/dashboard">
             <ArrowLeft />
-            Dashboard
+            {t.backShort}
           </Link>
         </Button>
 
@@ -135,7 +127,7 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
               </span>
               {state?.reported && (
                 <Badge variant={state.status === 'UP' ? 'up' : 'down'}>
-                  reported: {state.reported}
+                  {t.reported(state.reported)}
                 </Badge>
               )}
             </div>
@@ -144,13 +136,13 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
               {monitor.type === 'health' && (
                 <Badge variant="outline" className="shrink-0 gap-1">
                   <Activity className="h-3 w-3" />
-                  Health endpoint
+                  {t.healthEndpoint}
                 </Badge>
               )}
               {monitor.type === 'login' && (
                 <Badge variant="outline" className="shrink-0 gap-1">
                   <KeyRound className="h-3 w-3" />
-                  Login check
+                  {t.loginCheck}
                 </Badge>
               )}
               <SslBadge expiresAt={monitor.sslExpiresAt} />
@@ -166,9 +158,9 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
             </a>
           </div>
 
-          <p className="text-xs text-muted-foreground" title={formatExact(state?.lastCheck)}>
-            Checks run on GitHub Actions
-            {state?.lastCheck ? ` · last check ${formatRelative(state.lastCheck)}` : ''}
+          <p className="text-xs text-muted-foreground" title={format.exact(state?.lastCheck)}>
+            {t.runsOn}
+            {state?.lastCheck ? t.lastCheck(format.relative(state.lastCheck)) : ''}
           </p>
         </div>
 
@@ -176,11 +168,11 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
           <Card className="flex items-start gap-3 border-down/30 bg-down/5 p-4 text-sm">
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-down" />
             <div className="min-w-0">
-              <p className="font-medium text-down">This site is currently down</p>
+              <p className="font-medium text-down">{t.downTitle}</p>
               <p className="mt-1 break-words text-muted-foreground">{state.error}</p>
               {openIncident && (
                 <p className="mt-1 text-muted-foreground">
-                  Down since {new Date(openIncident.startedAt).toLocaleString()}.
+                  {t.downSince(format.exact(openIncident.startedAt) ?? openIncident.startedAt)}
                 </p>
               )}
             </div>
@@ -189,27 +181,27 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
 
         <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-4">
           <div className="bg-background">
-            <Stat label="Uptime · 30d" value={formatUptime(state?.uptime30d)} />
+            <Stat label={t.uptime30d} value={format.uptime(state?.uptime30d)} />
           </div>
           <div className="bg-background">
-            <Stat label="Average response" value={formatResponseTime(state?.avgResponse24h)} />
+            <Stat label={t.avgResponse} value={format.responseTime(state?.avgResponse24h)} />
           </div>
           <div className="bg-background">
-            <Stat label="Checks" value={formatNumber(state?.totalChecks ?? 0)} />
+            <Stat label={t.checks} value={format.number(state?.totalChecks ?? 0)} />
           </div>
           <div className="bg-background">
-            <Stat label="Incidents" value={formatNumber(state?.incidents ?? 0)} />
+            <Stat label={t.incidents} value={format.number(state?.incidents ?? 0)} />
           </div>
         </div>
 
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm">Response time</CardTitle>
+            <CardTitle className="text-sm">{t.responseTime}</CardTitle>
             <Tabs value={range} onValueChange={(value) => setRange(value as HistoryRange)}>
               <TabsList>
                 {RANGES.map((option) => (
-                  <TabsTrigger key={option.value} value={option.value}>
-                    {option.label}
+                  <TabsTrigger key={option} value={option}>
+                    {t.ranges[option]}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -227,7 +219,7 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">History</CardTitle>
+              <CardTitle className="text-sm">{t.history}</CardTitle>
             </CardHeader>
             <div className="max-h-[420px] overflow-y-auto border-t border-border">
               {history.loading ? (
@@ -240,7 +232,7 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Incidents</CardTitle>
+              <CardTitle className="text-sm">{t.incidents}</CardTitle>
             </CardHeader>
             <div className="max-h-[420px] overflow-y-auto border-t border-border">
               {incidents.loading ? (

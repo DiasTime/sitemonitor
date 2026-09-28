@@ -11,7 +11,8 @@ import {
   YAxis,
 } from 'recharts'
 
-import { formatResponseTime } from '@/lib/utils'
+import { useI18n } from '@/components/i18n/i18n-provider'
+import type { Formatters } from '@/lib/i18n/format'
 import type { HistoryEntry, HistoryRange } from '@/lib/types'
 
 interface Point {
@@ -25,7 +26,7 @@ interface Point {
 /** Fixed number of buckets keeps 30 days of samples from choking the SVG. */
 const MAX_POINTS = 160
 
-function bucketise(entries: HistoryEntry[], range: HistoryRange): Point[] {
+function bucketise(entries: HistoryEntry[], range: HistoryRange, format: Formatters): Point[] {
   if (!entries.length) return []
 
   const times = entries.map((entry) => new Date(entry.timestamp).getTime())
@@ -56,12 +57,7 @@ function bucketise(entries: HistoryEntry[], range: HistoryRange): Point[] {
     .sort((a, b) => a[0] - b[0])
     .map(([time, bucket]) => ({
       time,
-      label: new Date(time).toLocaleString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        ...(showDate ? { month: 'short', day: 'numeric' } : {}),
-      }),
+      label: format.chartLabel(time, showDate),
       responseTime: bucket.counted ? Math.round(bucket.total / bucket.counted) : null,
       failures: bucket.failures,
       samples: bucket.samples,
@@ -79,6 +75,7 @@ function ChartTooltip({
   active?: boolean
   payload?: TooltipPayloadItem[]
 }) {
+  const { t, format } = useI18n()
   if (!active || !payload?.length) return null
   const point = payload[0].payload
 
@@ -86,11 +83,11 @@ function ChartTooltip({
     <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md">
       <div className="font-medium">{point.label}</div>
       <div className="tabular mt-1 text-muted-foreground">
-        {formatResponseTime(point.responseTime)}
+        {format.responseTime(point.responseTime)}
       </div>
       {point.failures > 0 && (
         <div className="tabular mt-0.5 text-down">
-          {point.failures} failed check{point.failures === 1 ? '' : 's'}
+          {t.chart.failed(point.failures)}
         </div>
       )}
     </div>
@@ -104,12 +101,13 @@ export function ResponseTimeChart({
   entries: HistoryEntry[]
   range: HistoryRange
 }) {
-  const data = React.useMemo(() => bucketise(entries, range), [entries, range])
+  const { t, format } = useI18n()
+  const data = React.useMemo(() => bucketise(entries, range, format), [entries, range, format])
 
   if (!data.length) {
     return (
       <div className="flex h-[240px] items-center justify-center text-sm text-muted-foreground">
-        No checks recorded in this period yet.
+        {t.chart.empty}
       </div>
     )
   }
@@ -138,7 +136,7 @@ export function ResponseTimeChart({
             tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value: number) => `${value} ms`}
+            tickFormatter={(value: number) => t.chart.axisMs(value)}
           />
           <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'hsl(var(--border))' }} />
           <Area

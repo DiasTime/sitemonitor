@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { Loader2, Plus } from 'lucide-react'
 
+import { useI18n } from '@/components/i18n/i18n-provider'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -18,52 +19,10 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { Monitor, MonitorType } from '@/lib/types'
 
-/** Wording differs per kind, everything else about the form is identical. */
-const COPY: Record<MonitorType, {
-  tab: string
-  title: string
-  description: string
-  urlLabel: string
-  urlPlaceholder: string
-  namePlaceholder: string
-  hint: string
-  submit: string
-}> = {
-  website: {
-    tab: 'Website',
-    title: 'Add website',
-    description: 'The next monitoring run picks it up — usually within a few minutes.',
-    urlLabel: 'Website URL',
-    urlPlaceholder: 'https://example.com',
-    namePlaceholder: 'Example Website',
-    hint: 'Up when the page answers with an HTTP status of 200–399.',
-    submit: 'Add website',
-  },
-  health: {
-    tab: 'Health endpoint',
-    title: 'Add health endpoint',
-    description: 'The next monitoring run picks it up — usually within a few minutes.',
-    urlLabel: 'Health endpoint URL',
-    urlPlaceholder: 'https://example.com/api/health',
-    namePlaceholder: 'Example API health',
-    hint: 'If it answers JSON with a "status" field, that field must report ok — otherwise the check fails even on HTTP 200.',
-    submit: 'Add health endpoint',
-  },
-  login: {
-    tab: 'Portal login',
-    title: 'Add portal login check',
-    description:
-      'Signs into the portal on every run instead of just loading the page, so a broken login counts as down. ' +
-      'The credentials themselves are never entered here — add them as the PORTAL_CREDENTIALS secret, keyed by this monitor’s id (see the README).',
-    urlLabel: 'Login page URL',
-    urlPlaceholder: 'https://portal.example.com/login',
-    namePlaceholder: 'Example Portal',
-    hint: 'Fetches this page, submits the sign-in form with the configured credentials, and checks the result.',
-    submit: 'Add login check',
-  },
-}
+const KINDS: MonitorType[] = ['website', 'health', 'login']
 
 export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
+  const { t } = useI18n()
   const [open, setOpen] = React.useState(false)
   return (
     <MonitorDialog
@@ -73,7 +32,7 @@ export function AddMonitorDialog({ onAdded }: { onAdded: () => void }) {
       trigger={
         <Button size="sm">
           <Plus />
-          Add monitor
+          {t.dialog.addMonitor}
         </Button>
       }
     />
@@ -109,6 +68,8 @@ function MonitorDialog({
   onSaved: () => void
   trigger?: React.ReactNode
 }) {
+  const { t: messages } = useI18n()
+  const t = messages.dialog
   const editing = monitor !== undefined
   const [type, setType] = React.useState<MonitorType>('website')
   const [url, setUrl] = React.useState('')
@@ -123,7 +84,8 @@ function MonitorDialog({
   const [error, setError] = React.useState<string | null>(null)
   const [pending, setPending] = React.useState(false)
 
-  const copy = COPY[type]
+  // Wording differs per kind, everything else about the form is identical.
+  const copy = t.kinds[type]
 
   /** Back to an empty form, or to the monitor's saved values when editing. */
   const reset = React.useCallback(() => {
@@ -180,8 +142,8 @@ function MonitorDialog({
           typeof body?.error === 'string'
             ? body.error
             : editing
-              ? 'Could not save the monitor'
-              : 'Could not add the monitor',
+              ? t.saveError
+              : t.addError,
         )
         return
       }
@@ -208,12 +170,12 @@ function MonitorDialog({
 
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{monitor ? `Edit ${monitor.name}` : copy.title}</DialogTitle>
+          <DialogTitle>{monitor ? t.editTitle(monitor.name) : copy.title}</DialogTitle>
           <DialogDescription>
             {monitor
               ? type === 'login'
-                ? `Changes apply from the next monitoring run. The id stays "${monitor.id}", so its PORTAL_CREDENTIALS entry, history and incidents are kept.`
-                : 'Changes apply from the next monitoring run. History and incidents are kept.'
+                ? t.editLoginDescription(monitor.id)
+                : t.editDescription
               : copy.description}
           </DialogDescription>
         </DialogHeader>
@@ -226,9 +188,9 @@ function MonitorDialog({
           }}
         >
           <TabsList className="w-full">
-            {(Object.keys(COPY) as MonitorType[]).map((key) => (
+            {KINDS.map((key) => (
               <TabsTrigger key={key} value={key} className="flex-1">
-                {COPY[key].tab}
+                {t.kinds[key].tab}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -252,7 +214,7 @@ function MonitorDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t.name}</Label>
             <Input
               id="name"
               maxLength={80}
@@ -261,12 +223,12 @@ function MonitorDialog({
               onChange={(event) => setName(event.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Optional — the hostname is used when left empty.
+              {t.nameHint}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sslExpiresAt">SSL certificate expires</Label>
+            <Label htmlFor="sslExpiresAt">{t.sslLabel}</Label>
             <Input
               id="sslExpiresAt"
               type="date"
@@ -277,24 +239,24 @@ function MonitorDialog({
               onChange={(event) => setSslExpiresAt(event.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Optional. Telegram is warned 5 days before this date and again on the day.
+              {t.sslHint}
             </p>
           </div>
 
           {type === 'login' && (
             <div className="space-y-4 border-t pt-4">
               <p className="text-xs text-muted-foreground">
-                Advanced — optional, defaults work for a plain HTML sign-in form.
+                {t.advanced}
               </p>
 
               <div className="space-y-2">
-                <Label htmlFor="loginUrl">Form target URL</Label>
+                <Label htmlFor="loginUrl">{t.loginUrl}</Label>
                 <Input
                   id="loginUrl"
                   type="url"
                   inputMode="url"
                   maxLength={2048}
-                  placeholder="Defaults to the login page URL above"
+                  placeholder={t.loginUrlPlaceholder}
                   value={loginUrl}
                   onChange={(event) => setLoginUrl(event.target.value)}
                 />
@@ -307,15 +269,15 @@ function MonitorDialog({
                   checked={loginBodyType === 'json'}
                   onChange={(event) => setLoginBodyType(event.target.checked ? 'json' : 'form')}
                 />
-                Send credentials as a JSON body instead of a form
+                {t.jsonBody}
               </label>
               <p className="-mt-2 text-xs text-muted-foreground">
-                For an API-driven sign-in (a single-page app posting JSON), not a plain HTML form.
+                {t.jsonBodyHint}
               </p>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="usernameField">Username field name</Label>
+                  <Label htmlFor="usernameField">{t.usernameField}</Label>
                   <Input
                     id="usernameField"
                     maxLength={64}
@@ -325,7 +287,7 @@ function MonitorDialog({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="passwordField">Password field name</Label>
+                  <Label htmlFor="passwordField">{t.passwordField}</Label>
                   <Input
                     id="passwordField"
                     maxLength={64}
@@ -337,28 +299,27 @@ function MonitorDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="successText">Success text</Label>
+                <Label htmlFor="successText">{t.successText}</Label>
                 <Input
                   id="successText"
                   maxLength={200}
-                  placeholder="Text that only appears once signed in"
+                  placeholder={t.successPlaceholder}
                   value={successText}
                   onChange={(event) => setSuccessText(event.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="failureText">Failure text</Label>
+                <Label htmlFor="failureText">{t.failureText}</Label>
                 <Input
                   id="failureText"
                   maxLength={200}
-                  placeholder="Text that only appears when sign-in fails"
+                  placeholder={t.failurePlaceholder}
                   value={failureText}
                   onChange={(event) => setFailureText(event.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Without either, a login counts as successful once the sign-in form is no longer
-                  shown back to it.
+                  {t.textHint}
                 </p>
               </div>
             </div>
@@ -373,7 +334,7 @@ function MonitorDialog({
           <DialogFooter>
             <Button type="submit" disabled={pending || !url}>
               {pending && <Loader2 className="animate-spin" />}
-              {editing ? 'Save changes' : copy.submit}
+              {editing ? t.save : copy.submit}
             </Button>
           </DialogFooter>
         </form>

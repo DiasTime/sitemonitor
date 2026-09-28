@@ -11,7 +11,7 @@ const config: Config = {
     container: {
       center: true,
       padding: '1.5rem',
-      screens: { '2xl': '1200px' },
+      screens: { '2xl': '1240px' },
     },
     extend: {
       colors: {
@@ -56,6 +56,7 @@ const config: Config = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        xl: 'calc(var(--radius) + 6px)',
       },
       fontFamily: {
         sans: ['var(--font-sans)'],
@@ -76,6 +77,7 @@ const config: Config = {
         },
       },
       animation: {
+        sweep: 'sweep 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in': 'fade-in 0.3s ease-out',

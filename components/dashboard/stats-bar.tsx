@@ -1,48 +1,47 @@
-import { formatUptime } from '@/lib/utils'
+'use client'
+
+import { useI18n } from '@/components/i18n/i18n-provider'
+import { cn } from '@/lib/utils'
 import type { MonitorWithState } from '@/lib/types'
 
 function Stat({ value, label, tone }: { value: string; label: string; tone?: 'up' | 'down' }) {
   return (
-    <div className="px-5 py-4">
+    <div className="bg-card px-5 py-5 sm:px-6">
+      <div className="text-[13px] text-muted-foreground">{label}</div>
       <div
-        className={`tabular text-2xl font-semibold tracking-tight ${
-          tone === 'up' ? 'text-up' : tone === 'down' ? 'text-down' : ''
-        }`}
+        className={cn(
+          'mt-2.5 text-[1.9rem] font-semibold leading-none tracking-[-0.04em] tabular',
+          tone === 'up' && 'text-up',
+          tone === 'down' && 'text-down',
+        )}
       >
         {value}
-      </div>
-      <div className="mt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
       </div>
     </div>
   )
 }
 
-/** The four headline numbers at the top of the dashboard. */
-export function StatsBar({ monitors }: { monitors: MonitorWithState[] }) {
-  const online = monitors.filter((monitor) => monitor.state?.status === 'UP').length
-  const down = monitors.filter((monitor) => monitor.state?.status === 'DOWN').length
+function average(values: (number | null | undefined)[]): number | null {
+  const numbers = values.filter((value): value is number => typeof value === 'number')
+  return numbers.length ? numbers.reduce((sum, value) => sum + value, 0) / numbers.length : null
+}
 
-  const uptimes = monitors
-    .map((monitor) => monitor.state?.uptime30d)
-    .filter((value): value is number => typeof value === 'number')
-  const uptime = uptimes.length
-    ? uptimes.reduce((sum, value) => sum + value, 0) / uptimes.length
-    : null
+/** The headline numbers at the top of the dashboard. */
+export function StatsBar({ monitors }: { monitors: MonitorWithState[] }) {
+  const { t, format } = useI18n()
+  const online = monitors.filter((monitor) => monitor.enabled && monitor.state?.status === 'UP').length
+  const down = monitors.filter((monitor) => monitor.enabled && monitor.state?.status === 'DOWN').length
+  const uptime = average(monitors.map((monitor) => monitor.state?.uptime30d))
+  const response = average(monitors.map((monitor) => monitor.state?.avgResponse24h))
 
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-4">
-      <div className="bg-background">
-        <Stat value={String(monitors.length)} label="Monitors" />
-      </div>
-      <div className="bg-background">
-        <Stat value={String(online)} label="Online" tone={online ? 'up' : undefined} />
-      </div>
-      <div className="bg-background">
-        <Stat value={String(down)} label="Down" tone={down ? 'down' : undefined} />
-      </div>
-      <div className="bg-background">
-        <Stat value={formatUptime(uptime)} label="Uptime · 30d" />
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border shadow-panel sm:grid-cols-5">
+      <Stat value={String(monitors.length)} label={t.stats.monitors} />
+      <Stat value={String(online)} label={t.stats.online} tone={online ? 'up' : undefined} />
+      <Stat value={String(down)} label={t.stats.down} tone={down ? 'down' : undefined} />
+      <Stat value={format.uptime(uptime)} label={t.stats.uptime30d} />
+      <div className="col-span-2 sm:col-span-1">
+        <Stat value={format.responseTime(response)} label={t.stats.avgResponse} />
       </div>
     </div>
   )

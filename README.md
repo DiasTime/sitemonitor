@@ -14,7 +14,7 @@ delivers the alerts, and Vercel serves the dashboard.
              │    Actions   │
              └──────┬───────┘
                     │
-          every ~3 minutes
+            every hour
                     │
                     ↓
           ┌─────────────────┐
