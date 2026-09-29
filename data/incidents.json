@@ -572,8 +572,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: сертификат выдан на другое имя",
-      "failedChecks": 13,
-      "lastNotifiedAt": "2026-09-28T19:28:22.407Z"
+      "failedChecks": 14,
+      "lastNotifiedAt": "2026-09-29T02:04:50.117Z"
     },
     {
       "id": "olen-vms-svoydom-kz-2-2026-09-28T10:33:01.351Z",
@@ -608,8 +608,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 4,
-      "lastNotifiedAt": "2026-09-28T19:28:22.407Z"
+      "failedChecks": 5,
+      "lastNotifiedAt": "2026-09-29T02:04:50.117Z"
     }
   ]
 }
