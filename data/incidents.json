@@ -572,7 +572,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: сертификат выдан на другое имя",
-      "failedChecks": 15,
+      "failedChecks": 17,
       "lastNotifiedAt": "2026-09-29T02:04:50.117Z"
     },
     {
@@ -608,7 +608,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 6,
+      "failedChecks": 8,
       "lastNotifiedAt": "2026-09-29T02:04:50.117Z"
     }
   ]
