@@ -5,10 +5,12 @@ import { Globe, Play, RefreshCw, Search, TriangleAlert, X } from 'lucide-react'
 
 import { AddMonitorDialog } from '@/components/dashboard/add-monitor-dialog'
 import { AppHeader } from '@/components/dashboard/app-header'
+import { FilterTabs } from '@/components/dashboard/filter-tabs'
 import { useI18n } from '@/components/i18n/i18n-provider'
 import { MonitorRow } from '@/components/dashboard/monitor-row'
 import { StatsBar } from '@/components/dashboard/stats-bar'
 import { Button } from '@/components/ui/button'
+import { EASE_OUT, gsap, useGSAP, withMotion } from '@/components/ui/motion'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusDot } from '@/components/ui/status-dot'
 import { usePoll } from '@/components/ui/use-poll'
@@ -30,7 +32,16 @@ const DAY_MS = 24 * 60 * 60 * 1000
 /** One bar per hour: the schedule aims for one run an hour, so finer bars would show gaps. */
 const BAR_COUNT = 24
 
+/**
+ * The opening wave: the first row's squares start rising this long after the
+ * history arrives, each next row one reveal step later — in step with the
+ * rows' own entrance, so squares never rise inside a row still fading in.
+ */
+const WAVE_START_S = 0.2
+const WAVE_ROW_STEP_S = 0.07
+
 type Filter = 'all' | 'down' | 'up' | 'paused'
+const FILTERS: Filter[] = ['all', 'down', 'up', 'paused']
 
 function matchesFilter(monitor: MonitorWithState, filter: Filter): boolean {
   if (filter === 'all') return true
@@ -54,6 +65,33 @@ export function DashboardClient() {
   const [query, setQuery] = React.useState('')
   // The updatedAt we started from; the run is done once it changes.
   const baseline = React.useRef<string | null>(null)
+  const heading = React.useRef<HTMLDivElement>(null)
+
+  // The squares' wave plays once, when the page first has both the list and
+  // its history. After that, squares that appear (a filter switch, a monitor
+  // added) are simply there, and polling never replays it.
+  const [introPlayed, setIntroPlayed] = React.useState(false)
+  React.useEffect(() => {
+    if (data && history.data) setIntroPlayed(true)
+  }, [data, history.data])
+
+  // The heading arrives first, the stats and rows cascade in below it.
+  useGSAP(
+    () => {
+      if (loading || !heading.current) return
+      return withMotion(() => {
+        gsap.from(heading.current!.children, {
+          y: 10,
+          opacity: 0,
+          duration: 0.6,
+          ease: EASE_OUT,
+          stagger: 0.07,
+          clearProps: 'all',
+        })
+      })
+    },
+    { dependencies: [loading] },
+  )
 
   async function runCheck() {
     setRunError(null)
@@ -150,7 +188,7 @@ export function DashboardClient() {
       <main className="container space-y-8 pb-20 pt-10">
         {/* Overall status */}
         <section className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="min-w-0">
+          <div ref={heading} className="min-w-0">
             {loading ? (
               <>
                 <Skeleton className="h-9 w-72" />
@@ -218,32 +256,17 @@ export function DashboardClient() {
             ) : (
               <section aria-label={d.listLabel} className="space-y-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div role="group" aria-label={d.filterLabel} className="flex w-fit items-center gap-1 rounded-lg border border-border bg-card p-1">
-                    {(['all', 'down', 'up', 'paused'] as Filter[]).map((key) => (
-                      <button
-                        key={key}
-                        type="button"
-                        aria-pressed={filter === key}
-                        onClick={() => setFilter(key)}
-                        className={cn(
-                          'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                          filter === key
-                            ? 'bg-secondary text-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground',
-                        )}
-                      >
-                        {d.filters[key]}
-                        <span
-                          className={cn(
-                            'font-mono tabular text-[10.5px]',
-                            key === 'down' && counts.down > 0 ? 'text-down' : 'text-muted-foreground',
-                          )}
-                        >
-                          {counts[key]}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  <FilterTabs
+                    label={d.filterLabel}
+                    value={filter}
+                    onChange={setFilter}
+                    options={FILTERS.map((key) => ({
+                      key,
+                      label: d.filters[key],
+                      count: counts[key],
+                      alert: key === 'down' && counts.down > 0,
+                    }))}
+                  />
 
                   <label className="relative block sm:w-64">
                     <span className="sr-only">{d.search}</span>
@@ -303,6 +326,7 @@ export function DashboardClient() {
                           index={index}
                           monitor={monitor}
                           buckets={bucketsById?.get(monitor.id) ?? null}
+                          waveDelay={introPlayed ? null : WAVE_START_S + Math.min(index, 10) * WAVE_ROW_STEP_S}
                           onChanged={reloadAll}
                         />
                       ))}
@@ -335,7 +359,7 @@ function OverallStatus({ down, total, t }: { down: number; total: number; t: Mes
           down ? 'bg-down/10' : 'bg-up/10',
         )}
       >
-        <StatusDot status={down ? 'DOWN' : 'UP'} size="lg" />
+        <StatusDot status={down ? 'DOWN' : 'UP'} size="lg" pulse />
       </span>
       <h1 className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
         {down ? t.down(down, total) : t.allOperational}
@@ -355,8 +379,20 @@ function Notice({
   children: React.ReactNode
   tone?: 'down'
 }) {
+  const ref = React.useRef<HTMLDivElement>(null)
+  // A run starting or a request failing is news: it slides in rather than
+  // shoving the page down in a single frame.
+  useGSAP(
+    () =>
+      withMotion(() => {
+        gsap.from(ref.current, { y: -6, opacity: 0, duration: 0.35, ease: EASE_OUT, clearProps: 'all' })
+      }),
+    { scope: ref },
+  )
+
   return (
     <div
+      ref={ref}
       role={tone === 'down' ? 'alert' : 'status'}
       className={cn(
         'flex items-start gap-3 rounded-xl border p-4 text-sm',

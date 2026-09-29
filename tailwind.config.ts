@@ -75,12 +75,19 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateY(4px)' },
           to: { opacity: '1', transform: 'translateY(0)' },
         },
+        // A ring leaving a down monitor's dot: slower and softer than `ping`,
+        // which stays reserved for a check in flight.
+        'status-pulse': {
+          '0%': { transform: 'scale(1)', opacity: '0.55' },
+          '70%, 100%': { transform: 'scale(2.8)', opacity: '0' },
+        },
       },
       animation: {
         sweep: 'sweep 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'fade-in': 'fade-in 0.3s ease-out',
+        'status-pulse': 'status-pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite',
       },
     },
   },

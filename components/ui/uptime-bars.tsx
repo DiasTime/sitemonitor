@@ -1,3 +1,5 @@
+import type { Ref } from 'react'
+
 import { en, type Messages } from '@/lib/i18n/messages/en'
 import { cn } from '@/lib/cn'
 import type { HistoryEntry } from '@/lib/types'
@@ -66,15 +68,18 @@ export function UptimeBars({
   className,
   barClassName,
   t = en.bars,
+  ref,
 }: {
   buckets: Bucket[]
   className?: string
   barClassName?: string
   /** Wording for the screen-reader summary; English when omitted. */
   t?: Messages['bars']
+  /** The row itself, whose children are the bars — for the dashboard's entrance wave. */
+  ref?: Ref<HTMLDivElement>
 }) {
   return (
-    <div className={cn('group/bars flex h-7 items-stretch gap-[2px]', className)} role="img" aria-label={summarise(buckets, t)}>
+    <div ref={ref} className={cn('group/bars flex h-7 items-stretch gap-[2px]', className)} role="img" aria-label={summarise(buckets, t)}>
       {buckets.map((bucket, index) => (
         <span
           key={index}
