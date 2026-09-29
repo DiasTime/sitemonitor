@@ -110,6 +110,14 @@
       "type": "health",
       "sslExpiresAt": "2026-12-28",
       "createdAt": "2026-09-29T12:25:57.058Z"
+    },
+    {
+      "id": "qaiyndy-kz",
+      "name": "Кайынды",
+      "url": "https://qaiyndy.kz/api/health",
+      "enabled": true,
+      "sslExpiresAt": "2026-12-28",
+      "createdAt": "2026-09-29T12:27:47.792Z"
     }
   ]
 }
