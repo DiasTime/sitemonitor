@@ -567,12 +567,12 @@
       "id": "megapolisast-kz-2026-09-28T09:55:19.938Z",
       "monitorId": "megapolisast-kz",
       "startedAt": "2026-09-28T09:55:19.938Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-29T05:31:25.931Z",
+      "durationMs": 70565993,
+      "status": "resolved",
       "statusCode": null,
       "error": "Ошибка SSL: сертификат выдан на другое имя",
-      "failedChecks": 17,
+      "failedChecks": 18,
       "lastNotifiedAt": "2026-09-29T02:04:50.117Z"
     },
     {
@@ -608,7 +608,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 8,
+      "failedChecks": 10,
       "lastNotifiedAt": "2026-09-29T02:04:50.117Z"
     }
   ]
