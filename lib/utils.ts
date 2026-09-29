@@ -1,9 +1,10 @@
-import { type ClassValue, clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+/**
+ * Plain helpers shared by the dashboard and the monitoring run.
+ *
+ * No npm imports here: the monitoring run loads this file from a bare checkout,
+ * without `npm ci`, and one package import would crash every run. The
+ * Tailwind class helper lives in lib/cn for that reason.
+ */
 
 /** `https://example.com/path` -> `example.com` */
 export function hostnameOf(url: string): string {

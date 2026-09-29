@@ -1,7 +1,7 @@
 'use client'
 
 import { useI18n } from '@/components/i18n/i18n-provider'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 import type { MonitorWithState } from '@/lib/types'
 
 function Stat({ value, label, tone }: { value: string; label: string; tone?: 'up' | 'down' }) {

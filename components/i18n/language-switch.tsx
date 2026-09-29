@@ -2,7 +2,7 @@
 
 import { useI18n } from '@/components/i18n/i18n-provider'
 import { LOCALES } from '@/lib/i18n/config'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 
 const LABEL = { en: 'EN', ru: 'RU' } as const
 const NAME = { en: 'English', ru: 'Русский' } as const

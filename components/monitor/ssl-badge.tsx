@@ -6,7 +6,7 @@ import { useI18n } from '@/components/i18n/i18n-provider'
 import { Badge } from '@/components/ui/badge'
 import type { Messages } from '@/lib/i18n/messages'
 import { sslDaysLeft, sslStage } from '@/lib/ssl'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 
 /** Same wording rules as `describeSslDaysLeft` in lib/ssl, in the interface language. */
 function describe(daysLeft: number, t: Messages['ssl']): string {

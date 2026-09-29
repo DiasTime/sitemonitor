@@ -20,7 +20,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { StatusDot } from '@/components/ui/status-dot'
 import { UptimeBars, type Bucket } from '@/components/ui/uptime-bars'
-import { cn, hostnameOf } from '@/lib/utils'
+import { cn } from '@/lib/cn'
+import { hostnameOf } from '@/lib/utils'
 import type { MonitorWithState, UiStatus } from '@/lib/types'
 
 interface MonitorRowProps {

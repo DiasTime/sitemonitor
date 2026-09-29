@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 import type { UiStatus } from '@/lib/types'
 
 const TONE: Record<UiStatus, string> = {

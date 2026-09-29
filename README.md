@@ -14,7 +14,7 @@ delivers the alerts, and Vercel serves the dashboard.
              │    Actions   │
              └──────┬───────┘
                     │
-            every hour
+      every 30 min, on the heartbeat
                     │
                     ↓
           ┌─────────────────┐
@@ -224,15 +224,20 @@ your own sites.
 
 **Monitoring — `scripts/monitor.ts`, run by `.github/workflows/monitor.yml`.**
 
-The schedule asks for a run three times an hour, at `:07`, `:27` and `:47`, and
-the run itself decides whether it is due: anything that lands less than
-`MIN_GAP_MINUTES` (45 by default) after the last recorded check exits straight
-away. GitHub serves only part of what a cron asks for, so asking three times is
-what it takes to get one real run an hour — see
-[why the schedule is hourly](#why-the-schedule-is-hourly). It can also be
-started by hand with `workflow_dispatch`. Each pass:
+Runs are clocked from outside GitHub. An external scheduler pings the
+dashboard's [`/api/heartbeat`](#the-heartbeat-endpoint) every five minutes, and
+whenever the last recorded check is 30 minutes old it dispatches a run — which,
+unlike a scheduled one, starts within seconds. GitHub's own schedule (three
+ticks an hour, at `:07`, `:27` and `:47`) is kept as the backup, because it
+serves only a fraction of what it is asked for — see
+[why the schedule is hourly](#why-the-schedule-is-hourly). A run also decides
+for itself whether it is due: a scheduled tick less than `MIN_GAP_MINUTES` (45)
+after the last check, or a heartbeat dispatch that finds another run got there
+first, exits straight away. It can also be started by hand with
+`workflow_dispatch`. Each pass:
 
-1. checks out the repository and installs dependencies;
+1. checks out the repository and fetches `tsx` — nothing else from npm, so a
+   run fits in one billed minute;
 2. reads `data/monitors.json`;
 3. probes every enabled site over HTTP(S) with a 10 second timeout, up to 8 at a
    time, measuring the time to the first response byte;
@@ -889,8 +894,18 @@ the hour is covered as long as GitHub serves at least one of the three.
 
 Nothing here can make GitHub fire a tick it decided to drop. Three offset ticks
 took this repository from 6–8 runs a day to 11–13, which is better and still
-not hourly: holes of four and five hours survived. To close them the clock has
-to come from somewhere GitHub does not control — see below.
+not hourly: holes of four and five hours survived. And it got worse again: by
+late September the same three ticks an hour (72 a day) were producing **5–8
+scheduled runs a day** — one tick in ten — with 10–15 of every 24 hours left
+without a single check. The breakage is on GitHub's side and not specific to
+this repository ([community discussion](https://github.com/orgs/community/discussions/207346):
+scheduled runs created hours late or never since 26 Aug 2026). A run started by
+`repository_dispatch` is not affected — the **Run check** button's runs start
+within seconds.
+
+So the schedule is no longer the clock. The clock is
+[the heartbeat endpoint](#the-heartbeat-endpoint), pinged from outside GitHub;
+the three ticks stay as a backup for when that pinger stops.
 
 ### The heartbeat endpoint
 
@@ -901,29 +916,57 @@ anything, it is already running. The detection has to happen somewhere that is
 always awake, and the dashboard on Vercel already is.
 
 `GET /api/heartbeat` reads `data/status.json`, and if the last check is older
-than `HEARTBEAT_STALE_MINUTES` (75 by default) it starts a run through the same
+than `HEARTBEAT_STALE_MINUTES` (30 by default) it starts a run through the same
 `repository_dispatch` event as the **Run check** button. Otherwise it just
 reports the age. No session is needed; set `HEARTBEAT_TOKEN` in Vercel to
 require one, as `?token=…` or `Authorization: Bearer …`.
 
 ```console
 $ curl -s https://your-dashboard.vercel.app/api/heartbeat
-{"lastCheck":"2026-09-21T09:58:11.031Z","ageMinutes":22,"stale":false,"triggered":false}
+{"lastCheck":"2026-09-21T09:58:11.031Z","ageMinutes":22,"stale":false,"staleAfterMinutes":30,"triggered":false}
 
 $ curl -s https://your-dashboard.vercel.app/api/heartbeat
-{"lastCheck":"2026-09-21T05:08:44.512Z","ageMinutes":291,"stale":true,"triggered":true}
+{"lastCheck":"2026-09-21T05:08:44.512Z","ageMinutes":291,"stale":true,"staleAfterMinutes":30,"triggered":true}
 ```
 
-Then point anything that can fetch a URL at it — a GitLab pipeline schedule, a
-free uptime service, a cron box, another CI. **Ping it often, every 5–15
-minutes.** That costs nothing: a run is only started when the data is actually
-stale, so a ping every five minutes is still at most one run an hour, and a
-missed hour is repaired within minutes instead of waiting for GitHub to feel
-like it. The `⚠️ MONITORING GAP` alert then means both clocks failed, which is
-worth knowing.
+**Ping it every five minutes** from something punctual that GitHub does not
+control. That costs nothing extra: a run is only started when the data is
+actually stale, so pings every five minutes become a run every 30–35 minutes —
+every one-hour bar on the dashboard gets a check, with room for a lost ping or a
+slow runner. The `⚠️ MONITORING GAP` alert then means the pinger stopped too,
+which is worth knowing.
 
-A GitLab schedule (Settings → CI/CD → Schedules, `0 * * * *` or finer) is one
-job:
+The simplest free option is [cron-job.org](https://cron-job.org):
+
+1. In Vercel, set `HEARTBEAT_TOKEN` to a long random string and redeploy.
+2. On cron-job.org, create a cron job with the URL
+   `https://your-dashboard.vercel.app/api/heartbeat?token=<HEARTBEAT_TOKEN>`,
+   schedule *every 5 minutes*, and turn on its failure notifications.
+3. Run it once from there and check the response: `"triggered":true` the first
+   time if the data is stale, `"stale":false` on the pings after.
+
+An uptime service that can watch a URL every five minutes (UptimeRobot and the
+like) does the same job, and so does Vercel Cron on a plan that allows crons
+more often than daily (Hobby does not — a sub-daily schedule fails the deploy).
+For Vercel Cron, add this to `vercel.json` and set `CRON_SECRET` to the same
+value as `HEARTBEAT_TOKEN`, since Vercel sends it as a bearer token:
+
+```json
+"crons": [{ "path": "/api/heartbeat", "schedule": "*/5 * * * *" }]
+```
+
+Two pingers — or two Vercel instances answering them — do not buy two checks.
+A heartbeat dispatch carries `min_gap_minutes` (half the threshold), and the
+workflow's **Due for a check?** step drops a dispatched run that finds its data
+younger than that: a run the heartbeat needed finds it at least 30 minutes old,
+a duplicate finds it a few minutes old and costs a minute instead of a check.
+
+Keep `COMMIT_INTERVAL_MINUTES` at or below `HEARTBEAT_STALE_MINUTES` if you
+change either (both default to 30). The heartbeat reads its age from
+`status.json`, which only moves when a run commits; a run that merely buffers
+its results leaves the age where it was, and the next ping starts another run.
+
+A GitLab schedule (Settings → CI/CD → Schedules, `*/5 * * * *`) is one job:
 
 ```yaml
 heartbeat:
@@ -950,13 +993,14 @@ curl -sS --fail -X POST \
 The difference is what it costs: this starts a run on every tick, while the
 endpoint starts one only when a check is actually missing.
 
-**This deployment is budgeted at 1 minute of runner time per hour**
-(`LOOP_MINUTES=1`, `LOOP_INTERVAL_SECONDS=60`), which is one check per hour.
-It was 2 while the schedule was delivering ~7 runs a day; now that the schedule
-aims for 24, the window had to come down to pay for the extra runs. Raise
-`LOOP_MINUTES` and `LOOP_INTERVAL_SECONDS` together to get closer to continuous
-coverage — see the table below — and note that a window shorter than
-`LOOP_INTERVAL_SECONDS` fits exactly one check.
+**This deployment is budgeted at one billed minute per run, a run every half
+hour** (`LOOP_MINUTES=1`, `LOOP_INTERVAL_SECONDS=60`): each run is a single
+check. That is also why a run no longer installs the dashboard's dependencies —
+it fetches only `tsx`, and `tests/monitor-deps.test.ts` fails if anything the
+monitor imports would need more. Raise `LOOP_MINUTES` and
+`LOOP_INTERVAL_SECONDS` together to check more often inside each run — see the
+table below — and note that a window shorter than `LOOP_INTERVAL_SECONDS` fits
+exactly one check.
 
 A looping run commits and pushes on its own as soon as a status changes, so
 alerts and the dashboard do not wait for the window to end. Set `LOOP_MINUTES`
@@ -973,33 +1017,32 @@ private repositories. **Check your usage at
 - Private repositories: GitHub Free includes 2,000 minutes/month. A 50-minute
   window every hour is roughly 36,000 minutes/month, far beyond that.
 
-If you are on a private repository and want to stay inside the free allowance,
-set the repository variable `LOOP_MINUTES` lower (Settings → Secrets and
-variables → Actions → Variables). Some reference points, at ~1 billed minute per
-minute of runner time:
+GitHub bills every job rounded up to a whole minute, so what a month costs is
+mostly how many runs it has. Some reference points for a private repository:
 
-| `LOOP_MINUTES` | Coverage | Approx. minutes/month |
+| Setup | Coverage | Approx. minutes/month |
 | --- | --- | --- |
-| `50` | continuous, at `LOOP_INTERVAL_SECONDS` | ~36,000 |
-| `10` | 10 min of every hour | ~7,300 |
-| `2` | 2 min of every hour — 2 checks | ~2,200 |
-| `1` (current) | one check per hour | ~1,500 |
-| `0` | one check per hour, committed by the workflow | ~1,500 |
+| Heartbeat every 5 min, defaults (current) | a check every 30–35 min, every hour covered | ~1,600 |
+| Heartbeat, `HEARTBEAT_STALE_MINUTES` and `COMMIT_INTERVAL_MINUTES` at `15` | a check every 15–20 min | ~2,700 |
+| Heartbeat, `LOOP_MINUTES=2` | two checks a minute apart, every half hour | ~4,000 |
+| No heartbeat, schedule only | whatever GitHub serves — lately 5–8 checks a day | ~250 |
 
-The window is not the whole bill: checkout, `npm ci` and the push add roughly a
-minute to every run, and the ticks that are served but not due add about a
-minute each. Budget on the order of `(LOOP_MINUTES + 1) × 24 × 30` minutes a
-month, then check the real figure on the billing page after a few days — it is
-the only number that counts.
+The current row is 40–45 heartbeat runs a day at one minute each, plus the
+scheduled ticks GitHub still serves, which now find a recent check and stop at
+the gate for a minute apiece. A run in which a site newly fails takes longer —
+the confirmation probes add up to ~40 seconds — and bills two minutes. Check
+the real figure on the billing page after a few days; it is the only number
+that counts, and the 2,000 free minutes are shared by every private repository
+on the account.
 
 `LOOP_INTERVAL_SECONDS` must be smaller than the window, or the window fits a
-single check: 2 minutes at the 180s default would be one check per hour, not
+single check: 2 minutes at the 180s default would be one check per run, not
 two.
 
-Note the trade-off is real either way: a low `LOOP_MINUTES` gives accurate
-three-minute checking inside its window and no checking at all outside it, while
-`0` gives one check an hour, evenly spread. Pick whichever failure you would
-rather have.
+Note the trade-off is real either way: a higher `LOOP_MINUTES` gives dense
+checking inside each run and the same half-hour spacing between runs, while `1`
+or `0` gives one check every half hour, evenly spread. Pick whichever failure
+you would rather have.
 
 ---
 
@@ -1088,7 +1131,8 @@ dashboard at the cost of more commits.
 | `SESSION_SECRET` | no | derived from `ADMIN_PASSWORD` | Session cookie signing key |
 | `DATA_CACHE_TTL_SECONDS` | no | `20` | In-memory cache for GitHub reads |
 | `HEARTBEAT_TOKEN` | no | — | Shared secret for `/api/heartbeat`; unset leaves it open |
-| `HEARTBEAT_STALE_MINUTES` | no | `75` | How old the last check must be before a ping starts a run |
+| `HEARTBEAT_STALE_MINUTES` | no | `30` | How old the last check must be before a ping starts a run; keep `COMMIT_INTERVAL_MINUTES` at or below it |
+| `CRON_SECRET` | no | — | Only for Vercel Cron: set it to the same value as `HEARTBEAT_TOKEN` |
 | `TELEGRAM_BOT_TOKEN` | no | — | Needed only to answer the bot from the dashboard — see [talking to the bot](#talking-to-the-bot) |
 | `TELEGRAM_WEBHOOK_SECRET` | no | — | Required for `/api/telegram` to answer at all; matched against Telegram's header |
 | `TELEGRAM_SUBSCRIBE_PASSWORD` | no | — | Same passphrase as the Actions secret, so webhook `/start` is gated too |
@@ -1123,7 +1167,7 @@ not an error.
 | `MAX_LOGIN_BODY_BYTES` | `262144` | How much of a login-flow response is read |
 | `LOOP_MINUTES` | `1` | How long one run keeps checking; `0` = one check and exit |
 | `LOOP_INTERVAL_SECONDS` | `60` | Interval between checks inside a run |
-| `MIN_GAP_MINUTES` | `45` | A scheduled tick landing sooner than this after the last check exits without checking |
+| `MIN_GAP_MINUTES` | `45` | A scheduled tick landing sooner than this after the last check exits without checking (heartbeat dispatches carry their own) |
 | `STALE_AFTER_MINUTES` | `90` | How long a gap in checking has to be before it is reported to Telegram |
 | `DISPLAY_TIMEZONE` | `UTC` | IANA zone for times in Telegram alerts |
 
@@ -1131,19 +1175,17 @@ not an error.
 
 ## 14. Limits and honest caveats
 
-- **The interval is driven by the run, not the schedule.** GitHub will not fire
-  a three-minute cron, so the workflow starts on an hourly-ish schedule and does
-  its own timing (see [why the schedule is hourly](#why-the-schedule-is-hourly)).
-  At the current `LOOP_MINUTES=1` that means **one check per hour**, and nothing
-  for the other 59 minutes. An outage starting just after a check can go
-  unnoticed for nearly an hour. Raise `LOOP_MINUTES` to shrink that gap, at the
-  cost of runner minutes.
-- **The schedule is GitHub's to keep, and it does not always keep it.** Ticks
-  are dropped without notice — measured here at roughly two in three, and still
-  about half after moving to three offset ticks an hour — which is why a gap in
-  checking raises its own Telegram alert. If an hour must genuinely never be
-  missed, do not rely on GitHub's scheduler at all: ping
-  [the heartbeat endpoint](#the-heartbeat-endpoint) from a clock you control.
+- **The interval is driven by the heartbeat, not the schedule.** With the
+  defaults that means **one check every 30–35 minutes**, and nothing in between.
+  An outage starting just after a check can go unnoticed for half an hour.
+  Lower `HEARTBEAT_STALE_MINUTES` (with `COMMIT_INTERVAL_MINUTES`) or raise
+  `LOOP_MINUTES` to shrink that, at the cost of runner minutes.
+- **Without a pinger, coverage is whatever GitHub's scheduler serves** — lately
+  one tick in ten, leaving most hours of the day unchecked (see
+  [why the schedule is hourly](#why-the-schedule-is-hourly)). The heartbeat
+  needs something outside GitHub to call it; nothing in the repository can
+  supply that clock by itself. A gap in checking still raises its own Telegram
+  alert, so a pinger that stops does not go unnoticed.
 - **Runner time is metered on private repositories.** A continuous 50-minute
   window every hour will exceed the free 2,000 minutes/month several times over.
   See [Actions minutes](#actions-minutes).
@@ -1191,7 +1233,7 @@ npm run build
 ```
 
 `.github/workflows/checks.yml` runs the first three on every push and pull
-request that touches something other than `data/`, so the monitor's own hourly
+request that touches something other than `data/`, so the monitor's own
 commits never start a build.
 
 ### Tests
@@ -1208,7 +1250,8 @@ wrong quietly rather than loudly:
 | `tests/transitions.test.ts` | UP/DOWN transitions, opening and closing incidents, outage duration, reminder scheduling, check totals, untouched disabled monitors |
 | `tests/confirm.test.ts` | Which failures are re-probed and which are believed at once, and how many probes each case costs |
 | `tests/reminders.test.ts` | When an ongoing outage repeats itself |
-| `tests/heartbeat.test.ts` | When a ping starts a run, and the cooldown that stops a burst of them |
+| `tests/heartbeat.test.ts` | When a ping starts a run, the cooldown that stops a burst of them, and that five-minute pings leave no hour unchecked |
+| `tests/monitor-deps.test.ts` | That the monitor imports nothing from npm, since a run starts without `npm ci` |
 | `tests/ru.test.ts` | Russian agreement — "1 час", "2 часа", "5 часов" — and the formatters the alerts are built from |
 | `tests/env.test.ts` | That an undefined repository variable falls back to the default instead of reading as zero |
 | `tests/telegram.test.ts` | Command parsing including button taps, the menu and its callbacks, the `/status` board in every state, and the subscriber list |
@@ -1263,18 +1306,23 @@ Either the repository has had no activity for 60 days (push any commit to
 re-enable), Actions is disabled for the repository, or you have run out of
 Actions minutes — check <https://github.com/settings/billing>.
 
-**Runs are far apart / checks are less frequent than expected.**
-Look at whether `LOOP_MINUTES` is set low, and remember the gap between runs is
-not covered when it is. Then count the runs GitHub actually started — every run
-leaves a commit, so
+**Runs are far apart / grey bars on the dashboard.**
+First make sure something is pinging
+[the heartbeat endpoint](#the-heartbeat-endpoint): without a pinger the only
+clock is GitHub's schedule, which lately serves one tick in ten.
+`curl https://your-dashboard.vercel.app/api/heartbeat` shows the age of the
+last check and the threshold in effect; if the age keeps growing past
+`staleAfterMinutes`, the pings are not arriving or the dispatch fails (the
+response then carries the error). Then count the runs actually made — every
+run leaves a commit, so
 
 ```bash
 git log --format='%ad' --date=format:'%Y-%m-%d' | uniq -c
 ```
 
-is a run-per-day histogram. Well under 24 means GitHub is dropping ticks, not
-that the monitor is broken; see
-[why the schedule is hourly](#why-the-schedule-is-hourly).
+is a run-per-day histogram. With a pinger it should read 40–45 a day; well
+under 24 without one means GitHub is dropping ticks, not that the monitor is
+broken — see [why the schedule is hourly](#why-the-schedule-is-hourly).
 
 **A site alerted as DOWN and recovered a minute later.**
 A failure now has to survive `CONFIRM_RETRIES` extra probes, so a blip that

@@ -1,22 +1,10 @@
 import { errorResponse, jsonResponse } from '@/lib/api'
 import { dispatchRepositoryEvent } from '@/lib/github'
-import { decideHeartbeat } from '@/lib/heartbeat'
+import { decideHeartbeat, dispatchPayload, staleAfterMinutes } from '@/lib/heartbeat'
 import { getStatus } from '@/lib/storage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-/**
- * How old the last recorded check has to be before a ping starts a run.
- *
- * Below the monitor's own STALE_AFTER_MINUTES (90), so the repair happens
- * before the "monitoring gap" alert would fire: the alert is then what you get
- * when this endpoint was not pinged either, which is worth knowing.
- */
-function staleAfterMs(): number {
-  const minutes = Number(process.env.HEARTBEAT_STALE_MINUTES)
-  return (Number.isFinite(minutes) && minutes > 0 ? minutes : 75) * 60_000
-}
 
 /**
  * Do not start a second run while the first is still getting to its commit.
@@ -30,6 +18,10 @@ let lastDispatchAt = 0
  * Optional shared secret. Unset leaves the endpoint open, which is defensible:
  * it reveals only how long ago the last check ran, and it cannot start more
  * than one run per cooldown no matter how often it is called.
+ *
+ * Vercel Cron sends `Authorization: Bearer $CRON_SECRET`, so on a plan whose
+ * crons may run every few minutes, setting CRON_SECRET to the same value as
+ * HEARTBEAT_TOKEN is all it takes to point one at this endpoint.
  */
 function authorized(request: Request): boolean {
   const expected = process.env.HEARTBEAT_TOKEN
@@ -41,17 +33,19 @@ function authorized(request: Request): boolean {
 }
 
 /**
- * GET/POST /api/heartbeat — an outside clock for a schedule that drops ticks.
+ * GET/POST /api/heartbeat — the clock the monitor runs on.
  *
- * GitHub's scheduler serves roughly half of what this repository asks for, and
- * a monitor that is not running cannot notice that it is not running: the gap
- * is only ever discovered by the run that ends it. So the discovery has to
- * happen somewhere that is always awake. Point anything that can fetch a URL
- * at this — an uptime service, a GitLab pipeline schedule, a cron box — and a
- * missed hour is repaired on the next ping instead of waiting for GitHub.
+ * GitHub's scheduler cannot be that clock. Since 26 Aug 2026 it serves about
+ * one tick in ten on this repository — 5–8 runs a day out of 72 asked for,
+ * hours late or never — while a dispatched run starts within seconds. And a
+ * monitor that is not running cannot notice that it is not running, so the
+ * timing has to come from somewhere that is always awake. Point a punctual
+ * outside scheduler at this — cron-job.org, an uptime service, a GitLab
+ * pipeline schedule, Vercel Cron on Pro — every five minutes.
  *
  * Pinging often is cheap on purpose: a run is started only when the data is
- * actually stale, so a ping every five minutes costs 24 runs a day, not 288.
+ * actually stale, so a ping every five minutes costs a run every half hour,
+ * not 288 runs a day.
  */
 async function handle(request: Request) {
   if (!authorized(request)) {
@@ -59,20 +53,22 @@ async function handle(request: Request) {
   }
 
   try {
+    const staleMinutes = staleAfterMinutes()
     const status = await getStatus()
     const { shouldDispatch, ...decision } = decideHeartbeat({
       lastCheck: status.updatedAt,
-      staleAfterMs: staleAfterMs(),
+      staleAfterMs: staleMinutes * 60_000,
       lastDispatchAt,
       cooldownMs: DISPATCH_COOLDOWN_MS,
       now: Date.now(),
     })
+    const report = { ...decision, staleAfterMinutes: staleMinutes }
 
-    if (!shouldDispatch) return jsonResponse({ ...decision, triggered: false })
+    if (!shouldDispatch) return jsonResponse({ ...report, triggered: false })
 
-    await dispatchRepositoryEvent('run-check')
+    await dispatchRepositoryEvent('run-check', dispatchPayload(staleMinutes))
     lastDispatchAt = Date.now()
-    return jsonResponse({ ...decision, triggered: true }, { status: 202 })
+    return jsonResponse({ ...report, triggered: true }, { status: 202 })
   } catch (error) {
     return errorResponse(error)
   }

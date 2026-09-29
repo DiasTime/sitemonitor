@@ -1,5 +1,5 @@
 import { en, type Messages } from '@/lib/i18n/messages/en'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 import type { HistoryEntry } from '@/lib/types'
 
 export type BucketState = 'up' | 'degraded' | 'down' | 'empty'

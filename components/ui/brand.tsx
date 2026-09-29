@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 
 /** Wordmark: a small square "beacon" and the product name. */
 export function Brand({ className }: { className?: string }) {

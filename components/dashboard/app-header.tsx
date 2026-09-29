@@ -10,7 +10,7 @@ import { LanguageSwitch } from '@/components/i18n/language-switch'
 import { Brand } from '@/components/ui/brand'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/cn'
 
 export function AppHeader({ children }: { children?: React.ReactNode }) {
   const router = useRouter()

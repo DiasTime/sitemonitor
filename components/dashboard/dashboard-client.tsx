@@ -14,7 +14,8 @@ import { StatusDot } from '@/components/ui/status-dot'
 import { usePoll } from '@/components/ui/use-poll'
 import { bucketHistory, type Bucket } from '@/components/ui/uptime-bars'
 import type { Messages } from '@/lib/i18n/messages'
-import { cn, hostnameOf } from '@/lib/utils'
+import { cn } from '@/lib/cn'
+import { hostnameOf } from '@/lib/utils'
 import type { HistoryEntry, HistoryResponse, MonitorWithState, StatusResponse } from '@/lib/types'
 
 const POLL_INTERVAL_MS = 30_000

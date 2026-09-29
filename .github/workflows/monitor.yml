@@ -2,17 +2,20 @@ name: Website Monitor
 
 on:
   schedule:
-    # Three offset ticks an hour, to get one real run an hour.
+    # The backup clock, not the main one.
     #
-    # GitHub's scheduler drops what it cannot serve, and it is not only short
-    # crons that suffer: a plain "0 * * * *" here produced 22-27 runs/day until
-    # 26 Aug and 3-9 runs/day after it — about one tick in three, each started
-    # 0-60 min late. The top of the hour is the most contended slot of all, so
-    # the schedule now asks off the hour and asks three times.
+    # GitHub's scheduler drops what it cannot serve, and since 26 Aug 2026 it
+    # serves about one tick in ten here: these three offset ticks an hour
+    # produced 5-8 runs a day, hours apart, with no failed runs — the ticks
+    # were simply never started. A dispatched run starts within seconds, so
+    # the monitor is clocked from outside instead: a scheduler pings the
+    # dashboard's /api/heartbeat every five minutes, and it dispatches a run
+    # whenever the last check is 30 minutes old (README, "The heartbeat
+    # endpoint"). These ticks remain for when that clock stops.
     #
     # Asking three times does not mean paying three times: the "Due for a
     # check?" step below drops any tick that lands too soon after the previous
-    # run, at ~1 minute of runner time instead of a full window.
+    # check, at ~1 minute of runner time instead of a full run.
     - cron: "7 * * * *"
     - cron: "27 * * * *"
     - cron: "47 * * * *"
@@ -27,9 +30,11 @@ on:
         required: false
         type: boolean
         default: false
-  # Fired by the dashboard's "Run check" button. repository_dispatch is used
-  # rather than workflow_dispatch because it needs only the "Contents: write"
-  # token the dashboard already has, not an extra "Actions: write" grant.
+  # Fired by the dashboard: its "Run check" button, /check in Telegram, and
+  # /api/heartbeat, which is what keeps the checks coming when the schedule
+  # does not. repository_dispatch is used rather than workflow_dispatch
+  # because it needs only the "Contents: write" token the dashboard already
+  # has, not an extra "Actions: write" grant.
   repository_dispatch:
     types: [run-check]
 
@@ -45,29 +50,41 @@ permissions:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    # Must exceed LOOP_MINUTES with room for checkout, install and the last pass.
+    # Must exceed LOOP_MINUTES with room for checkout, fetching tsx and the last pass.
     timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
 
-      # The schedule fires more often than the monitor needs, because most
-      # ticks never arrive. This is where the extra ones are given up: a tick
-      # that lands less than MIN_GAP_MINUTES after the last recorded check
-      # exits here, before the expensive steps, and the hour keeps its single
-      # run. Manual and dashboard-triggered runs always go through.
+      # Runs that would repeat a check just made are given up here, before
+      # the expensive steps. Two kinds qualify:
+      #  - a scheduled tick landing less than MIN_GAP_MINUTES (45) after the
+      #    last recorded check — the schedule asks three times an hour to get
+      #    one run;
+      #  - a heartbeat dispatch whose data is younger than the min_gap_minutes
+      #    it carries. It was sent because the data was stale, so finding it
+      #    fresh means another run got there first (a second pinger, a second
+      #    Vercel instance).
+      # The Run check button, /check and manual runs always go through.
       - name: Due for a check?
         id: gate
         env:
           MIN_GAP_MINUTES: ${{ vars.MIN_GAP_MINUTES }}
+          DISPATCH_MIN_GAP: ${{ github.event.client_payload.min_gap_minutes }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
 
           # Every unknown here decides in favour of checking: a gate that fails
           # closed would take monitoring down over an unreadable timestamp.
-          gap="${MIN_GAP_MINUTES:-45}"
-          case "$gap" in '' | *[!0-9]*) gap=45 ;; esac
+          gap=""
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            gap="${MIN_GAP_MINUTES:-45}"
+            case "$gap" in '' | *[!0-9]*) gap=45 ;; esac
+          elif [ "$EVENT_NAME" = "repository_dispatch" ]; then
+            gap="${DISPATCH_MIN_GAP:-}"
+            case "$gap" in *[!0-9]*) gap="" ;; esac
+          fi
 
           last="$(jq -r '.updatedAt // empty' data/status.json 2>/dev/null || true)"
           # Not folded into one line: `date -d ""` does not fail, it returns
@@ -78,7 +95,7 @@ jobs:
             last_epoch="$(date -u -d "$last" +%s 2>/dev/null || echo 0)"
           fi
 
-          if [ "$EVENT_NAME" != "schedule" ] || [ "$last_epoch" -le 0 ]; then
+          if [ -z "$gap" ] || [ "$last_epoch" -le 0 ]; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "Running (${EVENT_NAME})."
             exit 0
@@ -87,21 +104,22 @@ jobs:
           age=$(( ( $(date -u +%s) - last_epoch ) / 60 ))
           if [ "$age" -lt "$gap" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Last check was ${age} min ago (< ${gap}) — leaving this hour to the run that already made it."
+            echo "Last check was ${age} min ago (< ${gap}) — leaving it to the run that already made it."
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "Last check was ${age} min ago (>= ${gap}) — running."
           fi
 
+      # No `npm ci`: the monitor needs nothing from npm but tsx, which the
+      # check step fetches on its own — a handful of packages instead of the
+      # dashboard's 520. With a run every half hour, keeping each one inside a
+      # single billed minute is what fits the cadence into the free Actions
+      # allowance. tests/monitor-deps.test.ts keeps the monitor's imports free
+      # of npm packages so this stays true.
       - uses: actions/setup-node@v4
         if: steps.gate.outputs.skip != 'true'
         with:
           node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        if: steps.gate.outputs.skip != 'true'
-        run: npm ci
 
       # Carries the between-commit sample buffer from one run to the next, so
       # full resolution is kept without committing on every check.
@@ -117,7 +135,9 @@ jobs:
       - name: Check websites
         id: check
         if: steps.gate.outputs.skip != 'true'
-        run: npx tsx scripts/monitor.ts
+        # Pinned to the version in package-lock.json, which the Checks
+        # workflow runs the tests with.
+        run: npx --yes tsx@4.23.12 scripts/monitor.ts
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -135,11 +155,11 @@ jobs:
           # commits and pushes for itself as soon as a status changes.
           #
           # Deliberately small: runner time is metered on private repositories,
-          # and the schedule above now aims for 24 runs a day rather than 7, so
-          # the per-run window has to come down to pay for the extra runs. At 1
-          # minute this is one check per run — an hourly check, evenly spread.
-          # Raise it (repository variable LOOP_MINUTES) to buy denser coverage
-          # inside the hour, and watch the bill — see the README.
+          # and the heartbeat starts a run every half hour, so each run is paid
+          # for 40-45 times a day. At 1 minute this is one check per run — a
+          # check every half hour, evenly spread. Raise it (repository variable
+          # LOOP_MINUTES) to buy denser coverage inside each run, and watch the
+          # bill — see the README.
           SEND_TEST_ALERT: ${{ inputs.test_alert }}
           LOOP_MINUTES: ${{ inputs.loop_minutes || github.event.client_payload.loop_minutes || vars.LOOP_MINUTES || '1' }}
           LOOP_INTERVAL_SECONDS: ${{ vars.LOOP_INTERVAL_SECONDS || '60' }}
@@ -201,7 +221,7 @@ jobs:
             echo "### Website Monitor"
             echo ""
             if [ "${{ steps.gate.outputs.skip }}" = "true" ]; then
-              echo "- Result: skipped — the previous run covered this hour"
+              echo "- Result: skipped — a recent check already covered it"
               exit 0
             fi
             echo "- Result: ${{ steps.check.outputs.summary || 'run did not complete' }}"

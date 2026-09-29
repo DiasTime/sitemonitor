@@ -4,6 +4,43 @@
  * recorded, should a ping start a run?
  */
 
+import { numberFromEnv } from './env'
+
+/**
+ * How old the last recorded check may get before a ping starts a run.
+ *
+ * Thirty minutes, because the dashboard draws the day as one-hour bars and an
+ * hour with no check in it is a grey bar. Pinged every five minutes, the
+ * heartbeat starts a run 30–35 minutes after the previous check, which leaves
+ * every hour covered even when a ping is lost or a runner is slow to start.
+ * It is also well below the monitor's STALE_AFTER_MINUTES (90), so the repair
+ * happens before the "monitoring gap" alert would fire: the alert is then what
+ * you get when this endpoint was not pinged either, which is worth knowing.
+ *
+ * Keep COMMIT_INTERVAL_MINUTES (30 by default) at or below this. The age is
+ * read from status.json, and a run that only buffers its results does not
+ * move it — the next ping would see the old age and start another run.
+ */
+export const DEFAULT_STALE_MINUTES = 30
+
+export function staleAfterMinutes(env: Record<string, string | undefined> = process.env): number {
+  return numberFromEnv('HEARTBEAT_STALE_MINUTES', DEFAULT_STALE_MINUTES, env)
+}
+
+/**
+ * The client payload of a heartbeat dispatch.
+ *
+ * `min_gap_minutes` lets the workflow's gate drop a run that arrives after
+ * another run already made the check — a second pinger, a second Vercel
+ * instance — for about a minute of runner time instead of a full check. Half
+ * the threshold separates the two cases with room on both sides: a run the
+ * heartbeat needed finds its data at least `staleMinutes` old, a duplicate
+ * finds it a few minutes old.
+ */
+export function dispatchPayload(staleMinutes: number): { source: 'heartbeat'; min_gap_minutes: string } {
+  return { source: 'heartbeat', min_gap_minutes: String(Math.max(1, Math.floor(staleMinutes / 2))) }
+}
+
 export interface HeartbeatInput {
   /** `updatedAt` from data/status.json — null or unparseable when unknown. */
   lastCheck: string | null | undefined
