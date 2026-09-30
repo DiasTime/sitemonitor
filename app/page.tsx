@@ -13,6 +13,7 @@ import { SAMPLE_MONITORS, SAMPLE_OUTAGE } from '@/components/marketing/sample'
 import { Brand } from '@/components/ui/brand'
 import { Button } from '@/components/ui/button'
 import { StatusDot } from '@/components/ui/status-dot'
+import { TelegramButton } from '@/components/ui/telegram-button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { UptimeBars } from '@/components/ui/uptime-bars'
 import { LanguageSwitch } from '@/components/i18n/language-switch'
@@ -53,9 +54,9 @@ export default async function LandingPage() {
       </a>
 
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/75 backdrop-blur-xl">
-        <nav className="container flex h-16 items-center justify-between gap-6" aria-label="Main">
+        <nav className="container flex h-16 items-center justify-between gap-4 sm:gap-6" aria-label="Main">
           <Link href="/" aria-label={t.common.home}>
-            <Brand />
+            <Brand collapse />
           </Link>
           <div className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
             <a href="#features" className="transition-colors hover:text-foreground">
@@ -68,6 +69,7 @@ export default async function LandingPage() {
           <div className="flex items-center gap-1.5">
             <LanguageSwitch className="mr-1" />
             <ThemeToggle />
+            <TelegramButton label={t.common.telegramBot} />
             <Button asChild size="sm">
               <Link href="/dashboard">{t.common.openDashboard}</Link>
             </Button>

@@ -19,6 +19,7 @@ export const ru: Messages = {
   common: {
     openDashboard: 'Открыть панель',
     signOut: 'Выйти',
+    telegramBot: 'Открыть Telegram-бота',
     toggleTheme: 'Переключить тёмную тему',
     language: 'Язык',
     skipToContent: 'Перейти к содержимому',

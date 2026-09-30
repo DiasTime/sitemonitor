@@ -9,6 +9,7 @@ import { useI18n } from '@/components/i18n/i18n-provider'
 import { LanguageSwitch } from '@/components/i18n/language-switch'
 import { Brand } from '@/components/ui/brand'
 import { Button } from '@/components/ui/button'
+import { TelegramButton } from '@/components/ui/telegram-button'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/cn'
 
@@ -36,7 +37,7 @@ export function AppHeader({ children }: { children?: React.ReactNode }) {
       <div className="container flex h-14 items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" aria-label={t.header.dashboard}>
-            <Brand />
+            <Brand collapse />
           </Link>
           <nav aria-label={t.header.dashboard} className="hidden items-center sm:flex">
             <Link
@@ -61,6 +62,7 @@ export function AppHeader({ children }: { children?: React.ReactNode }) {
           {children}
           <LanguageSwitch className="mr-1" />
           <ThemeToggle />
+          <TelegramButton label={t.common.telegramBot} compact />
           <Button variant="ghost" size="icon" aria-label={t.common.signOut} title={t.common.signOut} onClick={signOut} disabled={pending}>
             <LogOut />
           </Button>

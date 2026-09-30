@@ -15,6 +15,7 @@ export const en = {
   common: {
     openDashboard: 'Open dashboard',
     signOut: 'Sign out',
+    telegramBot: 'Open the Telegram bot',
     toggleTheme: 'Toggle dark mode',
     language: 'Language',
     skipToContent: 'Skip to content',
