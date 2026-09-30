@@ -627,24 +627,24 @@
       "id": "gakkuast-kz-2026-09-30T00:10:33.253Z",
       "monitorId": "gakkuast-kz",
       "startedAt": "2026-09-30T00:10:33.253Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-30T03:24:06.158Z",
+      "durationMs": 11612905,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 6,
+      "failedChecks": 7,
       "lastNotifiedAt": "2026-09-30T00:10:33.253Z"
     },
     {
       "id": "zhanaurpaq-kz-2026-09-30T00:45:32.997Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-09-30T00:45:32.997Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-30T03:24:06.158Z",
+      "durationMs": 9513161,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 5,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-09-30T00:45:32.997Z"
     }
   ]
