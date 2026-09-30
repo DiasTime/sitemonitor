@@ -675,12 +675,12 @@
       "id": "megapolisast-kz-2026-09-30T20:20:37.092Z",
       "monitorId": "megapolisast-kz",
       "startedAt": "2026-09-30T20:20:37.092Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-09-30T20:36:28.368Z",
+      "durationMs": 951276,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-09-30T20:20:37.092Z"
     }
   ]
