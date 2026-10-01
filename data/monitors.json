@@ -4,7 +4,7 @@
       "id": "sharyn-kz",
       "name": "Шарын",
       "url": "https://sharyn.kz/login",
-      "enabled": false,
+      "enabled": true,
       "type": "login",
       "loginUrl": "https://sharyn.kz/api/auth/login",
       "loginBodyType": "json",
