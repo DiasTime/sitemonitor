@@ -682,6 +682,18 @@
       "error": "HTTP 502",
       "failedChecks": 2,
       "lastNotifiedAt": "2026-09-30T20:20:37.092Z"
+    },
+    {
+      "id": "samal-park-vms-svoydom-kz-2026-10-01T04:10:30.742Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "startedAt": "2026-10-01T04:10:30.742Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-01T04:10:30.742Z"
     }
   ]
 }
