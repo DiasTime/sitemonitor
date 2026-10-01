@@ -699,12 +699,12 @@
       "id": "olen-vms-svoydom-kz-2-2026-10-01T05:25:26.796Z",
       "monitorId": "olen-vms-svoydom-kz-2",
       "startedAt": "2026-10-01T05:25:26.796Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-01T06:00:19.459Z",
+      "durationMs": 2092663,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-10-01T05:25:26.796Z"
     }
   ]
