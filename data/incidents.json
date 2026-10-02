@@ -718,6 +718,18 @@
       "error": "Таймаут соединения",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-10-01T19:55:27.238Z"
+    },
+    {
+      "id": "darynast-kz-2026-10-02T15:10:36.475Z",
+      "monitorId": "darynast-kz",
+      "startedAt": "2026-10-02T15:10:36.475Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-02T15:10:36.475Z"
     }
   ]
 }
