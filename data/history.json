@@ -49457,7 +49457,6 @@
       "error": null
     },
     {
-<<<<<<< HEAD
       "timestamp": "2026-10-05T20:21:13.701Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -49526,7 +49525,34 @@
       "monitorId": "aqqain-kz",
       "status": "UP",
       "statusCode": 200,
-=======
+      "responseTime": 1237,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-05T20:21:13.701Z",
+      "monitorId": "izetast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1653,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-05T20:21:13.701Z",
+      "monitorId": "qaiyndy-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1590,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-05T20:21:13.701Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1425,
+      "error": null
+    },
+    {
       "timestamp": "2026-10-05T20:26:56.784Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -49563,34 +49589,10 @@
       "monitorId": "anarast-kz",
       "status": "UP",
       "statusCode": 200,
->>>>>>> 08a8e0f (chore(monitor): scheduled flush (12 monitors, 0 down))
       "responseTime": 1237,
       "error": null
     },
     {
-<<<<<<< HEAD
-      "timestamp": "2026-10-05T20:21:13.701Z",
-      "monitorId": "izetast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1653,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-05T20:21:13.701Z",
-      "monitorId": "qaiyndy-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1590,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-05T20:21:13.701Z",
-      "monitorId": "samal-park-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1425,
-=======
       "timestamp": "2026-10-05T20:26:56.784Z",
       "monitorId": "olen-vms-svoydom-kz-2",
       "status": "UP",
@@ -49644,7 +49646,6 @@
       "status": "UP",
       "statusCode": 200,
       "responseTime": 798,
->>>>>>> 08a8e0f (chore(monitor): scheduled flush (12 monitors, 0 down))
       "error": null
     }
   ]
