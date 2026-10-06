@@ -1394,7 +1394,17 @@ async function commitAndPush(message: string): Promise<boolean> {
     if (pushed.ok) return true
     log(`  push rejected (attempt ${attempt}), rebasing onto origin/${branch}...`)
     await new Promise((resolve) => setTimeout(resolve, attempt * 2000))
-    await git(['pull', '--rebase', '--autostash', 'origin', branch])
+    const rebased = await git(['pull', '--rebase', '--autostash', 'origin', branch])
+    if (!rebased.ok) {
+      // A conflict leaves the rebase half-done with markers in data/*.json, and
+      // pushing HEAD from there "succeeds" without sending anything — the next
+      // commit then publishes the markers. Give this commit up and continue
+      // from origin's data; the next pass recomputes on top of it.
+      log(`  rebase failed, dropping this commit: ${rebased.output}`)
+      await git(['rebase', '--abort'])
+      await git(['reset', '--hard', `origin/${branch}`])
+      return false
+    }
   }
 
   log('  could not push monitoring results after 5 attempts')

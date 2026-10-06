@@ -54,7 +54,13 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      # The branch, not the default github.sha: that is fixed when the event
+      # fires, so a run queued behind another in the concurrency group would
+      # start from the data before that run's commit — and its own commit then
+      # conflicts with it on every line of status.json.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
       # Runs that would repeat a check just made are given up here, before
       # the expensive steps. Two kinds qualify:
@@ -196,6 +202,11 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Never publish a file the dashboard and the next run cannot parse,
+          # such as one left with conflict markers by a failed rebase.
+          for f in data/*.json; do
+            jq empty "$f" || { echo "$f is not valid JSON — not committing." >&2; exit 1; }
+          done
           git add data/
           if git diff --staged --quiet; then
             echo "Nothing left to commit."
