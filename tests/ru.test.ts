@@ -3,6 +3,7 @@ import { test } from 'node:test'
 
 import {
   formatChecksRu,
+  formatDaysLeftRu,
   formatDurationRu,
   formatResponseTimeRu,
   formatUptimeRu,
@@ -67,4 +68,11 @@ test('numbers use a comma, as they do in Russian', () => {
   assert.equal(formatUptimeRu(99.9134), '99,91%')
   assert.equal(formatUptimeRu(100), '100,00%')
   assert.equal(formatUptimeRu(null), '—')
+})
+
+test('days until a date read the way they are said', () => {
+  assert.equal(formatDaysLeftRu(5), 'через 5 дней')
+  assert.equal(formatDaysLeftRu(1), 'через 1 день')
+  assert.equal(formatDaysLeftRu(0), 'сегодня')
+  assert.equal(formatDaysLeftRu(-3), '3 дня назад')
 })

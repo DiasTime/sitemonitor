@@ -54,6 +54,7 @@ delivers the alerts, and Vercel serves the dashboard.
     - [Health endpoints](#health-endpoints)
     - [Portal login checks](#portal-login-checks)
     - [Who receives alerts](#who-receives-alerts)
+    - [Bitrix24 tasks for SSL certificates](#bitrix24-tasks-for-ssl-certificates)
     - [Talking to the bot](#talking-to-the-bot)
     - [Running a check by hand](#running-a-check-by-hand)
     - [Why the schedule is hourly](#why-the-schedule-is-hourly)
@@ -428,7 +429,8 @@ left on the card, amber inside those five days and red from the expiry day on.
 "Today" is counted in `DISPLAY_TIMEZONE`, like alert times. Which notices were
 sent is kept in `status.json` under `sslNotices`, keyed by date, so entering
 the new date after a renewal starts the cycle over. A paused monitor sends
-none. The logic lives in `lib/ssl.ts`.
+none. The logic lives in `lib/ssl.ts`. Seven days out, DevOps also gets a
+task in Bitrix24 — see [Bitrix24 tasks for SSL certificates](#bitrix24-tasks-for-ssl-certificates).
 
 ```text
 🔒 SSL-СЕРТИФИКАТ СКОРО ИСТЕЧЁТ
@@ -741,6 +743,57 @@ automatically rather than failing on every future alert.
 > subscribes and everything else gets a polite refusal. Note that
 > `data/subscribers.json` records each subscriber's chat id and display name,
 > which is another reason to keep this repository private.
+
+---
+
+## Bitrix24 tasks for SSL certificates
+
+Telegram tells whoever is watching. The certificate is renewed by DevOps,
+though, so the monitor also files the work where DevOps takes it: a task in the
+Bitrix24 project *IT Infra Tickets*, built from the same *SSL certificate
+expires* date the Telegram warnings use.
+
+| Days before expiry | What happens in Bitrix24 |
+| --- | --- |
+| 7 | A task: `SSL: сертификат example.kz истекает через 7 дн.`, high priority, tags `ssl` and `monitoring`, due three days before expiry |
+| 5 | A comment on that task |
+| 3 | Another comment |
+
+A date entered when the certificate is already inside the window is filed
+straight away, at the stage it has reached. The task description names the
+domain, the date and the monitors on that host, and asks for the new date to
+be entered on the dashboard after the renewal. A new date starts the cycle over.
+Until then the comments and the Telegram warnings keep coming.
+
+**No duplicates.** Every pass looks at every certificate, so what was filed is
+recorded in `status.json` under `sslTasks`: host → date, task id, and the last
+threshold reported. Monitors on one host share one certificate and one task. If
+the record is ever lost (a run whose commit loses a rebase gives the commit up),
+the project's open tasks are searched for one titled `SSL: сертификат <host>`
+before anything new is filed. A match is reused and gets a comment. If the
+portal refuses a comment, typically because the task was deleted, the record is
+dropped and the next run starts afresh. If the portal is unreachable, the pass
+gives up on Bitrix24 and the next pass tries again; monitoring itself is never
+held up by it.
+
+**Setup:**
+
+1. In Bitrix24, create an inbound webhook with the **Tasks (task)** scope. Tasks
+   are created in the name of the user who owns the webhook.
+2. Add its URL (`https://<portal>/rest/<user>/<key>/`) as the Actions secret
+   `B24_WEBHOOK_URL`. It holds the key, so it belongs in secrets, not in code.
+3. Add the repository variable `B24_RESPONSIBLE_ID`: the Bitrix24 user id of the
+   DevOps engineer the task is assigned to. Without it nothing is filed, and
+   every run logs why.
+4. Optional: `B24_GROUP_ID` (default `4272`, IT Infra Tickets) and
+   `B24_SSL_DAYS` (default `7,5,3`; the first number files the task and each
+   of the rest comments on it, e.g. `30,14,7` for a month's notice).
+5. Check the connection: **Actions → Website Monitor → Run workflow** with
+   *test alert* ticked. Besides the Telegram test, it makes one read-only call
+   to Bitrix24 and reports in the run summary whether the webhook works. It
+   files nothing.
+
+The logic lives in `lib/bitrix.ts`.
 
 ---
 
@@ -1146,6 +1199,7 @@ dashboard at the cost of more commits.
 | `TELEGRAM_BOT_TOKEN` | no | Sending alerts |
 | `TELEGRAM_CHAT_ID` | no | Where alerts go |
 | `PORTAL_CREDENTIALS` | no | Credentials for `login` monitors — see [Portal login checks](#portal-login-checks) |
+| `B24_WEBHOOK_URL` | no | Bitrix24 inbound webhook (scope "task"); turns on [SSL tasks for DevOps](#bitrix24-tasks-for-ssl-certificates) |
 
 **GitHub Actions repository variables** (Settings → Secrets and variables →
 Actions → *Variables*) — all optional. A variable you have not defined reaches
@@ -1170,6 +1224,9 @@ not an error.
 | `MIN_GAP_MINUTES` | `45` | A scheduled tick landing sooner than this after the last check exits without checking (heartbeat dispatches carry their own) |
 | `STALE_AFTER_MINUTES` | `90` | How long a gap in checking has to be before it is reported to Telegram |
 | `DISPLAY_TIMEZONE` | `UTC` | IANA zone for times in Telegram alerts |
+| `B24_RESPONSIBLE_ID` | — | Bitrix24 user id the SSL task is assigned to; required once `B24_WEBHOOK_URL` is set |
+| `B24_GROUP_ID` | `4272` | Bitrix24 project the SSL task is filed in |
+| `B24_SSL_DAYS` | `7,5,3` | Days before expiry: a task at the first, a comment on it at each of the rest |
 
 ---
 

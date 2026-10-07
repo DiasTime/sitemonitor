@@ -23,6 +23,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 
+import { bitrix24Client, bitrix24FromEnv, parseSslTaskDays, planSslTasks, syncSslTasks } from '../lib/bitrix'
 import { confirmFailure } from '../lib/confirm'
 import { countFromEnv, numberFromEnv } from '../lib/env'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
@@ -59,7 +60,7 @@ import type {
 import {
   formatChecksRu,
   formatDateRu,
-  formatDaysRu,
+  formatDaysLeftRu,
   formatDurationRu,
   formatResponseTimeRu,
 } from '../lib/ru'
@@ -114,6 +115,14 @@ const REMINDER_INTERVAL_MS = countFromEnv('REMINDER_INTERVAL_MINUTES', 360) * 60
 const SSL_WARNING_DAYS = DEFAULT_SSL_WARNING_DAYS
 /** The zone "today" is counted in for SSL expiry dates — the reader's, like alert times. */
 const DISPLAY_TIMEZONE = process.env.DISPLAY_TIMEZONE?.trim() || 'UTC'
+/**
+ * Bitrix24 tasks for DevOps when a certificate runs out — see lib/bitrix.ts.
+ * Off unless B24_WEBHOOK_URL is set. B24_SSL_DAYS: a task at the first
+ * threshold, a comment on it at each of the rest.
+ */
+const BITRIX24 = bitrix24FromEnv()
+const bitrix = BITRIX24.config ? bitrix24Client(BITRIX24.config, { timeZone: DISPLAY_TIMEZONE }) : null
+const SSL_TASK_DAYS = parseSslTaskDays(process.env.B24_SSL_DAYS)
 /** How many sites are probed at the same time. */
 const CONCURRENCY = numberFromEnv('CHECK_CONCURRENCY', 8)
 /** History older than this is dropped on every run. */
@@ -1271,20 +1280,13 @@ function sslMessage(monitor: Monitor, expiresAt: string, notice: SslNotice): str
       : notice.daysLeft === 0
         ? '⛔ SSL-СЕРТИФИКАТ ИСТЕКАЕТ СЕГОДНЯ'
         : '⛔ SSL-СЕРТИФИКАТ ИСТЁК'
-  const when =
-    notice.daysLeft > 0
-      ? `через ${formatDaysRu(notice.daysLeft)}`
-      : notice.daysLeft === 0
-        ? 'сегодня'
-        : `${formatDaysRu(-notice.daysLeft)} назад`
-
   return [
     heading,
     '',
     monitor.name,
     '',
     'Срок действия:',
-    `${formatDateRu(expiresAt)} (${when})`,
+    `${formatDateRu(expiresAt)} (${formatDaysLeftRu(notice.daysLeft)})`,
     '',
     'Адрес:',
     monitor.url,
@@ -1551,6 +1553,17 @@ async function runOnce(): Promise<void> {
     JSON.stringify(Object.entries(sslNotices).sort()) !==
     JSON.stringify(Object.entries(previousSslNotices).sort())
 
+  // Bitrix24 tasks for the same dates, filed after the Telegram news below.
+  // Without a webhook the records are carried over untouched.
+  const previousSslTasks = statusRead.data.sslTasks ?? {}
+  if (BITRIX24.problem) log(`  Bitrix24: ${BITRIX24.problem} — no SSL tasks are filed.`)
+  const sslTaskPlan = bitrix
+    ? planSslTasks(monitors, previousSslTasks, startedAt, {
+        days: SSL_TASK_DAYS,
+        timeZone: DISPLAY_TIMEZONE,
+      })
+    : { records: previousSslTasks, actions: [] }
+
   // Monitors deleted from monitors.json should not linger in status.json.
   const prunedStatus = Object.keys(previousStatus).some((id) => !monitorById.has(id))
 
@@ -1664,13 +1677,24 @@ async function runOnce(): Promise<void> {
     await notify(sslMessage(alert.monitor, alert.expiresAt, alert.notice))
   }
 
+  // Like the SSL notices: a task filed and not recorded would be filed again
+  // next run, so a changed record asks for a commit of its own.
+  const sslTasks =
+    bitrix && sslTaskPlan.actions.length
+      ? await syncSslTasks(sslTaskPlan, bitrix, log)
+      : sslTaskPlan.records
+  const sslTasksChanged =
+    JSON.stringify(Object.entries(sslTasks).sort()) !==
+    JSON.stringify(Object.entries(previousSslTasks).sort())
+
   // --- persist -------------------------------------------------------------
-  if (shouldCommit) {
+  if (shouldCommit || sslTasksChanged) {
     const statusFile: StatusFile = {
       updatedAt: timestamp,
       lastCommitAt: timestamp,
       monitors: nextStatus,
       ...(Object.keys(sslNotices).length ? { sslNotices } : {}),
+      ...(Object.keys(sslTasks).length ? { sslTasks } : {}),
     }
     await writeJson(PATHS.status, statusFile)
     await writeJson(PATHS.history, { entries: history } satisfies HistoryFile)
@@ -1687,6 +1711,8 @@ async function runOnce(): Promise<void> {
         ? 'outage reminder'
         : sslAlerts.length
         ? 'ssl expiry notice'
+        : sslTasksChanged
+        ? 'ssl task update'
         : subscribersChanged
         ? 'subscriber update'
         : firstRun
@@ -1768,12 +1794,30 @@ async function sendTestAlert(): Promise<void> {
 
   if (changed) await writeJson(PATHS.subscribers, subscribers satisfies SubscribersFile)
 
+  const bitrixCheck = await checkBitrix24()
+  log(bitrixCheck)
+
   await setOutput('changed', changed ? 'true' : 'false')
   await setOutput('reason', 'test alert')
   await setOutput(
     'summary',
-    `test alert sent to ${recipients.length - dead.length}/${recipients.length} chat(s)`,
+    `test alert sent to ${recipients.length - dead.length}/${recipients.length} chat(s); ${bitrixCheck}`,
   )
+}
+
+/**
+ * The Bitrix24 half of the test run: one read-only call, which proves the
+ * webhook, its "task" scope and the project id without filing anything.
+ */
+async function checkBitrix24(): Promise<string> {
+  if (BITRIX24.problem) return `Bitrix24: ${BITRIX24.problem}`
+  if (!bitrix || !BITRIX24.config) return 'Bitrix24: off (B24_WEBHOOK_URL is not set)'
+  try {
+    const open = await bitrix.countOpenSslTasks()
+    return `Bitrix24: webhook works — ${open} open SSL task(s) in project ${BITRIX24.config.groupId}`
+  } catch (error) {
+    return `Bitrix24: webhook check failed — ${(error as Error).message}`
+  }
 }
 
 /**

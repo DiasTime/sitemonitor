@@ -26,7 +26,7 @@ on:
         required: false
         default: "2"
       test_alert:
-        description: "Send a test Telegram alert and exit, without checking anything"
+        description: "Send a test Telegram alert, check the Bitrix24 webhook, and exit without checking anything"
         required: false
         type: boolean
         default: false
@@ -154,6 +154,16 @@ jobs:
           # id, e.g. {"sharyn-kz":{"username":"...","password":"..."}}. Never
           # stored in data/monitors.json, which is public and committed.
           PORTAL_CREDENTIALS: ${{ secrets.PORTAL_CREDENTIALS }}
+          # Bitrix24 tasks for DevOps when an SSL certificate runs out (README,
+          # "Bitrix24 tasks for SSL certificates"). The webhook URL carries its
+          # key, hence a secret; unset, the feature is off. B24_RESPONSIBLE_ID
+          # is whom the task is assigned to, and is required with the webhook.
+          # B24_GROUP_ID defaults to 4272 (IT Infra Tickets), B24_SSL_DAYS to
+          # "7,5,3": a task at 7 days, a comment on it at 5 and at 3.
+          B24_WEBHOOK_URL: ${{ secrets.B24_WEBHOOK_URL }}
+          B24_RESPONSIBLE_ID: ${{ vars.B24_RESPONSIBLE_ID }}
+          B24_GROUP_ID: ${{ vars.B24_GROUP_ID }}
+          B24_SSL_DAYS: ${{ vars.B24_SSL_DAYS }}
           # IANA zone for the times printed in Telegram alerts, e.g. Asia/Almaty.
           # Unset or invalid falls back to UTC. The zone is always shown.
           DISPLAY_TIMEZONE: ${{ vars.DISPLAY_TIMEZONE }}

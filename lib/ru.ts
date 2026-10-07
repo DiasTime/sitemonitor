@@ -54,6 +54,13 @@ export function formatDaysRu(count: number): string {
   return say(count, DAYS)
 }
 
+/** Days until a date: 5 -> "через 5 дней", 0 -> "сегодня", -3 -> "3 дня назад". */
+export function formatDaysLeftRu(daysLeft: number): string {
+  if (daysLeft > 0) return `через ${formatDaysRu(daysLeft)}`
+  if (daysLeft === 0) return 'сегодня'
+  return `${formatDaysRu(-daysLeft)} назад`
+}
+
 /** "2026-10-01" -> "1 октября 2026 г." — a calendar date, so no zone applies. */
 export function formatDateRu(date: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)

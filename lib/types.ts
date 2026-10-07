@@ -49,7 +49,8 @@ export interface Monitor {
   failureText?: string
   /**
    * When the site's SSL certificate expires, as entered on the dashboard
-   * ("2026-10-01"). Telegram is warned ahead of it — see lib/ssl.ts.
+   * ("2026-10-01"). Telegram is warned ahead of it — see lib/ssl.ts — and
+   * DevOps gets a Bitrix24 task — see lib/bitrix.ts.
    */
   sslExpiresAt?: string
 }
@@ -97,6 +98,21 @@ export interface StatusFile {
    * `sslNoticeDue`, so each one goes out once rather than every run.
    */
   sslNotices?: Record<string, string>
+  /**
+   * Bitrix24 tasks filed for expiring certificates, by host — see
+   * lib/bitrix.ts. What keeps the monitor, which checks around the clock,
+   * from filing the same task every run.
+   */
+  sslTasks?: Record<string, SslTaskRecord>
+}
+
+/** One Bitrix24 task about one certificate: a host and its expiry date. */
+export interface SslTaskRecord {
+  /** The expiry date the task is about. A new date after a renewal starts over. */
+  expiresAt: string
+  taskId: number
+  /** The last threshold reported, in days before expiry — smaller is later. */
+  stage: number
 }
 
 export interface HistoryEntry {
