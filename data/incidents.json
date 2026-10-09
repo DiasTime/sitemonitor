@@ -754,6 +754,18 @@
       "error": "Таймаут соединения",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-10-02T17:30:43.274Z"
+    },
+    {
+      "id": "gakkuast-kz-2026-10-09T09:20:28.691Z",
+      "monitorId": "gakkuast-kz",
+      "startedAt": "2026-10-09T09:20:28.691Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-09T09:20:28.691Z"
     }
   ]
 }
