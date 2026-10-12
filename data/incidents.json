@@ -920,7 +920,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 5,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     },
     {
@@ -932,7 +932,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 5,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     },
     {
@@ -944,7 +944,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 5,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     },
     {
@@ -956,7 +956,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 5,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     }
   ]
