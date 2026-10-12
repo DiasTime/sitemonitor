@@ -915,9 +915,9 @@
       "id": "zhanaurpaq-kz-2026-10-12T00:35:25.137Z",
       "monitorId": "zhanaurpaq-kz",
       "startedAt": "2026-10-12T00:35:25.137Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-12T04:05:24.280Z",
+      "durationMs": 12599143,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 6,
@@ -932,16 +932,16 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 6,
+      "failedChecks": 7,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     },
     {
       "id": "gakkuast-kz-2026-10-12T00:35:25.137Z",
       "monitorId": "gakkuast-kz",
       "startedAt": "2026-10-12T00:35:25.137Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-12T04:05:24.280Z",
+      "durationMs": 12599143,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 6,
@@ -956,7 +956,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 6,
+      "failedChecks": 7,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     }
   ]
