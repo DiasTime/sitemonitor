@@ -910,6 +910,54 @@
       "error": "Таймаут соединения",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-10-10T06:00:45.888Z"
+    },
+    {
+      "id": "zhanaurpaq-kz-2026-10-12T00:35:25.137Z",
+      "monitorId": "zhanaurpaq-kz",
+      "startedAt": "2026-10-12T00:35:25.137Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-10-12T00:35:25.137Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-10-12T00:35:25.137Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
+    },
+    {
+      "id": "gakkuast-kz-2026-10-12T00:35:25.137Z",
+      "monitorId": "gakkuast-kz",
+      "startedAt": "2026-10-12T00:35:25.137Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
+    },
+    {
+      "id": "samal-park-vms-svoydom-kz-2026-10-12T00:35:25.137Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "startedAt": "2026-10-12T00:35:25.137Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     }
   ]
 }
