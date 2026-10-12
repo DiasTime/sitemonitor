@@ -932,7 +932,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 9,
+      "failedChecks": 11,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     },
     {
@@ -951,12 +951,12 @@
       "id": "samal-park-vms-svoydom-kz-2026-10-12T00:35:25.137Z",
       "monitorId": "samal-park-vms-svoydom-kz",
       "startedAt": "2026-10-12T00:35:25.137Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-12T04:55:53.830Z",
+      "durationMs": 15628693,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 9,
+      "failedChecks": 10,
       "lastNotifiedAt": "2026-10-12T00:35:25.137Z"
     }
   ]
