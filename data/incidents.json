@@ -932,7 +932,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 52,
+      "failedChecks": 53,
       "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     },
     {
@@ -963,9 +963,9 @@
       "id": "megapolisast-kz-2026-10-12T23:50:30.715Z",
       "monitorId": "megapolisast-kz",
       "startedAt": "2026-10-12T23:50:30.715Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-13T03:55:34.269Z",
+      "durationMs": 14703554,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
       "failedChecks": 7,
@@ -975,9 +975,9 @@
       "id": "anarast-kz-2026-10-13T00:25:27.311Z",
       "monitorId": "anarast-kz",
       "startedAt": "2026-10-13T00:25:27.311Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-13T03:55:34.269Z",
+      "durationMs": 12606958,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 6,
@@ -987,9 +987,9 @@
       "id": "aqqain-kz-2026-10-13T01:00:44.797Z",
       "monitorId": "aqqain-kz",
       "startedAt": "2026-10-13T01:00:44.797Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-13T03:55:34.269Z",
+      "durationMs": 10489472,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
       "failedChecks": 5,
@@ -1004,7 +1004,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 4,
+      "failedChecks": 5,
       "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     },
     {
@@ -1016,7 +1016,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 4,
+      "failedChecks": 5,
       "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     }
   ]
