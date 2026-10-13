@@ -932,7 +932,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 53,
+      "failedChecks": 54,
       "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     },
     {
@@ -1004,16 +1004,16 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 5,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     },
     {
       "id": "qaiyndy-kz-2026-10-13T01:35:29.418Z",
       "monitorId": "qaiyndy-kz",
       "startedAt": "2026-10-13T01:35:29.418Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-13T04:13:19.736Z",
+      "durationMs": 9470318,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
       "failedChecks": 5,
