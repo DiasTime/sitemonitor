@@ -932,7 +932,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 56,
+      "failedChecks": 58,
       "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     },
     {
@@ -1004,7 +1004,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 8,
+      "failedChecks": 10,
       "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     },
     {
