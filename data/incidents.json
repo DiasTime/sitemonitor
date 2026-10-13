@@ -927,9 +927,9 @@
       "id": "olen-vms-svoydom-kz-2-2026-10-12T00:35:25.137Z",
       "monitorId": "olen-vms-svoydom-kz-2",
       "startedAt": "2026-10-12T00:35:25.137Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-13T10:50:41.660Z",
+      "durationMs": 123316523,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
       "failedChecks": 70,
@@ -1004,7 +1004,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 22,
+      "failedChecks": 23,
       "lastNotifiedAt": "2026-10-13T07:55:27.858Z"
     },
     {
