@@ -932,7 +932,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 47,
+      "failedChecks": 48,
       "lastNotifiedAt": "2026-10-12T19:10:30.986Z"
     },
     {
@@ -968,7 +968,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 2,
+      "failedChecks": 3,
       "lastNotifiedAt": "2026-10-12T23:50:30.715Z"
     },
     {
@@ -980,8 +980,20 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-10-13T00:25:27.311Z"
+    },
+    {
+      "id": "aqqain-kz-2026-10-13T01:00:44.797Z",
+      "monitorId": "aqqain-kz",
+      "startedAt": "2026-10-13T01:00:44.797Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-13T01:00:44.797Z"
     }
   ]
 }
