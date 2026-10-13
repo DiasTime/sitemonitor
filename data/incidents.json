@@ -932,7 +932,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 46,
+      "failedChecks": 47,
       "lastNotifiedAt": "2026-10-12T19:10:30.986Z"
     },
     {
@@ -968,8 +968,20 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-10-12T23:50:30.715Z"
+    },
+    {
+      "id": "anarast-kz-2026-10-13T00:25:27.311Z",
+      "monitorId": "anarast-kz",
+      "startedAt": "2026-10-13T00:25:27.311Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-13T00:25:27.311Z"
     }
   ]
 }
