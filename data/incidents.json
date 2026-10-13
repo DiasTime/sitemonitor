@@ -932,8 +932,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 65,
-      "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
+      "failedChecks": 66,
+      "lastNotifiedAt": "2026-10-13T07:55:27.858Z"
     },
     {
       "id": "gakkuast-kz-2026-10-12T00:35:25.137Z",
@@ -1004,8 +1004,8 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 17,
-      "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
+      "failedChecks": 18,
+      "lastNotifiedAt": "2026-10-13T07:55:27.858Z"
     },
     {
       "id": "qaiyndy-kz-2026-10-13T01:35:29.418Z",
