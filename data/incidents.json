@@ -932,8 +932,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 48,
-      "lastNotifiedAt": "2026-10-12T19:10:30.986Z"
+      "failedChecks": 49,
+      "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     },
     {
       "id": "gakkuast-kz-2026-10-12T00:35:25.137Z",
@@ -968,7 +968,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 3,
+      "failedChecks": 4,
       "lastNotifiedAt": "2026-10-12T23:50:30.715Z"
     },
     {
@@ -980,7 +980,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 2,
+      "failedChecks": 3,
       "lastNotifiedAt": "2026-10-13T00:25:27.311Z"
     },
     {
@@ -992,8 +992,32 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-10-13T01:00:44.797Z"
+    },
+    {
+      "id": "zhanaurpaq-kz-2026-10-13T01:35:29.418Z",
+      "monitorId": "zhanaurpaq-kz",
+      "startedAt": "2026-10-13T01:35:29.418Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
+    },
+    {
+      "id": "qaiyndy-kz-2026-10-13T01:35:29.418Z",
+      "monitorId": "qaiyndy-kz",
+      "startedAt": "2026-10-13T01:35:29.418Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-13T01:35:29.418Z"
     }
   ]
 }
