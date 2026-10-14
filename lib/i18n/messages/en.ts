@@ -278,6 +278,26 @@ export const en = {
     axisMs: (value: number) => `${value} ms`,
     failed: (count: number) => `${count} failed check${count === 1 ? '' : 's'}`,
   },
+
+  report: {
+    button: 'Report',
+    title: 'Uptime report',
+    description: 'A PDF of every outage in the period: when it happened, how long it lasted and how often.',
+    period: 'Period',
+    presets: { week: '7 days', days30: '30 days', thisMonth: 'This month', lastMonth: 'Last month' },
+    from: 'From',
+    to: 'To',
+    scope: 'Monitors',
+    allMonitors: 'All monitors',
+    retentionNote:
+      'Check history is kept for 30 days. Earlier days still list every outage, without check counts or response times.',
+    invalidRange: 'Pick a start date on or before the end date.',
+    tooLong: 'A report can cover at most a year.',
+    cancel: 'Cancel',
+    download: 'Download PDF',
+    building: 'Building report',
+    failed: 'The report could not be built',
+  },
 }
 
 export type Messages = typeof en

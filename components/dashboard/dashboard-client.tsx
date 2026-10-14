@@ -9,6 +9,7 @@ import { FilterTabs } from '@/components/dashboard/filter-tabs'
 import { useI18n } from '@/components/i18n/i18n-provider'
 import { MonitorRow } from '@/components/dashboard/monitor-row'
 import { StatsBar } from '@/components/dashboard/stats-bar'
+import { ReportDialog } from '@/components/report/report-dialog'
 import { Button } from '@/components/ui/button'
 import { EASE_OUT, gsap, useGSAP, withMotion } from '@/components/ui/motion'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -207,7 +208,7 @@ export function DashboardClient() {
             )}
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -222,6 +223,7 @@ export function DashboardClient() {
               {running ? <RefreshCw className="animate-spin" /> : <Play />}
               {running ? d.checking : d.runCheck}
             </Button>
+            {monitors.length > 0 && <ReportDialog monitors={monitors} />}
             <AddMonitorDialog onAdded={reloadAll} />
           </div>
         </section>

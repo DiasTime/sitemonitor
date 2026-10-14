@@ -10,6 +10,7 @@ import { useI18n } from '@/components/i18n/i18n-provider'
 import { HistoryTable } from '@/components/monitor/history-table'
 import { IncidentList } from '@/components/monitor/incident-list'
 import { SslBadge } from '@/components/monitor/ssl-badge'
+import { ReportDialog } from '@/components/report/report-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
@@ -158,10 +159,13 @@ export function MonitorDetail({ monitorId }: { monitorId: string }) {
             </a>
           </div>
 
-          <p className="text-xs text-muted-foreground" title={format.exact(state?.lastCheck)}>
-            {t.runsOn}
-            {state?.lastCheck ? t.lastCheck(format.relative(state.lastCheck)) : ''}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-muted-foreground" title={format.exact(state?.lastCheck)}>
+              {t.runsOn}
+              {state?.lastCheck ? t.lastCheck(format.relative(state.lastCheck)) : ''}
+            </p>
+            <ReportDialog monitors={status.data?.monitors ?? [monitor]} monitorId={monitor.id} />
+          </div>
         </div>
 
         {state?.status === 'DOWN' && state.error && (
