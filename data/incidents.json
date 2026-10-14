@@ -1040,7 +1040,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 19,
+      "failedChecks": 20,
       "lastNotifiedAt": "2026-10-13T22:35:27.426Z"
     },
     {
@@ -1052,7 +1052,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 17,
+      "failedChecks": 18,
       "lastNotifiedAt": "2026-10-13T23:45:33.084Z"
     },
     {
@@ -1064,8 +1064,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 11,
-      "lastNotifiedAt": "2026-10-13T20:50:32.334Z"
+      "failedChecks": 12,
+      "lastNotifiedAt": "2026-10-14T03:15:30.453Z"
     },
     {
       "id": "izetast-kz-2026-10-13T22:00:47.745Z",
@@ -1076,7 +1076,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 9,
+      "failedChecks": 10,
       "lastNotifiedAt": "2026-10-13T22:00:47.745Z"
     }
   ]
