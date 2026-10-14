@@ -1040,16 +1040,16 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 21,
+      "failedChecks": 22,
       "lastNotifiedAt": "2026-10-13T22:35:27.426Z"
     },
     {
       "id": "darynast-kz-2026-10-13T17:20:35.375Z",
       "monitorId": "darynast-kz",
       "startedAt": "2026-10-13T17:20:35.375Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-14T04:23:06.711Z",
+      "durationMs": 39751336,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
       "failedChecks": 19,
@@ -1059,9 +1059,9 @@
       "id": "gakkuast-kz-2026-10-13T20:50:32.334Z",
       "monitorId": "gakkuast-kz",
       "startedAt": "2026-10-13T20:50:32.334Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-14T04:23:06.711Z",
+      "durationMs": 27154377,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
       "failedChecks": 13,
@@ -1076,8 +1076,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 11,
-      "lastNotifiedAt": "2026-10-13T22:00:47.745Z"
+      "failedChecks": 12,
+      "lastNotifiedAt": "2026-10-14T04:23:06.711Z"
     }
   ]
 }
