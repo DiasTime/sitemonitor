@@ -1040,7 +1040,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 14,
+      "failedChecks": 15,
       "lastNotifiedAt": "2026-10-13T22:35:27.426Z"
     },
     {
@@ -1052,7 +1052,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 12,
+      "failedChecks": 13,
       "lastNotifiedAt": "2026-10-13T23:45:33.084Z"
     },
     {
@@ -1064,7 +1064,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 6,
+      "failedChecks": 7,
       "lastNotifiedAt": "2026-10-13T20:50:32.334Z"
     },
     {
@@ -1076,7 +1076,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 4,
+      "failedChecks": 5,
       "lastNotifiedAt": "2026-10-13T22:00:47.745Z"
     }
   ]
