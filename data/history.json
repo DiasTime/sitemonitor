@@ -1,62 +1,6 @@
 {
   "entries": [
     {
-      "timestamp": "2026-09-19T22:54:03.000Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1049,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-19T22:54:03.000Z",
-      "monitorId": "darynast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1096,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-19T22:54:03.000Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1187,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-19T22:54:03.000Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1200,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-19T22:54:03.000Z",
-      "monitorId": "anarast-kz",
-      "status": "DOWN",
-      "statusCode": null,
-      "responseTime": null,
-      "error": "Connection timeout"
-    },
-    {
-      "timestamp": "2026-09-19T22:54:03.000Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "DOWN",
-      "statusCode": 502,
-      "responseTime": 1192,
-      "error": "HTTP 502"
-    },
-    {
-      "timestamp": "2026-09-19T22:54:03.000Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1253,
-      "error": null
-    },
-    {
       "timestamp": "2026-09-20T00:59:02.571Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -96438,6 +96382,102 @@
       "status": "UP",
       "statusCode": 200,
       "responseTime": 743,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1239,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1257,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 973,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1410,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "anarast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1707,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1812,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1694,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "gakkuast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1420,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "aqqain-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1387,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "izetast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1563,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "qaiyndy-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1187,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-19T23:00:48.985Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 997,
       "error": null
     }
   ]
