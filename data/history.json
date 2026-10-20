@@ -99663,6 +99663,102 @@
       "statusCode": 200,
       "responseTime": 908,
       "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1314,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1200,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1232,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "megapolisast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": 1508,
+      "error": "Таймаут соединения"
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "anarast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1257,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1784,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1950,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "gakkuast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1419,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "aqqain-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1316,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "izetast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1080,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "qaiyndy-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 977,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-20T20:10:38.047Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 906,
+      "error": null
     }
   ]
 }
