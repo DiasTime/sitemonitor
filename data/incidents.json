@@ -1102,6 +1102,18 @@
       "error": "Таймаут соединения",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-10-14T10:30:39.455Z"
+    },
+    {
+      "id": "megapolisast-kz-2026-10-20T17:15:28.091Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-10-20T17:15:28.091Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-20T17:15:28.091Z"
     }
   ]
 }
