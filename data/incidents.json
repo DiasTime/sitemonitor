@@ -1126,6 +1126,18 @@
       "error": "HTTP 502",
       "failedChecks": 5,
       "lastNotifiedAt": "2026-10-21T03:10:30.478Z"
+    },
+    {
+      "id": "megapolisast-kz-2026-10-21T14:35:27.487Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-10-21T14:35:27.487Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-21T14:35:27.487Z"
     }
   ]
 }
