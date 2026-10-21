@@ -1112,8 +1112,20 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 18,
+      "failedChecks": 19,
       "lastNotifiedAt": "2026-10-20T23:40:33.306Z"
+    },
+    {
+      "id": "samal-park-vms-svoydom-kz-2026-10-21T03:10:30.478Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "startedAt": "2026-10-21T03:10:30.478Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-21T03:10:30.478Z"
     }
   ]
 }
