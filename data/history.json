@@ -1,62 +1,6 @@
 {
   "entries": [
     {
-      "timestamp": "2026-09-22T00:11:26.981Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1255,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-22T00:11:26.981Z",
-      "monitorId": "darynast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1315,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-22T00:11:26.981Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "DOWN",
-      "statusCode": null,
-      "responseTime": null,
-      "error": "Таймаут соединения"
-    },
-    {
-      "timestamp": "2026-09-22T00:11:26.981Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1368,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-22T00:11:26.981Z",
-      "monitorId": "anarast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1224,
-      "error": null
-    },
-    {
-      "timestamp": "2026-09-22T00:11:26.981Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "DOWN",
-      "statusCode": 502,
-      "responseTime": 1754,
-      "error": "HTTP 502"
-    },
-    {
-      "timestamp": "2026-09-22T00:11:26.981Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1837,
-      "error": null
-    },
-    {
       "timestamp": "2026-09-22T03:42:42.883Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -103686,6 +103630,102 @@
       "status": "UP",
       "statusCode": 200,
       "responseTime": 795,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1405,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1371,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1363,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "megapolisast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1380,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "anarast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1163,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1892,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1849,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "gakkuast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1395,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "aqqain-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1236,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "izetast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1088,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "qaiyndy-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1113,
+      "error": null
+    },
+    {
+      "timestamp": "2026-10-22T00:30:38.286Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 870,
       "error": null
     }
   ]
