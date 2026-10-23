@@ -1150,6 +1150,66 @@
       "error": "Таймаут соединения",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-10-22T10:30:39.650Z"
+    },
+    {
+      "id": "zhanaurpaq-kz-2026-10-23T10:03:12.968Z",
+      "monitorId": "zhanaurpaq-kz",
+      "startedAt": "2026-10-23T10:03:12.968Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
+    },
+    {
+      "id": "gakkuast-kz-2026-10-23T10:03:12.968Z",
+      "monitorId": "gakkuast-kz",
+      "startedAt": "2026-10-23T10:03:12.968Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
+    },
+    {
+      "id": "aqqain-kz-2026-10-23T10:03:12.968Z",
+      "monitorId": "aqqain-kz",
+      "startedAt": "2026-10-23T10:03:12.968Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
+    },
+    {
+      "id": "izetast-kz-2026-10-23T10:03:12.968Z",
+      "monitorId": "izetast-kz",
+      "startedAt": "2026-10-23T10:03:12.968Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
+    },
+    {
+      "id": "samal-park-vms-svoydom-kz-2026-10-23T10:03:12.968Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "startedAt": "2026-10-23T10:03:12.968Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
     }
   ]
 }
