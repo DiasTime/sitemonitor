@@ -1191,9 +1191,9 @@
       "id": "izetast-kz-2026-10-23T10:03:12.968Z",
       "monitorId": "izetast-kz",
       "startedAt": "2026-10-23T10:03:12.968Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-23T10:45:29.152Z",
+      "durationMs": 2536184,
+      "status": "resolved",
       "statusCode": null,
       "error": "Таймаут соединения",
       "failedChecks": 3,
@@ -1208,8 +1208,44 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 3,
+      "failedChecks": 4,
       "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-10-23T10:45:29.152Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-10-23T10:45:29.152Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:45:29.152Z"
+    },
+    {
+      "id": "gakkuast-kz-2026-10-23T10:45:29.152Z",
+      "monitorId": "gakkuast-kz",
+      "startedAt": "2026-10-23T10:45:29.152Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:45:29.152Z"
+    },
+    {
+      "id": "aqqain-kz-2026-10-23T10:45:29.152Z",
+      "monitorId": "aqqain-kz",
+      "startedAt": "2026-10-23T10:45:29.152Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-23T10:45:29.152Z"
     }
   ]
 }
