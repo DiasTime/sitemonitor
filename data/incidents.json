@@ -1179,9 +1179,9 @@
       "id": "aqqain-kz-2026-10-23T10:03:12.968Z",
       "monitorId": "aqqain-kz",
       "startedAt": "2026-10-23T10:03:12.968Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-10-23T10:11:07.037Z",
+      "durationMs": 474069,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 2,
@@ -1196,7 +1196,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 2,
+      "failedChecks": 3,
       "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
     },
     {
@@ -1208,7 +1208,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 2,
+      "failedChecks": 3,
       "lastNotifiedAt": "2026-10-23T10:03:12.968Z"
     }
   ]
