@@ -61,6 +61,7 @@ delivers the alerts, and Vercel serves the dashboard.
     - [The heartbeat endpoint](#the-heartbeat-endpoint)
 11. [Why it does not commit on every check](#11-why-it-does-not-commit-on-every-check)
 12. [Security](#12-security)
+    - [Making the repository public](#making-the-repository-public)
 13. [Configuration reference](#13-configuration-reference)
 14. [Limits and honest caveats](#14-limits-and-honest-caveats)
 15. [Local development](#15-local-development)
@@ -146,6 +147,7 @@ repository secret**.
 | `TELEGRAM_BOT_TOKEN` | The token from BotFather |
 | `TELEGRAM_CHAT_ID` | Optional. A chat wired in from the start, without `/start` |
 | `TELEGRAM_SUBSCRIBE_PASSWORD` | Optional. Requires `/start <passphrase>` to subscribe |
+| `SUBSCRIBERS_KEY` | Optional; required for a public repository. Encrypts `data/subscribers.json` — see [Making the repository public](#making-the-repository-public) |
 | `PORTAL_CREDENTIALS` | Optional. Only needed for `login` monitors — see [Portal login checks](#portal-login-checks) |
 
 You do **not** need to add a GitHub token here. The workflow uses the built-in
@@ -336,7 +338,8 @@ on every run:
 the reminder interval counts from.
 
 **`data/subscribers.json`** — the chats that sent `/start`, plus the `getUpdates`
-cursor. See [who receives alerts](#who-receives-alerts).
+cursor. See [who receives alerts](#who-receives-alerts). With `SUBSCRIBERS_KEY`
+set it is stored encrypted, and reads as `{"sealed": "aes-256-gcm", …}`.
 
 ---
 
@@ -741,8 +744,9 @@ automatically rather than failing on every future alert.
 > and when they were down. If the bot might be discoverable, set the
 > `TELEGRAM_SUBSCRIBE_PASSWORD` secret — then only `/start <passphrase>`
 > subscribes and everything else gets a polite refusal. Note that
-> `data/subscribers.json` records each subscriber's chat id and display name,
-> which is another reason to keep this repository private.
+> `data/subscribers.json` records each subscriber's chat id and display name:
+> set `SUBSCRIBERS_KEY` to store it encrypted, and do so before the repository
+> is ever public — see [Making the repository public](#making-the-repository-public).
 
 ---
 
@@ -1146,6 +1150,10 @@ dashboard at the cost of more commits.
   get a few through; the staleness check is the bound that always holds.) It
   cannot read your monitors. Set `HEARTBEAT_TOKEN` if even the timestamp should
   stay private.
+- `data/subscribers.json` is the one data file that is about people rather than
+  sites. With `SUBSCRIBERS_KEY` set (Actions secret and Vercel variable, same
+  value) it is stored AES-256-GCM encrypted; the run's log and the commit
+  messages show no chat ids or usernames either way.
 - Password checks and signature comparisons are constant-time; login is rate
   limited.
 - **SSRF protection.** The monitoring script fetches URLs you supply, so URLs are
@@ -1168,6 +1176,39 @@ dashboard at the cost of more commits.
   in its own right, which also means a redirect cannot be used to reach an
   internal address.
 
+### Making the repository public
+
+On a public repository Actions minutes are free, which is the cheapest way out
+of [the minutes budget](#actions-minutes). It also publishes everything in it,
+and its whole history:
+
+- **Fine to publish:** the code, `data/monitors.json` (sites and the shape of
+  their login forms — never credentials), `status.json`, `history.json`,
+  `incidents.json`. Anyone will be able to see what is monitored and when it
+  was down; the dashboard's password no longer hides that.
+- **Not fine:** `data/subscribers.json` — chat ids and usernames — in the tree
+  *and in every earlier commit*. Older versions of this tool also put the
+  username in the commit message of a webhook `/start`, and in the run's log.
+
+In that order:
+
+1. Generate a key (`openssl rand -base64 32`) and set it as `SUBSCRIBERS_KEY`
+   in **both** the Actions secrets and the Vercel project, then redeploy. Keep a
+   copy: without it the list cannot be read, and the run falls back to
+   alerting `TELEGRAM_CHAT_ID` alone rather than overwrite it.
+2. Rewrite the history so no commit carries the plain file or a username in
+   its message, and force-push it. The run seals the file by itself on its
+   next commit, but that does not touch the commits before it.
+3. Delete the old workflow runs: their logs become public with the
+   repository, and older logs name subscribers. `gh run list -L 5000 --json
+   databaseId -q '.[].databaseId' | xargs -n1 gh run delete`
+4. Set `TELEGRAM_SUBSCRIBE_PASSWORD` (Actions and Vercel) if it is not set:
+   the bot's username is in the code, so anyone can find it.
+5. **Settings → General → Danger Zone → Change visibility.**
+
+Commits orphaned by the rewrite can stay reachable on GitHub by their hash for
+a while. If that matters, ask GitHub Support to purge cached views.
+
 ---
 
 ## 13. Configuration reference
@@ -1189,6 +1230,7 @@ dashboard at the cost of more commits.
 | `TELEGRAM_BOT_TOKEN` | no | — | Needed only to answer the bot from the dashboard — see [talking to the bot](#talking-to-the-bot) |
 | `TELEGRAM_WEBHOOK_SECRET` | no | — | Required for `/api/telegram` to answer at all; matched against Telegram's header |
 | `TELEGRAM_SUBSCRIBE_PASSWORD` | no | — | Same passphrase as the Actions secret, so webhook `/start` is gated too |
+| `SUBSCRIBERS_KEY` | no | — | Same key as the Actions secret, so webhook `/start` and `/stop` can read and write the encrypted list |
 | `DISPLAY_TIMEZONE` | no | `UTC` | Zone for the timestamp in `/status` |
 | `STALE_AFTER_MINUTES` | no | `90` | When `/status` warns that its data is old |
 
@@ -1198,6 +1240,7 @@ dashboard at the cost of more commits.
 | --- | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | no | Sending alerts |
 | `TELEGRAM_CHAT_ID` | no | Where alerts go |
+| `SUBSCRIBERS_KEY` | no; yes on a public repository | Encrypts `data/subscribers.json` — see [Making the repository public](#making-the-repository-public) |
 | `PORTAL_CREDENTIALS` | no | Credentials for `login` monitors — see [Portal login checks](#portal-login-checks) |
 | `B24_WEBHOOK_URL` | no | Bitrix24 inbound webhook (scope "task"); turns on [SSL tasks for DevOps](#bitrix24-tasks-for-ssl-certificates) |
 
@@ -1425,6 +1468,7 @@ lib/
 ├── auth.ts                  password check and signed session cookie
 ├── security.ts              URL validation and SSRF protection
 ├── storage.ts               typed access to the four JSON files
+├── subscribers.ts           encryption of data/subscribers.json
 ├── api.ts                   shared route-handler helpers
 ├── types.ts                 shared data model
 └── utils.ts                 formatting helpers

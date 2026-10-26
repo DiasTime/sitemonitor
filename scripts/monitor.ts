@@ -28,6 +28,14 @@ import { confirmFailure } from '../lib/confirm'
 import { countFromEnv, numberFromEnv } from '../lib/env'
 import { isBlockedAddress, isBlockedHostname, validateMonitorUrl } from '../lib/security'
 import {
+  EMPTY_SUBSCRIBERS,
+  isSealed,
+  openSubscribers,
+  sealSubscribers,
+  subscribersKey,
+  SubscribersLockedError,
+} from '../lib/subscribers'
+import {
   checkRunningMessage,
   helpMessage,
   identify,
@@ -960,6 +968,47 @@ function telegramToken(): string | null {
   return process.env.TELEGRAM_BOT_TOKEN?.trim() || null
 }
 
+/** Seals data/subscribers.json — see lib/subscribers.ts. */
+const SUBSCRIBERS_KEY = subscribersKey()
+
+/**
+ * A chat id as the run's log shows it. The log is public on a public
+ * repository, and the full id is what it takes to message someone through the
+ * bot, so only enough is kept to tell two chats apart.
+ */
+function maskChatId(chatId: number): string {
+  return `chat …${String(Math.abs(chatId)).slice(-3)}`
+}
+
+interface SubscribersRead {
+  file: SubscribersFile
+  /** Sealed and unopenable here: never processed, never written back. */
+  locked: boolean
+  /** Plain on disk while a key is configured: write it back sealed. */
+  needsSealing: boolean
+}
+
+async function readSubscribers(): Promise<SubscribersRead> {
+  const { data, existed } = await readJson<unknown>(PATHS.subscribers, null)
+  try {
+    return {
+      file: openSubscribers(data, SUBSCRIBERS_KEY),
+      locked: false,
+      needsSealing: existed && SUBSCRIBERS_KEY !== null && !isSealed(data),
+    }
+  } catch (error) {
+    if (!(error instanceof SubscribersLockedError)) throw error
+    // Not fatal: the run still checks, and still alerts TELEGRAM_CHAT_ID.
+    // Overwriting the file would lose the list, so it is left alone.
+    log(`  Telegram: ${error.message} — alerting TELEGRAM_CHAT_ID only, subscribers untouched`)
+    return { file: EMPTY_SUBSCRIBERS, locked: true, needsSealing: false }
+  }
+}
+
+async function writeSubscribers(file: SubscribersFile): Promise<void> {
+  await writeJson(PATHS.subscribers, sealSubscribers(file, SUBSCRIBERS_KEY))
+}
+
 interface TelegramResult<T> {
   ok: boolean
   result?: T
@@ -1059,7 +1108,7 @@ async function syncSubscribers(
       if (added.changed) {
         file = added.file
         changed = true
-        log(`  Telegram: subscribed ${chat.label} (${chat.chatId})`)
+        log(`  Telegram: subscribed ${maskChatId(chat.chatId)} (${chat.chatType})`)
       }
       await telegram('sendMessage', {
         chat_id: chat.chatId,
@@ -1075,7 +1124,7 @@ async function syncSubscribers(
       if (removed.changed) {
         file = removed.file
         changed = true
-        log(`  Telegram: unsubscribed ${removed.removed?.label ?? chat.label} (${chat.chatId})`)
+        log(`  Telegram: unsubscribed ${maskChatId(chat.chatId)}`)
       }
       await telegram('sendMessage', { chat_id: chat.chatId, text: unsubscribedMessage() })
       continue
@@ -1178,9 +1227,9 @@ async function broadcast(file: SubscribersFile, text: string): Promise<number[]>
     // 403: blocked, kicked or deactivated. 400: chat no longer exists.
     if (code === 403 || code === 400) {
       dead.push(chatId)
-      log(`  Telegram: dropping ${chatId} (${response.description ?? code})`)
+      log(`  Telegram: dropping ${maskChatId(chatId)} (${response.description ?? code})`)
     } else {
-      log(`  Telegram: delivery to ${chatId} failed (${response.description ?? code})`)
+      log(`  Telegram: delivery to ${maskChatId(chatId)} failed (${response.description ?? code})`)
     }
   }
 
@@ -1434,16 +1483,17 @@ async function runOnce(): Promise<void> {
   const historyRead = await readJson<HistoryFile>(PATHS.history, { entries: [] })
   const incidentsRead = await readJson<IncidentsFile>(PATHS.incidents, { incidents: [] })
   const bufferRead = await readJson<HistoryFile>(PATHS.buffer, { entries: [] })
-  const subscribersRead = await readJson<SubscribersFile>(PATHS.subscribers, {
-    offset: 0,
-    subscribers: [],
-  })
+  const subscribersRead = await readSubscribers()
 
   // Pick up anyone who sent /start or /stop since the last pass, before any
-  // alert goes out, so a fresh subscriber gets this run's news too.
-  const sync = await syncSubscribers(subscribersRead.data)
+  // alert goes out, so a fresh subscriber gets this run's news too. Not while
+  // the list is locked: a /start answered but never saved is worse than one
+  // left waiting for a run that can save it.
+  const sync = subscribersRead.locked
+    ? { file: subscribersRead.file, changed: false }
+    : await syncSubscribers(subscribersRead.file)
   let subscribers = sync.file
-  let subscribersChanged = sync.changed
+  let subscribersChanged = sync.changed || subscribersRead.needsSealing
 
   const previousStatus = statusRead.data.monitors ?? {}
   const incidents: Incident[] = [...(incidentsRead.data.incidents ?? [])]
@@ -1699,7 +1749,9 @@ async function runOnce(): Promise<void> {
     await writeJson(PATHS.status, statusFile)
     await writeJson(PATHS.history, { entries: history } satisfies HistoryFile)
     await writeJson(PATHS.incidents, { incidents: liveIncidents } satisfies IncidentsFile)
-    await writeJson(PATHS.subscribers, subscribers satisfies SubscribersFile)
+    // Only when it changed: sealing is randomised, so rewriting an unchanged
+    // list would still show up as a change in every commit.
+    if (subscribersChanged && !subscribersRead.locked) await writeSubscribers(subscribers)
     // The buffer has been folded into history.json.
     await writeJson(PATHS.buffer, { entries: [] } satisfies HistoryFile)
 
@@ -1759,10 +1811,10 @@ async function runOnce(): Promise<void> {
  * included in the very test they are waiting for.
  */
 async function sendTestAlert(): Promise<void> {
-  const read = await readJson<SubscribersFile>(PATHS.subscribers, { offset: 0, subscribers: [] })
-  const sync = await syncSubscribers(read.data)
+  const read = await readSubscribers()
+  const sync = read.locked ? { file: read.file, changed: false } : await syncSubscribers(read.file)
   let subscribers = sync.file
-  let changed = sync.changed
+  let changed = sync.changed || read.needsSealing
 
   const recipients = recipientsOf(subscribers)
   log(
@@ -1792,7 +1844,7 @@ async function sendTestAlert(): Promise<void> {
     changed = true
   }
 
-  if (changed) await writeJson(PATHS.subscribers, subscribers satisfies SubscribersFile)
+  if (changed && !read.locked) await writeSubscribers(subscribers)
 
   const bitrixCheck = await checkBitrix24()
   log(bitrixCheck)

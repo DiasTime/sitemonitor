@@ -150,6 +150,10 @@ jobs:
           # Optional gate on /start. Without it, anyone who finds the bot can
           # subscribe and will then receive your hosts and their outage windows.
           TELEGRAM_SUBSCRIBE_PASSWORD: ${{ secrets.TELEGRAM_SUBSCRIBE_PASSWORD }}
+          # Encrypts data/subscribers.json (chat ids and usernames), which a
+          # public repository would otherwise publish. Same value as the
+          # dashboard's SUBSCRIBERS_KEY. Unset, the file stays plain JSON.
+          SUBSCRIBERS_KEY: ${{ secrets.SUBSCRIBERS_KEY }}
           # Credentials for "login" monitors — one JSON object keyed by monitor
           # id, e.g. {"sharyn-kz":{"username":"...","password":"..."}}. Never
           # stored in data/monitors.json, which is public and committed.

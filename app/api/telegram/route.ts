@@ -2,6 +2,13 @@ import { jsonResponse } from '@/lib/api'
 import { dispatchRepositoryEvent, updateJsonFile } from '@/lib/github'
 import { DATA_PATHS, getMonitors, getStatus } from '@/lib/storage'
 import {
+  EMPTY_SUBSCRIBERS,
+  openSubscribers,
+  sealSubscribers,
+  subscribersKey,
+  type StoredSubscribers,
+} from '@/lib/subscribers'
+import {
   checkBusyMessage,
   checkStartedMessage,
   helpMessage,
@@ -23,12 +30,9 @@ import {
   type TelegramMessage,
   type TelegramUpdate,
 } from '@/lib/telegram'
-import type { SubscribersFile } from '@/lib/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-
-const EMPTY_SUBSCRIBERS: SubscribersFile = { offset: 0, subscribers: [] }
 
 /** A check on demand is cheap, but not free — it spends an Actions minute. */
 const CHECK_COOLDOWN_MS = 60_000
@@ -109,27 +113,30 @@ async function answer(
     const passphrase = process.env.TELEGRAM_SUBSCRIBE_PASSWORD?.trim()
     if (passphrase && argument !== passphrase) return { text: passphraseRequiredMessage() }
 
-    await updateJsonFile<SubscribersFile>(
+    // The commit message names no one: on a public repository it is public.
+    const key = subscribersKey()
+    await updateJsonFile<StoredSubscribers>(
       DATA_PATHS.subscribers,
       EMPTY_SUBSCRIBERS,
       (current) => {
-        const { file, changed } = subscribe(normalise(current), chat, new Date().toISOString())
-        return changed ? file : null
+        const { file, changed } = subscribe(openSubscribers(current, key), chat, new Date().toISOString())
+        return changed ? sealSubscribers(file, key) : null
       },
-      `chore(monitor): subscribe ${chat.label}`,
+      'chore(monitor): subscribe',
     )
     return { text: subscribedMessage(), keyboard: mainKeyboard() }
   }
 
   if (name === 'stop') {
-    await updateJsonFile<SubscribersFile>(
+    const key = subscribersKey()
+    await updateJsonFile<StoredSubscribers>(
       DATA_PATHS.subscribers,
       EMPTY_SUBSCRIBERS,
       (current) => {
-        const { file, changed } = unsubscribe(normalise(current), chat.chatId)
-        return changed ? file : null
+        const { file, changed } = unsubscribe(openSubscribers(current, key), chat.chatId)
+        return changed ? sealSubscribers(file, key) : null
       },
-      `chore(monitor): unsubscribe ${chat.label}`,
+      'chore(monitor): unsubscribe',
     )
     return { text: unsubscribedMessage() }
   }
@@ -184,14 +191,6 @@ async function startCheck(): Promise<string> {
   await dispatchRepositoryEvent('run-check', { loop_minutes: '0' })
   lastCheckAt = Date.now()
   return checkStartedMessage()
-}
-
-/** A hand-edited or half-written subscribers.json must not throw here. */
-function normalise(file: SubscribersFile): SubscribersFile {
-  return {
-    offset: typeof file?.offset === 'number' ? file.offset : 0,
-    subscribers: Array.isArray(file?.subscribers) ? file.subscribers : [],
-  }
 }
 
 function staleAfterMs(): number {
