@@ -1292,8 +1292,20 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-10-29T13:31:10.973Z"
+    },
+    {
+      "id": "baimura-vms-svoydom-kz-2026-10-29T14:05:31.989Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "startedAt": "2026-10-29T14:05:31.989Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-29T14:05:31.989Z"
     }
   ]
 }
