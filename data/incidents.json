@@ -1270,6 +1270,18 @@
       "error": "HTTP 502",
       "failedChecks": 1,
       "lastNotifiedAt": "2026-10-29T07:05:26.115Z"
+    },
+    {
+      "id": "baimura-vms-svoydom-kz-2026-10-29T12:20:33.883Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "startedAt": "2026-10-29T12:20:33.883Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-29T12:20:33.883Z"
     }
   ]
 }
