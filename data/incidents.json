@@ -1340,8 +1340,20 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 60,
+      "failedChecks": 61,
       "lastNotifiedAt": "2026-10-31T20:15:28.909Z"
+    },
+    {
+      "id": "megapolisast-kz-2026-10-31T23:10:31.247Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-10-31T23:10:31.247Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-10-31T23:10:31.247Z"
     }
   ]
 }
