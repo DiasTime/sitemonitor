@@ -1340,7 +1340,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 80,
+      "failedChecks": 81,
       "lastNotifiedAt": "2026-11-01T09:05:24.446Z"
     },
     {
@@ -1352,7 +1352,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 20,
+      "failedChecks": 21,
       "lastNotifiedAt": "2026-11-01T05:35:25.978Z"
     }
   ]
