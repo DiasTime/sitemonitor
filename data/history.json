@@ -1,198 +1,6 @@
 {
   "entries": [
     {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 3254,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "darynast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 2475,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 2715,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 2935,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "anarast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1836,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 3306,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 3398,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "gakkuast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 2993,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "aqqain-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1302,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "izetast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 2379,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "qaiyndy-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 2105,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:20:46.371Z",
-      "monitorId": "samal-park-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 2226,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "sharyn-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1088,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "darynast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1334,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "zhanaurpaq-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1104,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "megapolisast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1147,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "anarast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1165,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "olen-vms-svoydom-kz-2",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1692,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "baimura-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1733,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "gakkuast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1058,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "aqqain-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1145,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "izetast-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 1104,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "qaiyndy-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 983,
-      "error": null
-    },
-    {
-      "timestamp": "2026-10-02T16:33:22.262Z",
-      "monitorId": "samal-park-vms-svoydom-kz",
-      "status": "UP",
-      "statusCode": 200,
-      "responseTime": 658,
-      "error": null
-    },
-    {
       "timestamp": "2026-10-02T16:55:33.638Z",
       "monitorId": "sharyn-kz",
       "status": "UP",
@@ -116062,6 +115870,102 @@
       "status": "UP",
       "statusCode": 200,
       "responseTime": 880,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "sharyn-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1512,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "darynast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1591,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "zhanaurpaq-kz",
+      "status": "DOWN",
+      "statusCode": 502,
+      "responseTime": 1418,
+      "error": "HTTP 502"
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "megapolisast-kz",
+      "status": "DOWN",
+      "statusCode": null,
+      "responseTime": null,
+      "error": "Таймаут соединения"
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "anarast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1037,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 2166,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 2088,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "gakkuast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1361,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "aqqain-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1257,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "izetast-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1240,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "qaiyndy-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 1175,
+      "error": null
+    },
+    {
+      "timestamp": "2026-11-01T16:40:32.226Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "status": "UP",
+      "statusCode": 200,
+      "responseTime": 971,
       "error": null
     }
   ]
