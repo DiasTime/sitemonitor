@@ -1354,6 +1354,18 @@
       "error": "Таймаут соединения",
       "failedChecks": 97,
       "lastNotifiedAt": "2026-11-03T02:30:39.589Z"
+    },
+    {
+      "id": "sharyn-kz-2026-11-04T08:15:36.559Z",
+      "monitorId": "sharyn-kz",
+      "startedAt": "2026-11-04T08:15:36.559Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-04T08:15:36.559Z"
     }
   ]
 }
