@@ -1376,8 +1376,20 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-11-06T06:20:28.467Z"
+    },
+    {
+      "id": "zhanaurpaq-kz-2026-11-06T06:55:24.391Z",
+      "monitorId": "zhanaurpaq-kz",
+      "startedAt": "2026-11-06T06:55:24.391Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-06T06:55:24.391Z"
     }
   ]
 }
