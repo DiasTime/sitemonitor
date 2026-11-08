@@ -1412,8 +1412,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 22,
-      "lastNotifiedAt": "2026-11-07T20:15:28.221Z"
+      "failedChecks": 23,
+      "lastNotifiedAt": "2026-11-08T02:40:27.861Z"
     },
     {
       "id": "sharyn-kz-2026-11-07T16:10:32.091Z",
@@ -1424,7 +1424,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 18,
+      "failedChecks": 19,
       "lastNotifiedAt": "2026-11-07T22:35:23.739Z"
     }
   ]
