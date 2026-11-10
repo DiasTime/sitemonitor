@@ -1484,7 +1484,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 3,
+      "failedChecks": 4,
       "lastNotifiedAt": "2026-11-10T12:35:29.671Z"
     },
     {
@@ -1496,7 +1496,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 1,
+      "failedChecks": 2,
       "lastNotifiedAt": "2026-11-10T13:45:32.597Z"
     }
   ]
