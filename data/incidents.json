@@ -1438,6 +1438,42 @@
       "error": "HTTP 502",
       "failedChecks": 2,
       "lastNotifiedAt": "2026-11-10T07:10:27.646Z"
+    },
+    {
+      "id": "darynast-kz-2026-11-10T10:05:24.944Z",
+      "monitorId": "darynast-kz",
+      "startedAt": "2026-11-10T10:05:24.944Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-10T10:05:24.944Z"
+    },
+    {
+      "id": "baimura-vms-svoydom-kz-2026-11-10T10:05:24.944Z",
+      "monitorId": "baimura-vms-svoydom-kz",
+      "startedAt": "2026-11-10T10:05:24.944Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-10T10:05:24.944Z"
+    },
+    {
+      "id": "gakkuast-kz-2026-11-10T10:05:24.944Z",
+      "monitorId": "gakkuast-kz",
+      "startedAt": "2026-11-10T10:05:24.944Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-10T10:05:24.944Z"
     }
   ]
 }
