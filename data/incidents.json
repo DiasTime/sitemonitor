@@ -1474,6 +1474,18 @@
       "error": "Таймаут соединения",
       "failedChecks": 6,
       "lastNotifiedAt": "2026-11-10T10:05:24.944Z"
+    },
+    {
+      "id": "aqqain-kz-2026-11-10T12:35:29.671Z",
+      "monitorId": "aqqain-kz",
+      "startedAt": "2026-11-10T12:35:29.671Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-10T12:35:29.671Z"
     }
   ]
 }
