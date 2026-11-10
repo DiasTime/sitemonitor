@@ -1443,12 +1443,12 @@
       "id": "darynast-kz-2026-11-10T10:05:24.944Z",
       "monitorId": "darynast-kz",
       "startedAt": "2026-11-10T10:05:24.944Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-11-10T11:21:20.034Z",
+      "durationMs": 4555090,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 3,
+      "failedChecks": 5,
       "lastNotifiedAt": "2026-11-10T10:05:24.944Z"
     },
     {
@@ -1460,7 +1460,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 3,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-11-10T10:05:24.944Z"
     },
     {
@@ -1472,7 +1472,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 3,
+      "failedChecks": 6,
       "lastNotifiedAt": "2026-11-10T10:05:24.944Z"
     }
   ]
