@@ -1498,6 +1498,18 @@
       "error": "HTTP 502",
       "failedChecks": 3,
       "lastNotifiedAt": "2026-11-10T13:45:32.597Z"
+    },
+    {
+      "id": "zhanaurpaq-kz-2026-11-11T05:55:25.522Z",
+      "monitorId": "zhanaurpaq-kz",
+      "startedAt": "2026-11-11T05:55:25.522Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Ошибка SSL: срок сертификата истёк",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-11T05:55:25.522Z"
     }
   ]
 }
