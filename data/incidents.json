@@ -1508,8 +1508,20 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Ошибка SSL: срок сертификата истёк",
-      "failedChecks": 6,
+      "failedChecks": 7,
       "lastNotifiedAt": "2026-11-11T05:55:25.522Z"
+    },
+    {
+      "id": "samal-park-vms-svoydom-kz-2026-11-11T09:25:25.977Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "startedAt": "2026-11-11T09:25:25.977Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-11T09:25:25.977Z"
     }
   ]
 }
