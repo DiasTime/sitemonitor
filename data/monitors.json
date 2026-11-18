@@ -128,6 +128,14 @@
       "type": "health",
       "sslExpiresAt": "2026-11-18",
       "createdAt": "2026-09-29T12:31:04.459Z"
+    },
+    {
+      "id": "umit-vms-svoydom-kz",
+      "name": "Умыт",
+      "url": "https://umit.vms.svoydom.kz/api/health",
+      "enabled": true,
+      "type": "health",
+      "createdAt": "2026-11-18T04:22:21.086Z"
     }
   ]
 }
