@@ -135,6 +135,7 @@
       "url": "https://umit.vms.svoydom.kz/api/health",
       "enabled": true,
       "type": "health",
+      "sslExpiresAt": "2027-02-04",
       "createdAt": "2026-11-18T04:22:21.086Z"
     }
   ]
