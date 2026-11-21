@@ -1546,6 +1546,30 @@
       "error": "HTTP 502",
       "failedChecks": 9,
       "lastNotifiedAt": "2026-11-18T05:30:44.450Z"
+    },
+    {
+      "id": "gakkuast-kz-2026-11-21T06:40:39.899Z",
+      "monitorId": "gakkuast-kz",
+      "startedAt": "2026-11-21T06:40:39.899Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-21T06:40:39.899Z"
+    },
+    {
+      "id": "samal-park-vms-svoydom-kz-2026-11-21T06:40:39.899Z",
+      "monitorId": "samal-park-vms-svoydom-kz",
+      "startedAt": "2026-11-21T06:40:39.899Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-21T06:40:39.899Z"
     }
   ]
 }
