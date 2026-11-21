@@ -1556,7 +1556,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 15,
+      "failedChecks": 16,
       "lastNotifiedAt": "2026-11-21T13:05:23.237Z"
     },
     {
@@ -1568,8 +1568,20 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 15,
+      "failedChecks": 16,
       "lastNotifiedAt": "2026-11-21T13:05:23.237Z"
+    },
+    {
+      "id": "olen-vms-svoydom-kz-2-2026-11-21T15:25:25.146Z",
+      "monitorId": "olen-vms-svoydom-kz-2",
+      "startedAt": "2026-11-21T15:25:25.146Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-21T15:25:25.146Z"
     }
   ]
 }
