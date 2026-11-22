@@ -1568,8 +1568,8 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 55,
-      "lastNotifiedAt": "2026-11-22T08:20:29.953Z"
+      "failedChecks": 56,
+      "lastNotifiedAt": "2026-11-22T14:45:36.766Z"
     },
     {
       "id": "olen-vms-svoydom-kz-2-2026-11-21T15:25:25.146Z",
@@ -1592,7 +1592,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 21,
+      "failedChecks": 22,
       "lastNotifiedAt": "2026-11-22T08:55:25.188Z"
     }
   ]
