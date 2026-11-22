@@ -1556,8 +1556,8 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 44,
-      "lastNotifiedAt": "2026-11-22T01:55:21.810Z"
+      "failedChecks": 45,
+      "lastNotifiedAt": "2026-11-22T08:20:29.953Z"
     },
     {
       "id": "samal-park-vms-svoydom-kz-2026-11-21T06:40:39.899Z",
@@ -1568,8 +1568,8 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 44,
-      "lastNotifiedAt": "2026-11-22T01:55:21.810Z"
+      "failedChecks": 45,
+      "lastNotifiedAt": "2026-11-22T08:20:29.953Z"
     },
     {
       "id": "olen-vms-svoydom-kz-2-2026-11-21T15:25:25.146Z",
@@ -1592,7 +1592,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 10,
+      "failedChecks": 11,
       "lastNotifiedAt": "2026-11-22T02:30:34.695Z"
     }
   ]
