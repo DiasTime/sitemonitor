@@ -1563,9 +1563,9 @@
       "id": "samal-park-vms-svoydom-kz-2026-11-21T06:40:39.899Z",
       "monitorId": "samal-park-vms-svoydom-kz",
       "startedAt": "2026-11-21T06:40:39.899Z",
-      "endedAt": null,
-      "durationMs": null,
-      "status": "ongoing",
+      "endedAt": "2026-11-23T06:21:14.663Z",
+      "durationMs": 171634764,
+      "status": "resolved",
       "statusCode": 502,
       "error": "HTTP 502",
       "failedChecks": 82,
@@ -1592,7 +1592,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 48,
+      "failedChecks": 49,
       "lastNotifiedAt": "2026-11-23T04:10:30.351Z"
     }
   ]
