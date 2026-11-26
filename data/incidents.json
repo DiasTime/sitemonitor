@@ -1606,6 +1606,18 @@
       "error": "Таймаут соединения",
       "failedChecks": 5,
       "lastNotifiedAt": "2026-11-24T10:20:28.481Z"
+    },
+    {
+      "id": "qaiyndy-kz-2026-11-26T05:05:25.040Z",
+      "monitorId": "qaiyndy-kz",
+      "startedAt": "2026-11-26T05:05:25.040Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": null,
+      "error": "Таймаут соединения",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-26T05:05:25.040Z"
     }
   ]
 }
