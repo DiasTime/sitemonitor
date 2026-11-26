@@ -1616,8 +1616,8 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 11,
-      "lastNotifiedAt": "2026-11-26T05:05:25.040Z"
+      "failedChecks": 12,
+      "lastNotifiedAt": "2026-11-26T11:30:39.775Z"
     },
     {
       "id": "zhanaurpaq-kz-2026-11-26T07:25:26.215Z",
@@ -1628,7 +1628,7 @@
       "status": "ongoing",
       "statusCode": 502,
       "error": "HTTP 502",
-      "failedChecks": 7,
+      "failedChecks": 8,
       "lastNotifiedAt": "2026-11-26T07:25:26.215Z"
     }
   ]
