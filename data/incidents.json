@@ -1616,7 +1616,7 @@
       "status": "ongoing",
       "statusCode": null,
       "error": "Таймаут соединения",
-      "failedChecks": 56,
+      "failedChecks": 57,
       "lastNotifiedAt": "2026-11-27T13:10:28.076Z"
     },
     {
@@ -1630,6 +1630,18 @@
       "error": "HTTP 502",
       "failedChecks": 36,
       "lastNotifiedAt": "2026-11-27T02:40:32.488Z"
+    },
+    {
+      "id": "megapolisast-kz-2026-11-27T13:45:33.146Z",
+      "monitorId": "megapolisast-kz",
+      "startedAt": "2026-11-27T13:45:33.146Z",
+      "endedAt": null,
+      "durationMs": null,
+      "status": "ongoing",
+      "statusCode": 502,
+      "error": "HTTP 502",
+      "failedChecks": 1,
+      "lastNotifiedAt": "2026-11-27T13:45:33.146Z"
     }
   ]
 }
